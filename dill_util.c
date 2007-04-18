@@ -1317,7 +1317,7 @@ dill_dump(dill_stream s)
 		}
 	    }
 	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
-	    l = s->j->print_insn(c, &info, (void *)p);
+	    l = s->j->print_insn(s, &info, (void *)p);
 	    printf("\n");
 	    if (l == -1) return;
 	    p = (char*)p + l;
