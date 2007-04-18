@@ -47,39 +47,42 @@ sub upperc {
 &arithi_insn("rsh", "u ul", "x86_shifti", "0x5", "2");
 &branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "x86_branch");
 &branchi_insn( "eq ge gt le lt ne", "i u ul l p", "x86_branchi");
+&compare_insn( "eq ge gt le lt ne", "i u ul l p d f", "x86_compare");
+&comparei_insn( "eq ge gt le lt ne", "i u ul l p", "x86_comparei");
 
 print COUT <<EOF;
 #define INSN_OUT(c, i) 
-extern void x86_FORM3_farith(c, b1, b2, dest, src1, src2)
-dill_stream c;
+extern void x86_FORM3_farith(s, b1, b2, dest, src1, src2)
+dill_stream s;
 int b1;
 int b2;
 int dest;
 int src1;
 int src2;
 {
-    BYTE_OUT2(c, b1, b2);
+    BYTE_OUT2(s, b1, b2);
 }
 
-extern void x86_FORM2_farith(c, b1, b2, dest, src)
-dill_stream c;
+extern void x86_FORM2_farith(s, b1, b2, dest, src)
+dill_stream s;
 int b1;
 int b2;
 int dest;
 int src;
 {
-    BYTE_OUT2(c, b1, b2);
+    BYTE_OUT2(s, b1, b2);
 }
 
 EOF
 print COUT "jmp_table ${mach}_jump_table;\n";
-print COUT "extern void dill_x86_init(dill_stream c)\n{\n";
+print COUT "extern void dill_x86_init(dill_stream s)\n{\n";
 print COUT "\tif(x86_jump_table == 0) {\n";
 print COUT "\t  x86_jump_table = alloc_dill_jump_table();\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
 print COUT $jmp_a2_assigns;
 print COUT $jmp_b_assigns;
+print COUT $jmp_c_assigns;
 print COUT "\t  ${mach}_jump_table->proc_start = (dill_mach_proc_start) x86_proc_start;\n";
 print COUT "\t  ${mach}_jump_table->end = x86_end;\n";
 print COUT "\t  ${mach}_jump_table->clone_code = x86_clone_code;\n";
@@ -121,11 +124,11 @@ print COUT "\t  ${mach}_jump_table->do_reverse_push = 1;\n";
 print COUT "\t  ${mach}_jump_table->target_byte_order = 2;  /* Format_Integer_littleendian */\n";
 print COUT "\t  ${mach}_jump_table->target_float_format = 2;  /* Format_IEEE_754_littleendian */ \n";
 print COUT "\t}\n";
-print COUT "\tc->j = x86_jump_table;\n";
-print COUT "\tc->dill_local_pointer = EBP;\n";
-print COUT "\tc->dill_param_reg_pointer = EBP;\n";
-print COUT "\tc->p->mach_info = (void*)gen_x86_mach_info(c);\n";
-print COUT "\tc->p->machine_strr_tmp_reg = EAX;\n";
+print COUT "\ts->j = x86_jump_table;\n";
+print COUT "\ts->dill_local_pointer = EBP;\n";
+print COUT "\ts->dill_param_reg_pointer = EBP;\n";
+print COUT "\ts->p->mach_info = (void*)gen_x86_mach_info(s);\n";
+print COUT "\ts->p->machine_strr_tmp_reg = EAX;\n";
 print COUT "\treturn;\n";
 print COUT "}\n";
 
@@ -169,8 +172,20 @@ sub branch_insn {
 	$op = $_;
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_b[dill_jmp_b${op}${_}] = $subr;\n";
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_b${op}_code;\n";
+	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_${op}_code;\n";
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
+	}
+    }
+}
+
+sub compare_insn {
+    local($ops, $types, $subr) = @_;
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->jmp_c[dill_jmp_c${op}${_}] = $subr;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data1 = dill_${op}_code;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
 	}
     }
 }
@@ -181,6 +196,16 @@ sub branchi_insn {
 	$op = $_;
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_bi[dill_jmp_b${op}${_}] = $subr;\n";
+	}
+    }
+}
+
+sub comparei_insn {
+    local($ops, $types, $subr) = @_;
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->jmp_ci[dill_jmp_c${op}${_}] = $subr;\n";
 	}
     }
 }

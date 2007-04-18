@@ -118,7 +118,7 @@ ia64_lea(dill_stream c, int junk, int junk1, int dest, int src, long imm);
 extern void ia64_jump_to_label(dill_stream c, unsigned long label);
 extern void ia64_jump_to_reg(dill_stream c, unsigned long reg);
 extern void ia64_jump_to_imm(dill_stream c, unsigned long imm);
-extern void ia64_jal(dill_stream c, int return_addill_reg, int target);
+extern void ia64_jal(dill_stream c, int return_addr_reg, int target);
 extern int ia64_calli(dill_stream c, int type, void *xfer_address);
 extern int ia64_callr(dill_stream c, int type, int src);
 extern void ia64_push(dill_stream c, int type, int reg);

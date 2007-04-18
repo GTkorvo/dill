@@ -102,26 +102,26 @@ print COUT "\t  ${mach}_jump_table->do_reverse_push = 0;\n";
 print COUT "\t  ${mach}_jump_table->target_byte_order = 2;  /* Format_Integer_littleendian */\n";
 print COUT "\t  ${mach}_jump_table->target_float_format = 3;  /* Format_IEEE_754_mixedendian */ \n";
 print COUT "}\n\n";
-print COUT "extern void dill_arm_init(dill_stream c)\n{\n";
+print COUT "extern void dill_arm_init(dill_stream s)\n{\n";
 print COUT "\tif(${mach}_jump_table == 0) {\n";
 print COUT "\t  gen_arm_jump_table();\n";
 print COUT "\t}\n";
-print COUT "\tc->j = ${mach}_jump_table;\n";
-print COUT "\tc->dill_local_pointer = _fp;\n";
-print COUT "\tc->dill_param_reg_pointer = _fp;\n";
-print COUT "\tc->p->mach_info = (void*)gen_arm_mach_info(c,/*v9*/ 0);\n";
-print COUT "\tc->p->machine_strr_tmp_reg = _v1;\n";
+print COUT "\ts->j = ${mach}_jump_table;\n";
+print COUT "\ts->dill_local_pointer = _fp;\n";
+print COUT "\ts->dill_param_reg_pointer = _fp;\n";
+print COUT "\ts->p->mach_info = (void*)gen_arm_mach_info(s,/*v9*/ 0);\n";
+print COUT "\ts->p->machine_strr_tmp_reg = _v1;\n";
 print COUT "\treturn;\n";
 print COUT "}\n";
-print COUT "extern void dill_armv9_init(dill_stream c)\n{\n";
+print COUT "extern void dill_armv9_init(dill_stream s)\n{\n";
 print COUT "\tif(${mach}_jump_table == 0) {\n";
 print COUT "\t  gen_arm_jump_table();\n";
 print COUT "\t}\n";
-print COUT "\tc->j = ${mach}_jump_table;\n";
-print COUT "\tc->dill_local_pointer = _fp;\n";
-print COUT "\tc->dill_param_reg_pointer = _fp;\n";
-print COUT "\tc->p->mach_info = (void*)gen_arm_mach_info(c,/*v9*/ 1);\n";
-print COUT "\tc->p->machine_strr_tmp_reg = _v1;\n";
+print COUT "\ts->j = ${mach}_jump_table;\n";
+print COUT "\ts->dill_local_pointer = _fp;\n";
+print COUT "\ts->dill_param_reg_pointer = _fp;\n";
+print COUT "\ts->p->mach_info = (void*)gen_arm_mach_info(s,/*v9*/ 1);\n";
+print COUT "\ts->p->machine_strr_tmp_reg = _v1;\n";
 print COUT "\treturn;\n";
 print COUT "}\n";
 
@@ -158,7 +158,7 @@ sub branch_insn {
 	$op = $_;
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_b[dill_jmp_b${op}${_}] = $subr;\n";
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_b${op}_code;\n";
+	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_${op}_code;\n";
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
 	}
     }

@@ -1,5 +1,5 @@
-extern void extend_dill_stream(dill_stream c);
-extern void dump_cur_dill_insn(dill_stream c);
+extern void extend_dill_stream(dill_stream s);
+extern void dump_cur_dill_insn(dill_stream s);
 extern jmp_table alloc_dill_jump_table(void);
 
 #define INIT_CODE_SIZE 64
@@ -64,7 +64,7 @@ typedef struct ret_table {
     int *ret_locs;
 } ret_t;
 
-typedef void (*mach_reset_func)(dill_stream c);
+typedef void (*mach_reset_func)(dill_stream s);
 
 typedef struct vreg_info {
     int typ;
@@ -230,10 +230,10 @@ struct dec {
 
 extern int dill_mustsave(reg_set *regs, int reg);
 extern int dill_wasused(reg_set *regs, int reg);
-extern void dill_mark_branch_location(dill_stream c, int label);
-extern void dill_mark_call_location(dill_stream c, char *xfer_name,
+extern void dill_mark_branch_location(dill_stream s, int label);
+extern void dill_mark_call_location(dill_stream s, char *xfer_name,
 				 void *xfer_address);
-extern void dill_mark_ret_location(dill_stream c);
-extern void dill_end_vararg_push(dill_stream c);
-EXTERN void dill_dump_reg(dill_stream c, int typ, int reg);
-extern void setup_VM_proc(dill_stream c);
+extern void dill_mark_ret_location(dill_stream s);
+extern void dill_end_vararg_push(dill_stream s);
+EXTERN void dill_dump_reg(dill_stream s, int typ, int reg);
+extern void setup_VM_proc(dill_stream s);

@@ -43,7 +43,7 @@ print VMOUT "{\n    switch(code) {\n$vm_bri_code    }return 0;\n}\n";
 
 print VMOUT "#define CONV(x,y) ((x<<4)+y)\n";
 print VMOUT "void emulate_convert(int code, struct reg_type *dest, struct reg_type *src)\n";
-print VMOUT "{\n    switch(code) {\n$vm_cvt_code        default: printf(\"convert missed case %lx \\n\", code); break;}\n}\n";
+print VMOUT "{\n    switch(code) {\n$vm_cvt_code        default: printf(\"convert missed case %x \\n\", code); break;}\n}\n";
 print VMOUT "int emulate_loadi(int code, struct reg_type *dest, struct reg_type *src, long imm)\n";
 print VMOUT "{\n    switch(code) {\n$vm_loadi_code    }return 0;\n}\n";
 
@@ -51,7 +51,7 @@ print VMOUT "int emulate_storei(int code, struct reg_type *dest, struct reg_type
 print VMOUT "{\n    switch(code) {\n$vm_storei_code    }return 0;\n}\n";
 
 print COUT "jmp_table ${mach}_jump_table;\n";
-print COUT "extern void dill_virtual_init(dill_stream c)\n{\n";
+print COUT "extern void dill_virtual_init(dill_stream s)\n{\n";
 print COUT "\tif(virtual_jump_table == 0) {\n";
 print COUT "\t  virtual_jump_table = alloc_dill_jump_table();\n";
 print COUT $jmp_a3_assigns;
@@ -60,8 +60,8 @@ print COUT $jmp_a2_assigns;
 print COUT $jmp_b_assigns;
 print COUT "\t  ${mach}_jump_table->proc_start = (dill_mach_proc_start) virtual_proc_start;\n";
 print COUT "\t  ${mach}_jump_table->end = (dill_mach_end)virtual_end;\n";
-print COUT "\t  ${mach}_jump_table->type_align = c->p->native.mach_jump->type_align;\n";
-print COUT "\t  ${mach}_jump_table->type_size = c->p->native.mach_jump->type_size;\n";
+print COUT "\t  ${mach}_jump_table->type_align = s->p->native.mach_jump->type_align;\n";
+print COUT "\t  ${mach}_jump_table->type_size = s->p->native.mach_jump->type_size;\n";
 print COUT "\t  ${mach}_jump_table->ret = virtual_ret;\n";
 print COUT "\t  ${mach}_jump_table->reti = virtual_reti;\n";
 print COUT "\t  ${mach}_jump_table->retf = (ret_opf)virtual_reti;\n";
@@ -92,25 +92,25 @@ print COUT "\t  ${mach}_jump_table->init_disassembly = virtual_init_disassembly_
 print COUT "\t  ${mach}_jump_table->print_insn = virtual_print_insn;\n";
 print COUT "\t  ${mach}_jump_table->print_reg = NULL;\n";
 print COUT "\t  ${mach}_jump_table->count_insn = NULL;\n";
-print COUT "\t  ${mach}_jump_table->do_reverse_push = c->p->native.mach_jump->do_reverse_push;\n";
-print COUT "\t  ${mach}_jump_table->target_byte_order = c->p->native.mach_jump->target_byte_order;\n";
-print COUT "\t  ${mach}_jump_table->target_float_format = c->p->native.mach_jump->target_float_format;\n";
+print COUT "\t  ${mach}_jump_table->do_reverse_push = s->p->native.mach_jump->do_reverse_push;\n";
+print COUT "\t  ${mach}_jump_table->target_byte_order = s->p->native.mach_jump->target_byte_order;\n";
+print COUT "\t  ${mach}_jump_table->target_float_format = s->p->native.mach_jump->target_float_format;\n";
 
 print COUT "\t}\n";
 print COUT "# line ". (__LINE__ + 2) . " \"virtual.ops\"\n";
 print COUT<<EOF;
-	if (c->p->virtual.mach_info == NULL) {
-	    c->p->virtual.mach_info = malloc(sizeof(struct mach_info));
+	if (s->p->virtual.mach_info == NULL) {
+	    s->p->virtual.mach_info = malloc(sizeof(struct mach_info));
 	}
-	c->p->mach_info = c->p->virtual.mach_info;
-	c->p->mach_reset = c->p->virtual.mach_reset;
-	c->p->code_base = c->p->virtual.code_base;
-	c->p->cur_ip = c->p->code_base;
-	c->p->code_limit = c->p->virtual.code_limit;
-	c->p->vreg_count = 0;
-	c->dill_local_pointer = dill_getreg(c, DILL_P);
-	c->dill_param_reg_pointer = c->dill_local_pointer;
-	c->j = virtual_jump_table;
+	s->p->mach_info = s->p->virtual.mach_info;
+	s->p->mach_reset = s->p->virtual.mach_reset;
+	s->p->code_base = s->p->virtual.code_base;
+	s->p->cur_ip = s->p->code_base;
+	s->p->code_limit = s->p->virtual.code_limit;
+	s->p->vreg_count = 0;
+	s->dill_local_pointer = dill_getreg(s, DILL_P);
+	s->dill_param_reg_pointer = s->dill_local_pointer;
+	s->j = virtual_jump_table;
 	return;
 }
 EOF
@@ -275,7 +275,7 @@ print COUT<<EOF;
 #endif
 
 static void 
-dill_varith3(dill_stream c, int op3, int op, int dest, int src1, int src2)
+dill_varith3(dill_stream s, int op3, int op, int dest, int src1, int src2)
 {
     virtual_insn i;
     i.class_code = iclass_arith3;
@@ -283,11 +283,11 @@ dill_varith3(dill_stream c, int op3, int op, int dest, int src1, int src2)
     i.opnds.a3.dest = dest;
     i.opnds.a3.src1 = src1;
     i.opnds.a3.src2 = src2;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 static void 
-dill_varith3i(dill_stream c, int op3, int op, int dest, int src1, long imm)
+dill_varith3i(dill_stream s, int op3, int op, int dest, int src1, long imm)
 {
     virtual_insn i;
     i.class_code = iclass_arith3i;
@@ -295,31 +295,31 @@ dill_varith3i(dill_stream c, int op3, int op, int dest, int src1, long imm)
     i.opnds.a3i.dest = dest;
     i.opnds.a3i.src = src1;
     i.opnds.a3i.u.imm = imm;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-static void dill_varith2(dill_stream c, int op3, int op, int dest, int src)
+static void dill_varith2(dill_stream s, int op3, int op, int dest, int src)
 {
     virtual_insn i;
     i.class_code = iclass_arith2;
     i.insn_code = op3;
     i.opnds.a2.dest = dest;
     i.opnds.a2.src = src;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-extern void virtual_ret(dill_stream c, int data1, int data2, int src)
+extern void virtual_ret(dill_stream s, int data1, int data2, int src)
 {
     virtual_insn i;
     i.class_code = iclass_ret;
     i.insn_code = data1;
     i.opnds.a1.src = src;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 
 extern void
-virtual_convert(dill_stream c, int from_type, int to_type, 
+virtual_convert(dill_stream s, int from_type, int to_type, 
 	      int dest, int src)
 {
     virtual_insn i;
@@ -327,11 +327,11 @@ virtual_convert(dill_stream c, int from_type, int to_type,
     i.insn_code = (unsigned)((from_type<<4) + to_type);
     i.opnds.a2.dest = dest;
     i.opnds.a2.src = src;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 extern void
-virtual_load(dill_stream c, int type, int junk, int dest, int src1, int src2)
+virtual_load(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
     virtual_insn i;
     i.class_code = iclass_loadstore;
@@ -339,11 +339,11 @@ virtual_load(dill_stream c, int type, int junk, int dest, int src1, int src2)
     i.opnds.a3.dest = dest;
     i.opnds.a3.src1 = src1;
     i.opnds.a3.src2 = src2;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 extern void
-virtual_loadi(dill_stream c, int type, int junk, int dest, int src1, long imm)
+virtual_loadi(dill_stream s, int type, int junk, int dest, int src1, long imm)
 {
     virtual_insn i;
     i.class_code = iclass_loadstorei;
@@ -351,11 +351,11 @@ virtual_loadi(dill_stream c, int type, int junk, int dest, int src1, long imm)
     i.opnds.a3i.dest = dest;
     i.opnds.a3i.src = src1;
     i.opnds.a3i.u.imm = imm;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 extern void
-virtual_pbsload(dill_stream c, int type, int junk, int dest, int src1, int src2)
+virtual_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
     virtual_insn i;
     i.class_code = iclass_loadstore;
@@ -363,11 +363,11 @@ virtual_pbsload(dill_stream c, int type, int junk, int dest, int src1, int src2)
     i.opnds.a3.dest = dest;
     i.opnds.a3.src1 = src1;
     i.opnds.a3.src2 = src2;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 extern void
-virtual_pbsloadi(dill_stream c, int type, int junk, int dest, int src1, long imm)
+virtual_pbsloadi(dill_stream s, int type, int junk, int dest, int src1, long imm)
 {
     virtual_insn i;
     i.class_code = iclass_loadstorei;
@@ -375,11 +375,11 @@ virtual_pbsloadi(dill_stream c, int type, int junk, int dest, int src1, long imm
     i.opnds.a3i.dest = dest;
     i.opnds.a3i.src = src1;
     i.opnds.a3i.u.imm = imm;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 extern void
-virtual_store(dill_stream c, int type, int junk, int dest, int src1, int src2)
+virtual_store(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
     virtual_insn i;
     i.class_code = iclass_loadstore;
@@ -387,11 +387,11 @@ virtual_store(dill_stream c, int type, int junk, int dest, int src1, int src2)
     i.opnds.a3.dest = dest;
     i.opnds.a3.src1 = src1;
     i.opnds.a3.src2 = src2;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 extern void
-virtual_storei(dill_stream c, int type, int junk, int dest, int src1, long imm)
+virtual_storei(dill_stream s, int type, int junk, int dest, int src1, long imm)
 {
     virtual_insn i;
     i.class_code = iclass_loadstorei;
@@ -399,54 +399,54 @@ virtual_storei(dill_stream c, int type, int junk, int dest, int src1, long imm)
     i.opnds.a3i.dest = dest;
     i.opnds.a3i.src = src1;
     i.opnds.a3i.u.imm = imm;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 extern void
-virtual_mov(dill_stream c, int type, int junk, int dest, int src)
+virtual_mov(dill_stream s, int type, int junk, int dest, int src)
 {
     virtual_insn i;
     i.class_code = iclass_mov;
     i.insn_code = type;
     i.opnds.a2.dest = dest;
     i.opnds.a2.src = src;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 extern void
-virtual_pset(dill_stream c, int type, int junk, int dest, long imm)
+virtual_pset(dill_stream s, int type, int junk, int dest, long imm)
 {
     virtual_insn i;
     i.class_code = iclass_set;
     i.insn_code = type;
     i.opnds.a3i.dest = dest;
     i.opnds.a3i.u.imm = imm;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 extern void
-virtual_setf(dill_stream c, int type, int junk, int dest, double imm)
+virtual_setf(dill_stream s, int type, int junk, int dest, double imm)
 {
     virtual_insn i;
     i.class_code = iclass_setf;
     i.insn_code = type;
     i.opnds.sf.dest = dest;
     i.opnds.sf.imm = imm;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 static void
-virtual_reti(dill_stream c, int type, int junk, long imm)
+virtual_reti(dill_stream s, int type, int junk, long imm)
 {
     virtual_insn i;
     i.class_code = iclass_reti;
     i.insn_code = type;
     i.opnds.a3i.u.imm = imm;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 static void
-virtual_branch(dill_stream c, int op, int type, int src1, int src2, int label)
+virtual_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 {
     virtual_insn i;
     i.class_code = iclass_branch;
@@ -454,11 +454,11 @@ virtual_branch(dill_stream c, int op, int type, int src1, int src2, int label)
     i.opnds.br.src1 = src1;
     i.opnds.br.src2 = src2;
     i.opnds.br.label = label;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 static void
-virtual_branchi(dill_stream c, int op, int type, int src, long imm, int label)
+virtual_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 {
     virtual_insn i;
     i.class_code = iclass_branchi;
@@ -466,98 +466,98 @@ virtual_branchi(dill_stream c, int op, int type, int src, long imm, int label)
     i.opnds.bri.src = src;
     i.opnds.bri.imm_l = imm;
     i.opnds.bri.label = label;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 static void
-virtual_jump_to_label(dill_stream c, unsigned long label)
+virtual_jump_to_label(dill_stream s, unsigned long label)
 {
     virtual_insn i;
     i.class_code = iclass_jump_to_label;
     i.insn_code = 0;
     i.opnds.br.label = (unsigned short) label;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-extern void virtual_jump_to_reg(dill_stream c, unsigned long reg)
+extern void virtual_jump_to_reg(dill_stream s, unsigned long reg)
 {
     virtual_insn i;
     i.class_code = iclass_jump_to_reg;
     i.insn_code = 0;
     i.opnds.br.src1 = (unsigned short) reg;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-extern void virtual_jump_to_imm(dill_stream c, void *imm)
+extern void virtual_jump_to_imm(dill_stream s, void *imm)
 {
     virtual_insn i;
     i.class_code = iclass_jump_to_imm;
     i.insn_code = 0;
     i.opnds.bri.imm_a = imm;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-extern int virtual_calli(dill_stream c, int type, void *xfer_address)
+extern int virtual_calli(dill_stream s, int type, void *xfer_address)
 {
     virtual_insn i;
     i.class_code = iclass_call;
     i.insn_code = type;
     i.opnds.bri.src = -1;
-    if (type != DILL_V) i.opnds.bri.src = dill_getreg(c, type);
+    if (type != DILL_V) i.opnds.bri.src = dill_getreg(s, type);
     i.opnds.bri.imm_a = xfer_address;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
     return i.opnds.bri.src;
 }
 
-extern int virtual_callr(dill_stream c, int type, int src)
+extern int virtual_callr(dill_stream s, int type, int src)
 {
     virtual_insn i;
     i.class_code = iclass_call;
     i.insn_code = 0x10 | type;
     i.opnds.bri.src = -1;
-    if (type != DILL_V) i.opnds.bri.src = dill_getreg(c, type);
+    if (type != DILL_V) i.opnds.bri.src = dill_getreg(s, type);
     i.opnds.bri.imm_l = src;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
     return i.opnds.bri.src;
 }
 
-extern void virtual_push(dill_stream c, int type, int reg)
+extern void virtual_push(dill_stream s, int type, int reg)
 {
     virtual_insn i;
     i.class_code = iclass_push;
     i.insn_code = type;
     i.opnds.a1.src = reg;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-extern void virtual_pushi(dill_stream c, int type, long value)
+extern void virtual_pushi(dill_stream s, int type, long value)
 {
     virtual_insn i;
     i.class_code = iclass_pushi;
     i.insn_code = type;
     i.opnds.a3i.u.imm = value;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-extern void virtual_pushpi(dill_stream c, int type, void *value)
+extern void virtual_pushpi(dill_stream s, int type, void *value)
 {
     virtual_insn i;
     i.class_code = iclass_pushi;
     i.insn_code = type;
     i.opnds.a3i.u.imm_a = value;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-extern void virtual_pushfi(dill_stream c, int type, double value)
+extern void virtual_pushfi(dill_stream s, int type, double value)
 {
     virtual_insn i;
     i.class_code = iclass_pushf;
     i.insn_code = type;
     i.opnds.sf.imm = value;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-extern void virtual_lea(dill_stream c, int junk1, int junk2, int dest, int src,
+extern void virtual_lea(dill_stream s, int junk1, int junk2, int dest, int src,
 			long imm)
 {
     virtual_insn i;
@@ -566,21 +566,21 @@ extern void virtual_lea(dill_stream c, int junk1, int junk2, int dest, int src,
     i.opnds.a3i.dest = dest;
     i.opnds.a3i.src = src;
     i.opnds.a3i.u.imm = imm;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
-extern void virtual_special(dill_stream c, special_operations type, long param)
+extern void virtual_special(dill_stream s, special_operations type, long param)
 {
     virtual_insn i;
     i.class_code = iclass_special;
     i.insn_code = 0;
     i.opnds.spec.type = type;
     i.opnds.spec.param = param;
-    INSN_OUT(c, i);
+    INSN_OUT(s, i);
 }
 
 static int
-virtual_init_disassembly_info(dill_stream c, void *ptr)
+virtual_init_disassembly_info(dill_stream s, void *ptr)
 {
     return 1;
 }

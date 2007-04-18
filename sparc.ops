@@ -66,8 +66,8 @@ sub upperc {
 &branchi_insn( "eq ge gt le lt ne", "i u ul l p", "sparc_branchi");
 
 print COUT <<EOF;
-extern void sparc_FORM3_farith(c, op3, fop, dest, src1, src2)
-dill_stream c;
+extern void sparc_FORM3_farith(s, op3, fop, dest, src1, src2)
+dill_stream s;
 int op3;
 int fop;
 int dest;
@@ -75,22 +75,22 @@ int src1;
 int src2;
 {
     /* format 3 */
-    INSN_OUT(c, HDR(0x2)|OP3(op3)|RD(dest)|RS1(src1)|OPF(fop)|RS2(src2));
+    INSN_OUT(s, HDR(0x2)|OP3(op3)|RD(dest)|RS1(src1)|OPF(fop)|RS2(src2));
 }
 
-extern void sparc_FORM2_farith(c, op3, fop, dest, src)
-dill_stream c;
+extern void sparc_FORM2_farith(s, op3, fop, dest, src)
+dill_stream s;
 int op3;
 int fop;
 int dest;
 int src;
 {
     /* format 3 */
-    INSN_OUT(c, HDR(0x2)|OP3(op3)|RD(dest)|OPF(fop)|RS2(src));
+    INSN_OUT(s, HDR(0x2)|OP3(op3)|RD(dest)|OPF(fop)|RS2(src));
 }
 
-extern void sparc_FORM2_arith(c, op3, op, dest, src)
-dill_stream c;
+extern void sparc_FORM2_arith(s, op3, op, dest, src)
+dill_stream s;
 int op3;
 int op;
 int dest;
@@ -98,11 +98,11 @@ int src;
 {
     if (op != 0) {
 	/* format 3 with g0 as rs1*/
-	INSN_OUT(c, HDR(op)|OP3(op3)|RD(dest)|RS1(_g0)|RS2(src));
+	INSN_OUT(s, HDR(op)|OP3(op3)|RD(dest)|RS1(_g0)|RS2(src));
     } else {
 	/* must be NOT */
-	INSN_OUT(c, HDR(0x2)|RD(_g0)|OP3(0x14)|RS1(_g0)|RS2(src));/* subcc */
-	INSN_OUT(c, HDR(0x2)|RD(dest)|OP3(0xc)|RS1(_g0)|IM|SIMM13(-1));
+	INSN_OUT(s, HDR(0x2)|RD(_g0)|OP3(0x14)|RS1(_g0)|RS2(src));/* subcc */
+	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0xc)|RS1(_g0)|IM|SIMM13(-1));
     }
 }
 
@@ -190,26 +190,26 @@ print COUT "    ${mach}_jump_table->do_reverse_push = 0;\n";
 print COUT "    ${mach}_jump_table->target_byte_order = 1;  /* Format_Integer_bigendian */\n";
 print COUT "    ${mach}_jump_table->target_float_format = 1;  /* Format_IEEE_754_bigendian */ \n";
 print COUT "}\n\n";
-print COUT "extern void dill_sparc_init(dill_stream c)\n{\n";
+print COUT "extern void dill_sparc_init(dill_stream s)\n{\n";
 print COUT "    if(sparc_jump_table == 0) {\n";
 print COUT "        gen_sparc_jump_table();\n";
 print COUT "    }\n";
-print COUT "    c->j = sparc_jump_table;\n";
-print COUT "    c->dill_local_pointer = _fp;\n";
-print COUT "    c->dill_param_reg_pointer = _fp;\n";
-print COUT "    c->p->mach_info = (void*)gen_sparc_mach_info(c,/*v9*/ 0);\n";
-print COUT "    c->p->machine_strr_tmp_reg = _g1;\n";
+print COUT "    s->j = sparc_jump_table;\n";
+print COUT "    s->dill_local_pointer = _fp;\n";
+print COUT "    s->dill_param_reg_pointer = _fp;\n";
+print COUT "    s->p->mach_info = (void*)gen_sparc_mach_info(s,/*v9*/ 0);\n";
+print COUT "    s->p->machine_strr_tmp_reg = _g1;\n";
 print COUT "    return;\n";
 print COUT "}\n";
-print COUT "extern void dill_sparcv9_init(dill_stream c)\n{\n";
+print COUT "extern void dill_sparcv9_init(dill_stream s)\n{\n";
 print COUT "    if(sparc_jump_table == 0) {\n";
 print COUT "        gen_sparc_jump_table();\n";
 print COUT "    }\n";
-print COUT "    c->j = sparc_jump_table;\n";
-print COUT "    c->dill_local_pointer = _fp;\n";
-print COUT "    c->dill_param_reg_pointer = _fp;\n";
-print COUT "    c->p->mach_info = (void*)gen_sparc_mach_info(c,/*v9*/ 1);\n";
-print COUT "    c->p->machine_strr_tmp_reg = _g1;\n";
+print COUT "    s->j = sparc_jump_table;\n";
+print COUT "    s->dill_local_pointer = _fp;\n";
+print COUT "    s->dill_param_reg_pointer = _fp;\n";
+print COUT "    s->p->mach_info = (void*)gen_sparc_mach_info(s,/*v9*/ 1);\n";
+print COUT "    s->p->machine_strr_tmp_reg = _g1;\n";
 print COUT "    return;\n";
 print COUT "}\n";
 
@@ -250,7 +250,7 @@ sub branch_insn {
 	$op = $_;
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "    ${mach}_jump_table->jmp_b[dill_jmp_b${op}${_}] = $subr;\n";
-	    $jmp_b_assigns = $jmp_b_assigns . "    ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_b${op}_code;\n";
+	    $jmp_b_assigns = $jmp_b_assigns . "    ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_${op}_code;\n";
 	    $jmp_b_assigns = $jmp_b_assigns . "    ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
 	}
     }

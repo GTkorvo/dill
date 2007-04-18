@@ -108,7 +108,7 @@ extern void sparc_bswap(dill_stream c, int junk, int typ, int dest, int src);
 extern void sparc_jump_to_label(dill_stream c, unsigned long label);
 extern void sparc_jump_to_reg(dill_stream c, unsigned long reg);
 extern void sparc_jump_to_imm(dill_stream c, unsigned long imm);
-extern void sparc_jal(dill_stream c, int return_addill_reg, int target);
+extern void sparc_jal(dill_stream c, int return_addr_reg, int target);
 extern int sparc_calli(dill_stream c, int type, void *xfer_address);
 extern int sparc_callr(dill_stream c, int type, int src);
 extern void sparc_push(dill_stream c, int type, int reg);

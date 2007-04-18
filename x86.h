@@ -1,8 +1,8 @@
 #ifndef _X86_H
 #define _X86_H
 
-extern void x86_FORM3_farith(dill_stream c, int op3, int op, int dest, int src1, int src2);
-extern void x86_FORM2_farith(dill_stream c, int op3, int op, int dest, int src);
+extern void x86_FORM3_farith(dill_stream s, int op3, int op, int dest, int src1, int src2);
+extern void x86_FORM2_farith(dill_stream s, int op3, int op, int dest, int src);
 
 #define BYTE_OUT1(c, insn1) \
 if (c->p->cur_ip >= c->p->code_limit) {\
@@ -135,79 +135,83 @@ typedef struct x86_mach_info {
 extern int x86_type_align[];
 extern int x86_type_size[];
 extern void *gen_x86_mach_info();
-extern void x86_arith3(dill_stream c, int op, int commut, int dest, int src1, int src2);
-extern void x86_arith2(dill_stream c, int op, int subop, int dest, int src);
-extern void x86_mul(dill_stream c, int signed, int imm, int dest, int src1, int src2);
+extern void x86_arith3(dill_stream s, int op, int commut, int dest, int src1, int src2);
+extern void x86_arith2(dill_stream s, int op, int subop, int dest, int src);
+extern void x86_mul(dill_stream s, int signed, int imm, int dest, int src1, int src2);
 
-extern void x86_div_mod(dill_stream c, int sign, int div, int dest, int src1, int src2);
-extern void x86_div_modi(dill_stream c, int sign, int div, int dest, int src1, long imm);
-extern void x86_arith3i(dill_stream c, int op, int commut, int dest, int src1, long src2);
-extern void x86_shift(dill_stream c, int op, int junk, int dest, int src1, int src2);
-extern void x86_shifti(dill_stream c, int op, int junk, int dest, int src, long imm);
-extern void x86_special(dill_stream c, special_operations type, long param);
-extern void x86_set(dill_stream c, int r, long imm);
-extern void x86_proc_start(dill_stream c, char *subr_name, int arg_count, 
+extern void x86_div_mod(dill_stream s, int sign, int div, int dest, int src1, int src2);
+extern void x86_div_modi(dill_stream s, int sign, int div, int dest, int src1, long imm);
+extern void x86_arith3i(dill_stream s, int op, int commut, int dest, int src1, long src2);
+extern void x86_shift(dill_stream s, int op, int junk, int dest, int src1, int src2);
+extern void x86_shifti(dill_stream s, int op, int junk, int dest, int src, long imm);
+extern void x86_special(dill_stream s, special_operations type, long param);
+extern void x86_set(dill_stream s, int r, long imm);
+extern void x86_proc_start(dill_stream s, char *subr_name, int arg_count, 
 			   arg_info_list args, dill_reg *arglist);
-extern void x86_end(dill_stream c);
-extern void *x86_clone_code(dill_stream c, void *base, int size);
-extern void x86_ret(dill_stream c, int data1, int data2, int src);
-extern void x86_reti(dill_stream c, int data1, int data2, long imm);
-extern int x86_getreg(dill_stream c, dill_reg *reg_p, int type, int class);
-extern int x86_putreg(dill_stream c, dill_reg reg, int type);
+extern void x86_end(dill_stream s);
+extern void *x86_clone_code(dill_stream s, void *base, int size);
+extern void x86_ret(dill_stream s, int data1, int data2, int src);
+extern void x86_reti(dill_stream s, int data1, int data2, long imm);
+extern int x86_getreg(dill_stream s, dill_reg *reg_p, int type, int class);
+extern int x86_putreg(dill_stream s, dill_reg reg, int type);
 extern void
-x86_ploadi(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-x86_pload(dill_stream c, int type, int junk, int dest, int src1, int src2);
+x86_pload(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_pbsloadi(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-x86_pbsload(dill_stream c, int type, int junk, int dest, int src1, int src2);
+x86_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_pstorei(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-x86_pstore(dill_stream c, int type, int junk, int dest, int src1, int src2);
+x86_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_modi(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_modi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-x86_mod(dill_stream c, int type, int junk, int dest, int src1, int src2);
+x86_mod(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_divi(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_divi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-x86_div(dill_stream c, int type, int junk, int dest, int src1, int src2);
+x86_div(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_converti(dill_stream c, int from_type, int to_type, int dest, long src);
+x86_converti(dill_stream s, int from_type, int to_type, int dest, long src);
 extern void
-x86_convert(dill_stream c, int from_type, int to_type, int dest, int src);
+x86_convert(dill_stream s, int from_type, int to_type, int dest, int src);
 extern void
-x86_mov(dill_stream c, int type, int junk, int dest, int src);
+x86_mov(dill_stream s, int type, int junk, int dest, int src);
 extern void
-x86_pset(dill_stream c, int type, int junk, int dest, long imm);
+x86_pset(dill_stream s, int type, int junk, int dest, long imm);
 extern void
-x86_setf(dill_stream c, int type, int junk, int dest, double imm);
+x86_setf(dill_stream s, int type, int junk, int dest, double imm);
 extern void
-x86_branch(dill_stream c, int op, int type, int src1, int src2, int label);
+x86_branch(dill_stream s, int op, int type, int src1, int src2, int label);
 extern void
-x86_branchi(dill_stream c, int op, int type, int src, long imm, int label);
+x86_branchi(dill_stream s, int op, int type, int src, long imm, int label);
+extern void
+x86_compare(dill_stream s, int op, int type, int dest, int src1, int src2);
+extern void
+x86_comparei(dill_stream s, int op, int type, int dest, int src, long imm);
 extern void 
-x86_lea(dill_stream c, int junk, int junk1, int dest, int src, long imm);
-extern void x86_bswap(dill_stream c, int op, int typ, int dest, int src);
-extern void x86_jump_to_label(dill_stream c, unsigned long label);
-extern void x86_jump_to_reg(dill_stream c, unsigned long reg);
-extern void x86_jump_to_imm(dill_stream c, void *imm);
-extern void x86_jal(dill_stream c, int return_addill_reg, int target);
-extern int x86_calli(dill_stream c, int type, void *xfer_address);
-extern int x86_callr(dill_stream c, int type, int src);
-extern void x86_push(dill_stream c, int type, int reg);
-extern void x86_pushi(dill_stream c, int type, long value);
-extern void x86_pushpi(dill_stream c, int type, void *value);
-extern void x86_pushfi(dill_stream c, int type, double value);
-extern int x86_local_op(dill_stream c, int flag, int val);
-extern int x86_local(dill_stream c, int type);
-extern int x86_localb(dill_stream c, int size);
-extern void x86_save_restore_op(dill_stream c, int save_restore, int type,
+x86_lea(dill_stream s, int junk, int junk1, int dest, int src, long imm);
+extern void x86_bswap(dill_stream s, int op, int typ, int dest, int src);
+extern void x86_jump_to_label(dill_stream s, unsigned long label);
+extern void x86_jump_to_reg(dill_stream s, unsigned long reg);
+extern void x86_jump_to_imm(dill_stream s, void *imm);
+extern void x86_jal(dill_stream s, int return_addr_reg, int target);
+extern int x86_calli(dill_stream s, int type, void *xfer_address);
+extern int x86_callr(dill_stream s, int type, int src);
+extern void x86_push(dill_stream s, int type, int reg);
+extern void x86_pushi(dill_stream s, int type, long value);
+extern void x86_pushpi(dill_stream s, int type, void *value);
+extern void x86_pushfi(dill_stream s, int type, double value);
+extern int x86_local_op(dill_stream s, int flag, int val);
+extern int x86_local(dill_stream s, int type);
+extern int x86_localb(dill_stream s, int size);
+extern void x86_save_restore_op(dill_stream s, int save_restore, int type,
 				 int reg);
-extern int x86_init_disassembly_info(dill_stream c, void * ptr);
-extern int x86_print_insn(dill_stream c, void *info_ptr, void *insn);
-extern int x86_count_insn(dill_stream c, int start, int end);
-extern void x86_print_reg(dill_stream c, int typ, int reg);
+extern int x86_init_disassembly_info(dill_stream s, void * ptr);
+extern int x86_print_insn(dill_stream s, void *info_ptr, void *insn);
+extern int x86_count_insn(dill_stream s, int start, int end);
+extern void x86_print_reg(dill_stream s, int typ, int reg);
 #endif

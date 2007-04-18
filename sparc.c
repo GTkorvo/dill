@@ -934,28 +934,28 @@ sparc_convert(dill_stream c, int from_type, int to_type,
 }
 
 static signed char op_conds[] = {
-    0x01, /* dill_beq_code */  /* signed */
-    0x0b, /* dill_bge_code */
-    0x0a, /* dill_bgt_code */
-    0x02, /* dill_ble_code */
-    0x03, /* dill_blt_code */
-    0x09, /* dill_bne_code */
+    0x01, /* dill_eq_code */  /* signed */
+    0x0b, /* dill_ge_code */
+    0x0a, /* dill_gt_code */
+    0x02, /* dill_le_code */
+    0x03, /* dill_lt_code */
+    0x09, /* dill_ne_code */
 
-    0x01, /* dill_beq_code */  /* unsigned */
-    0x00, /* dill_bge_code */ /* no unsigned version */
-    0x0c, /* dill_bgt_code */ 
-    0x04, /* dill_ble_code */
-    0x00, /* dill_blt_code */ /* no unsigned version */
-    0x09, /* dill_bne_code */
+    0x01, /* dill_eq_code */  /* unsigned */
+    0x00, /* dill_ge_code */ /* no unsigned version */
+    0x0c, /* dill_gt_code */ 
+    0x04, /* dill_le_code */
+    0x00, /* dill_lt_code */ /* no unsigned version */
+    0x09, /* dill_ne_code */
 };
 
 static char fop_conds[] = {
-    0x09, /* dill_beq_code */
-    0x0b, /* dill_bge_code */
-    0x06, /* dill_bgt_code */
-    0x0d, /* dill_ble_code */
-    0x04, /* dill_blt_code */
-    0x01, /* dill_bne_code */
+    0x09, /* dill_eq_code */
+    0x0b, /* dill_ge_code */
+    0x06, /* dill_gt_code */
+    0x0d, /* dill_le_code */
+    0x04, /* dill_lt_code */
+    0x01, /* dill_ne_code */
 };
 
 extern void
@@ -975,14 +975,14 @@ sparc_branch(dill_stream c, int op, int type, int src1, int src2, int label)
     case DILL_U:
     case DILL_UL:
 	switch(op) {
-	case dill_bge_code: {
+	case dill_ge_code: {
 	    int tmp = src1; src1 = src2; src2 = tmp;  /* swap operands */
-	    op = dill_ble_code;
+	    op = dill_le_code;
 	    break;
 	}
-	case dill_blt_code: {
+	case dill_lt_code: {
 	    int tmp = src1; src1 = src2; src2 = tmp;  /* swap operands */
-	    op = dill_bgt_code;
+	    op = dill_gt_code;
 	    break;
 	}
 	}
@@ -1017,9 +1017,9 @@ extern void sparc_jump_to_imm(dill_stream c, unsigned long imm)
 }
 
 extern void 
-sparc_jal(dill_stream c, int return_addill_reg, int target)
+sparc_jal(dill_stream c, int return_addr_reg, int target)
 {
-    INSN_OUT(c, HDR(0x2)|OP3(0x38)|RD(return_addill_reg)|RS1(target)|IM|SIMM13(0x0));
+    INSN_OUT(c, HDR(0x2)|OP3(0x38)|RD(return_addr_reg)|RS1(target)|IM|SIMM13(0x0));
 }
 
 static void internal_push(dill_stream c, int type, int immediate, 
@@ -1261,14 +1261,14 @@ sparc_branchi(dill_stream c, int op, int type, int src, long imm, int label)
     case DILL_U:
     case DILL_UL:
 	switch(op) {
-	case dill_bge_code: {
+	case dill_ge_code: {
 	    imm = imm-1;
-	    op = dill_bgt_code;
+	    op = dill_gt_code;
 	    break;
 	}
-	case dill_blt_code: {
+	case dill_lt_code: {
 	    imm = imm-1;
-	    op = dill_ble_code;
+	    op = dill_le_code;
 	    break;
 	}
 	}

@@ -224,7 +224,7 @@ extern void x86_64_bswap(dill_stream c, int op, int typ, int dest, int src);
 extern void x86_64_jump_to_label(dill_stream c, unsigned long label);
 extern void x86_64_jump_to_reg(dill_stream c, unsigned long reg);
 extern void x86_64_jump_to_imm(dill_stream c, unsigned long imm);
-extern void x86_64_jal(dill_stream c, int return_addill_reg, int target);
+extern void x86_64_jal(dill_stream c, int return_addr_reg, int target);
 extern int x86_64_calli(dill_stream c, int type, void *xfer_address);
 extern int x86_64_callr(dill_stream c, int type, int src);
 extern void x86_64_push(dill_stream c, int type, int reg);

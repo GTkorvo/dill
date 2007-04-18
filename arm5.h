@@ -3,12 +3,12 @@
 enum arm_cond {EQ, NE, CS, CC, MI, PL, VS, VC, HI, LS, GE, LT, GT, LE, AL, NV};
 enum arm_opcode {AND, EOR, SUB, RSB, ADD, ADC, SBC, RSC, TST, TEQ, CMP, CMN, ORR, MOV, BIC, MVN};
 
-extern void arm_dproc(dill_stream c, int op, int shift_code, int dest, int src1, int src2);
-extern void arm_dproc2(dill_stream c, int op3, int op, int dest, int src);
-extern void arm_dproci(dill_stream c, int op, int shift_code, int dest, int src1, long imm);
-extern void arm_fproc(dill_stream c, int op3, int op, int dest, int src1, int src2);
-extern void arm_fproc2(dill_stream c, int op3, int op, int dest, int src);
-extern void arm_fproci(dill_stream c, int op3, int op, int dest, int src1, long imm);
+extern void arm_dproc(dill_stream s, int op, int shift_code, int dest, int src1, int src2);
+extern void arm_dproc2(dill_stream s, int op3, int op, int dest, int src);
+extern void arm_dproci(dill_stream s, int op, int shift_code, int dest, int src1, long imm);
+extern void arm_fproc(dill_stream s, int op3, int op, int dest, int src1, int src2);
+extern void arm_fproc2(dill_stream s, int op3, int op, int dest, int src);
+extern void arm_fproci(dill_stream s, int op3, int op, int dest, int src1, long imm);
 
 enum {
     _r0,  _r1,  _r2,  _r3,  _r4,  _r5,  _r6,  _r7, /* globals */
@@ -45,71 +45,71 @@ typedef struct arm_mach_info {
 
 extern int arm_type_align[];
 extern int arm_type_size[];
-extern void *gen_arm_mach_info(dill_stream c, int v9);
-extern void arm_set(dill_stream c, int r, long imm);
-extern void arm_proc_start(dill_stream c, char *subr_name, int arg_count, 
+extern void *gen_arm_mach_info(dill_stream s, int v9);
+extern void arm_set(dill_stream s, int r, long imm);
+extern void arm_proc_start(dill_stream s, char *subr_name, int arg_count, 
 			 arg_info_list args, dill_reg *arglist);
-extern void arm_end(dill_stream c);
-extern void *arm_clone_code(dill_stream c, void *base, int size);
-extern void arm_ret(dill_stream c, int data1, int data2, int src);
-extern void arm_reti(dill_stream c, int data1, int data2, long imm);
-extern int arm_getreg(dill_stream c, dill_reg *reg_p, int type, int class);
-extern int arm_putreg(dill_stream c, dill_reg reg, int type);
+extern void arm_end(dill_stream s);
+extern void *arm_clone_code(dill_stream s, void *base, int size);
+extern void arm_ret(dill_stream s, int data1, int data2, int src);
+extern void arm_reti(dill_stream s, int data1, int data2, long imm);
+extern int arm_getreg(dill_stream s, dill_reg *reg_p, int type, int class);
+extern int arm_putreg(dill_stream s, dill_reg reg, int type);
 extern void
-arm_ploadi(dill_stream c, int type, int junk, int dest, int src, long offset);
+arm_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-arm_pload(dill_stream c, int type, int junk, int dest, int src1, int src2);
+arm_pload(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-arm_pbsloadi(dill_stream c, int type, int junk, int dest, int src, long offset);
+arm_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-arm_pbsload(dill_stream c, int type, int junk, int dest, int src1, int src2);
+arm_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-arm_pstorei(dill_stream c, int type, int junk, int dest, int src, long offset);
+arm_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-arm_pstore(dill_stream c, int type, int junk, int dest, int src1, int src2);
+arm_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-arm_modi(dill_stream c, int type, int junk, int dest, int src, long offset);
+arm_modi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-arm_mod(dill_stream c, int type, int junk, int dest, int src1, int src2);
+arm_mod(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-arm_divi(dill_stream c, int type, int junk, int dest, int src, long offset);
+arm_divi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
-arm_mul(dill_stream c, int unsign, int junk, int dest, int src1, int src2);
+arm_mul(dill_stream s, int unsign, int junk, int dest, int src1, int src2);
 extern void
-arm_muli(dill_stream c, int unsign, int junk, int dest, int src, long imm);
+arm_muli(dill_stream s, int unsign, int junk, int dest, int src, long imm);
 extern void
-arm_div(dill_stream c, int type, int junk, int dest, int src1, int src2);
+arm_div(dill_stream s, int type, int junk, int dest, int src1, int src2);
 extern void
-arm_convert(dill_stream c, int from_type, int to_type, int dest, int src);
+arm_convert(dill_stream s, int from_type, int to_type, int dest, int src);
 extern void
-arm_mov(dill_stream c, int type, int junk, int dest, int src);
+arm_mov(dill_stream s, int type, int junk, int dest, int src);
 extern void
-arm_pset(dill_stream c, int type, int junk, int dest, long imm);
+arm_pset(dill_stream s, int type, int junk, int dest, long imm);
 extern void
-arm_setf(dill_stream c, int type, int junk, int dest, double imm);
+arm_setf(dill_stream s, int type, int junk, int dest, double imm);
 extern void
-arm_branch(dill_stream c, int op, int type, int src1, int src2, int label);
+arm_branch(dill_stream s, int op, int type, int src1, int src2, int label);
 extern void
-arm_branchi(dill_stream c, int op, int type, int src, long imm, int label);
+arm_branchi(dill_stream s, int op, int type, int src, long imm, int label);
 extern void 
-arm_lea(dill_stream c, int junk, int junk1, int dest, int src, long imm);
-extern void arm_jump_to_label(dill_stream c, unsigned long label);
-extern void arm_jump_to_reg(dill_stream c, unsigned long reg);
-extern void arm_jump_to_imm(dill_stream c, unsigned long imm);
-extern void arm_jal(dill_stream c, int return_addill_reg, int target);
-extern int arm_calli(dill_stream c, int type, void *xfer_address);
-extern int arm_callr(dill_stream c, int type, int src);
-extern void arm_push(dill_stream c, int type, int reg);
-extern void arm_pushi(dill_stream c, int type, long value);
-extern void arm_pushfi(dill_stream c, int type, double value);
-extern void arm_pushpi(dill_stream c, int type, void *value);
-extern int arm_local_op(dill_stream c, int flag, int val);
-extern int arm_local(dill_stream c, int type);
-extern int arm_localb(dill_stream c, int size);
-extern void arm_save_restore_op(dill_stream c, int save_restore, int type,
+arm_lea(dill_stream s, int junk, int junk1, int dest, int src, long imm);
+extern void arm_jump_to_label(dill_stream s, unsigned long label);
+extern void arm_jump_to_reg(dill_stream s, unsigned long reg);
+extern void arm_jump_to_imm(dill_stream s, unsigned long imm);
+extern void arm_jal(dill_stream s, int return_addr_reg, int target);
+extern int arm_calli(dill_stream s, int type, void *xfer_address);
+extern int arm_callr(dill_stream s, int type, int src);
+extern void arm_push(dill_stream s, int type, int reg);
+extern void arm_pushi(dill_stream s, int type, long value);
+extern void arm_pushfi(dill_stream s, int type, double value);
+extern void arm_pushpi(dill_stream s, int type, void *value);
+extern int arm_local_op(dill_stream s, int flag, int val);
+extern int arm_local(dill_stream s, int type);
+extern int arm_localb(dill_stream s, int size);
+extern void arm_save_restore_op(dill_stream s, int save_restore, int type,
 				 int reg);
-extern int arm_init_disassembly_info(dill_stream c, void * ptr);
-extern int arm_print_insn(dill_stream c, void *info_ptr, void *insn);
-extern int arm_count_insn(dill_stream c, int start, int end);
-extern void arm_print_reg(dill_stream c, int typ, int reg);
+extern int arm_init_disassembly_info(dill_stream s, void * ptr);
+extern int arm_print_insn(dill_stream s, void *info_ptr, void *insn);
+extern int arm_count_insn(dill_stream s, int start, int end);
+extern void arm_print_reg(dill_stream s, int typ, int reg);
 #endif

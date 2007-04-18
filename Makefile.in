@@ -82,7 +82,7 @@ am__libdill_la_SOURCES_DIST = dill_util.c dill_virtual.c virtual.c \
 @MULTI_TARGET_TRUE@	sparc.lo dill_x86.lo x86.lo dill_arm5.lo \
 @MULTI_TARGET_TRUE@	arm5.lo dill_virtual.lo dill_x86_64.lo \
 @MULTI_TARGET_TRUE@	x86_64.lo virtual.lo dill.lo vm.lo \
-@MULTI_TARGET_TRUE@	version.lo
+@MULTI_TARGET_TRUE@	version.lo dill_ia64.c ia64.lo
 libdill_la_OBJECTS = $(am_libdill_la_OBJECTS)
 libdill_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -252,7 +252,7 @@ noinst_HEADERS = config.h dill_internal.h
 @MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@libdill_la_SOURCES = dill_util.c  dill_virtual.c virtual.c dill.c vm.c dill_${ARCH_FILE}.c ${ARCH_FILE}.c  version.c
 @MULTI_TARGET_TRUE@libdill_la_SOURCES = dill_sparc.c dill_util.c sparc.c dill_x86.c x86.c \
 @MULTI_TARGET_TRUE@		dill_arm5.c arm5.c dill_virtual.c dill_x86_64.c x86_64.c \
-@MULTI_TARGET_TRUE@		virtual.c dill.c vm.c version.c
+@MULTI_TARGET_TRUE@		dill_ia64.c ia64.c virtual.c dill.c vm.c version.c
 
 libdill_la_LIBADD = @DIS_LIBS@ 
 libdill_la_LDFLAGS = 

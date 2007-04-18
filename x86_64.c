@@ -27,11 +27,6 @@
 #define free(a) DFreeMM((addrs_t) a)
 #endif
 
-#ifdef KPLUGINS_INTEGRATION
-int dill_kplugins_integration = 1;
-#else
-int dill_kplugins_integration = 0;
-#endif
 /*
  * GANEV: note that we have to include "x86_64.h" _after_ including
  * "kdill.h" because it needs to #undef and then re-#define a few
@@ -1931,9 +1926,9 @@ extern void x86_64_jump_to_imm(dill_stream c, unsigned long imm)
 }
 
 extern void 
-x86_64_jal(dill_stream c, int return_addill_reg, int target)
+x86_64_jal(dill_stream c, int return_addr_reg, int target)
 {
-/* jump, source addr to return_addill_reg */
+/* jump, source addr to return_addr_reg */
 }
 
 extern void 
@@ -2545,9 +2540,9 @@ x86_64_init_disassembly_info(dill_stream c, void * ptr){return 0;}
 extern int x86_64_print_insn(dill_stream c, void *info_ptr, void *insn){return 0;}
 #endif
 
-char *char_regs[] = {"AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH"};
-char *short_regs[] = {"AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"};
-char *int_regs[] = {"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"};
+static char *char_regs[] = {"AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH"};
+static char *short_regs[] = {"AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"};
+static char *int_regs[] = {"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"};
 char *long_regs[] = {"RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI"};
 char *float_regs[] = {"RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI"};
 

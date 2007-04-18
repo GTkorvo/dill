@@ -77,6 +77,19 @@ while ($_ = $ARGV[0]) {
 &branch("bge",		">=",			"i u ul l p $FT $DT");
 
 
+###########################################################################
+# 			Compare operations
+#
+# 	name		c-equiv operation	types
+
+&compare("eq",		"==",			"i u ul l p $FT $DT");
+&compare("ne",		"!=",			"i u ul l p $FT $DT");
+&compare("lt",		"<",			"i u ul l p $FT $DT");
+&compare("le",		"<=",			"i u ul l p $FT $DT");
+&compare("gt",		">",			"i u ul l p $FT $DT");
+&compare("ge",		">=",			"i u ul l p $FT $DT");
+
+
 # TODO: add conditonal move, boolean expressions
 
 ###########################################################################
@@ -165,6 +178,16 @@ sub branch {
 	@tlist = split('\s+', $tlist);
 	foreach (@tlist) {
 		&emit_branch($_, $name, $op, 1);
+	}
+}
+
+sub compare {
+	local($name, $op, $tlist) = @_;
+	local(@tlist);
+
+	@tlist = split('\s+', $tlist);
+	foreach (@tlist) {
+		&emit_compare($_, $name, $op, 1);
 	}
 }
 
@@ -502,8 +525,81 @@ print<<EOF;
 EOF
 }
 
+sub emit_compare {
+	local($t, $name, $op) = @_;
+	local($insn,$insni, $s2);
+
+	$insn = "$name$t";
+	$insni = "$insn" . "i";
+
+	$s2 = ($name eq "lsh" || $name eq "rsh") ?
+		"shift$t" :
+		"s2$t";
+	$pf2 = ($name eq "lsh" || $name eq "rsh") ?
+		"%d" :
+		"$c_print_formats{$t}";
+	$pf = ($name eq "lsh" || $name eq "rsh") ?
+		"$hex_print_formats{$t}" :
+		"$c_print_formats{$t}";
+		
+        $upt = "\U$t\E";
+print<<EOF;
+    {
+	int expected_result;
+	int result;
+	int (*func)($type{$t},$type{$t});
+	dill_reg	rdi;
+	/* reg <- (reg $op reg) */
+	if (verbose) printf(" - $insn\\n");
+        dill_start_proc(c, "$insn",  DILL_$upt, "%$t%$t");
+		if(!dill_raw_getreg(c, &rdi, $type_enum{$t}, DILL_TEMP))
+			dill_fatal("out of registers!");
+
+        	dill_$insn(c, rdi, dill_param_reg(c, 0), dill_param_reg(c, 1));
+        	dill_ret$t(c, rdi);
+        func = (int(*)($type{$t},$type{$t})) dill_end(c);
+	result = func(s1$t, $s2);
+        expected_result = (s1$t $op $s2);
+	if (expected_result != result) {
+	    printf("Failed test for $c_print_formats{$t} $insn $pf2, expected %d, got %d\\n", s1$t, $s2, expected_result, result);
+	    dill_errors++;
+	    dill_dump(c);
+	}
+
+    }
+EOF
+	return if($t eq "f" || $t eq "d"); 
+
+print<<EOF;
+
+    {
+	int expected_result;
+	int result;
+	int (*func)($type{$t},$type{$t});
+	dill_reg	rdi;
+	/* reg <- (reg $op imm) */
+	if (verbose) printf(" - $insni\\n");
+        dill_start_proc(c, "$insni", DILL_$upt, "%$t");
+		if(!dill_raw_getreg(c, &rdi, $type_enum{$t}, DILL_TEMP))
+			dill_fatal("out of registers!");
+
+        	dill_$insni(c, rdi, dill_param_reg(c, 0), $s2);
+        	dill_ret$t(c, rdi);
+        func = (int(*)($type{$t},$type{$t})) dill_end(c);
+        expected_result = (s1$t $op $s2);
+	result = func(s1$t, $s2);
+	if (expected_result != result) {
+	    printf("Failed test for $c_print_formats{$t} $insni (imm $pf2), expected %d, got %d\\n", s1$t, $s2, expected_result, result);
+	    dill_errors++;
+	    dill_dump(c);
+	}
+    }
+
+EOF
+}
+
 #
-# Emit infix binary arith instructions.
+# Emit branch instructions.
 #
 sub emit_branch {
 	local($t, $name, $op) = @_;

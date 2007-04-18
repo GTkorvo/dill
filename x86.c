@@ -27,11 +27,6 @@
 #define free(a) DFreeMM((addrs_t) a)
 #endif
 
-#ifdef KPLUGINS_INTEGRATION
-int dill_kplugins_integration = 1;
-#else
-int dill_kplugins_integration = 0;
-#endif
 /*
  * GANEV: note that we have to include "x86.h" _after_ including
  * "kdill.h" because it needs to #undef and then re-#define a few
@@ -48,20 +43,20 @@ int dill_kplugins_integration = 0;
 #define ModRM(mod,reg,rm) (Mod(mod)|RegOp(reg)|RM(rm))
 #define SIB(scale, index, base) (((scale)<<6) | ((index)<<3) | (base))
 
-#define INSN_OUT(c, i) printf("Bad opout, line %d\n", __LINE__)
-#define x86_savei(c, imm) 
-#define x86_seti(c, r, val) BYTE_OUT1I(c, 0xb8 + r, val);
-#define x86_setp(c, r, val) BYTE_OUT1PI(c, 0xb8 + r, val);
-#define x86_rshai(c, dest, src, imm) if (dest !=src) x86_movi(c, dest, src); BYTE_OUT3(c, 0xc1, ModRM(0x3, 0x7, dest), imm & 0xff);
-#define x86_rshi(c, dest, src, imm) if (dest !=src) x86_movi(c, dest, src); BYTE_OUT3(c, 0xc1, ModRM(0x3, 0x5, dest), imm & 0xff);
-#define x86_lshi(c, d, s, imm) if (d !=s) x86_movi(c, d, s); BYTE_OUT3(c, 0xc1, ModRM(0x3, 0x4, d), imm & 0xff);
-#define x86_andi(c, dest, src, imm) x86_arith3i(c, 0x4, 0x2, dest, src, imm)
-#define x86_movi(c, dest, src) 	do { if (src != dest) BYTE_OUT2(c, MOV32, ModRM(0x3, src, dest)); } while (0)
+#define INSN_OUT(s, i) printf("Bad opout, line %d\n", __LINE__)
+#define x86_savei(s, imm) 
+#define x86_seti(s, r, val) BYTE_OUT1I(s, 0xb8 + r, val);
+#define x86_setp(s, r, val) BYTE_OUT1PI(s, 0xb8 + r, val);
+#define x86_rshai(s, dest, src, imm) if (dest !=src) x86_movi(s, dest, src); BYTE_OUT3(s, 0xc1, ModRM(0x3, 0x7, dest), imm & 0xff);
+#define x86_rshi(s, dest, src, imm) if (dest !=src) x86_movi(s, dest, src); BYTE_OUT3(s, 0xc1, ModRM(0x3, 0x5, dest), imm & 0xff);
+#define x86_lshi(s, d, src, imm) if (d !=src) x86_movi(s, d, src); BYTE_OUT3(s, 0xc1, ModRM(0x3, 0x4, d), imm & 0xff);
+#define x86_andi(s, dest, src, imm) x86_arith3i(s, 0x4, 0x2, dest, src, imm)
+#define x86_movi(s, dest, src) 	do { if (src != dest) BYTE_OUT2(s, MOV32, ModRM(0x3, src, dest)); } while (0)
 
-#define x86_push_reg(c, src) BYTE_OUT1(c, 0x50+src)
-#define x86_pop_reg(c, src) BYTE_OUT1(c, 0x58+src)
-#define x86_simple_ret(c) do {x86_pop_reg(c, EBX);x86_pop_reg(c, ESI);x86_pop_reg(c, EDI);x86_movi(c, ESP, EBP);x86_pop_reg(c, EBP); BYTE_OUT1(c, 0xc3);} while(0)
-#define x86_nop(c) BYTE_OUT1(c, 0x90)
+#define x86_push_reg(s, src) BYTE_OUT1(s, 0x50+src)
+#define x86_pop_reg(s, src) BYTE_OUT1(s, 0x58+src)
+#define x86_simple_ret(c) do {x86_pop_reg(s, EBX);x86_pop_reg(s, ESI);x86_pop_reg(s, EDI);x86_movi(s, ESP, EBP);x86_pop_reg(s, EBP); BYTE_OUT1(s, 0xc3);} while(0)
+#define x86_nop(c) BYTE_OUT1(s, 0x90)
 
 #define IREG 0
 #define FREG 1
@@ -127,44 +122,44 @@ int x86_type_size[] = {
 };
 
 extern int
-x86_local(dill_stream c, int type)
+x86_local(dill_stream s, int type)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
 
     smi->act_rec_size += roundup(type_info[type].size, smi->stack_align);
     return (-smi->act_rec_size) + smi->stack_constant_offset;
 }
 
 extern int
-x86_localb(dill_stream c, int size)
+x86_localb(dill_stream s, int size)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     smi->act_rec_size = roundup(smi->act_rec_size, size);
 
     smi->act_rec_size += roundup(size, smi->stack_align);
     return (-smi->act_rec_size) + smi->stack_constant_offset;
 }
 
-extern int x86_local_op(dill_stream c, int flag, int val)
+extern int x86_local_op(dill_stream s, int flag, int val)
 {
     int size = val;
     if (flag == 0) {
 	size = type_info[val].size;
     }
-    return x86_localb(c, size);
+    return x86_localb(s, size);
 }	
 
 extern void
-x86_save_restore_op(dill_stream c, int save_restore, int type, int reg)
+x86_save_restore_op(dill_stream s, int save_restore, int type, int reg)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     if (save_restore == 0) { /* save */
 	switch (type) {
 	case DILL_D: case DILL_F:
 	    /* should never happen on x86 */
 	    break;
 	default:
-	    x86_pstorei(c, type, 0, reg, _frame_reg, smi->save_base + (reg) * smi->stack_align + smi->stack_constant_offset);
+	    x86_pstorei(s, type, 0, reg, _frame_reg, smi->save_base + (reg) * smi->stack_align + smi->stack_constant_offset);
 	    break;
 	}
     } else {  /* restore */
@@ -173,44 +168,44 @@ x86_save_restore_op(dill_stream c, int save_restore, int type, int reg)
 	    /* should never happen on x86 */
 	    break;
 	default:
-	    x86_ploadi(c, type, 0, reg, _frame_reg, smi->save_base + reg * smi->stack_align + smi->stack_constant_offset);
+	    x86_ploadi(s, type, 0, reg, _frame_reg, smi->save_base + reg * smi->stack_align + smi->stack_constant_offset);
 	    break;
 	}
     }
 }	
 
 extern void
-x86_proc_start(dill_stream c, char *subr_name, int arg_count, arg_info_list args,
+x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args,
 	     dill_reg *arglist)
 {
     int i;
     int cur_arg_offset = 0;
 
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     smi->pending_prefix = 0;
-    x86_push_reg(c, EBP);
-    x86_movi(c, EBP, ESP);
-    smi->backpatch_offset = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
+    x86_push_reg(s, EBP);
+    x86_movi(s, EBP, ESP);
+    smi->backpatch_offset = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
 
     /* make local space reservation constant big so we have a word to patch */
     /* use the nop op code so that if we don't use all of it we get nops */
-    dill_subii(c, ESP, ESP, 0x90909090);
+    dill_subii(s, ESP, ESP, 0x90909090);
 
-    x86_push_reg(c, EDI);   /* callee is supposed to save these */
-    x86_push_reg(c, ESI);
-    x86_push_reg(c, EBX);
+    x86_push_reg(s, EDI);   /* callee is supposed to save these */
+    x86_push_reg(s, ESI);
+    x86_push_reg(s, EBX);
 
-    /* leave some space */ x86_local(c, DILL_D);
-    smi->conversion_word = x86_local(c, DILL_D);
-    smi->fcu_word = x86_local(c, DILL_I);
-    smi->save_base = x86_localb(c, 8 * 4);
+    /* leave some space */ x86_local(s, DILL_D);
+    smi->conversion_word = x86_local(s, DILL_D);
+    smi->fcu_word = x86_local(s, DILL_I);
+    smi->save_base = x86_localb(s, 8 * 4);
 
     cur_arg_offset = 8;
     for (i = 0; i < arg_count; i++) {
 	/* at most 2 args moved into registers */
 	if ((args[i].type != DILL_F) && (args[i].type != DILL_D) && (i < 2)) {
 	    int reg;
-	    args[i].is_register = dill_raw_getreg(c, &reg, DILL_L, DILL_VAR);
+	    args[i].is_register = dill_raw_getreg(s, &reg, DILL_L, DILL_VAR);
 	    args[i].in_reg = reg;
 	    args[i].out_reg = -1;
 	} else {
@@ -224,7 +219,7 @@ x86_proc_start(dill_stream c, char *subr_name, int arg_count, arg_info_list args
 	if (args[i].is_register && ((args[i].type != DILL_F) && 
 				    (args[i].type != DILL_D))) {
 	    if (arglist != NULL) arglist[i] = args[i].in_reg;
-	    x86_ploadi(c, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
+	    x86_ploadi(s, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
 	} else {
 	    /* well, just leave it on the stack */
 	}
@@ -248,19 +243,19 @@ static unsigned char ld_opcodes[] = {
     0x8b, /* DILL_EC */
 };
 
-static void x86_clear(c, dest)
-dill_stream c;
+static void x86_clear(s, dest)
+dill_stream s;
 int dest;
 {
-    BYTE_OUT2(c, 0x33, ModRM(0x3, dest, dest));  /* xor dest, dest */
+    BYTE_OUT2(s, 0x33, ModRM(0x3, dest, dest));  /* xor dest, dest */
 }
 
 extern void
-x86_ploadi(dill_stream c, int type, int junk, int dest, int src, long offset)
+x86_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     unsigned char opcode = ld_opcodes[type];
     int tmp_dest = dest;
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     switch (type) {
     case DILL_F:
 	opcode = 0xd9;
@@ -282,7 +277,7 @@ x86_ploadi(dill_stream c, int type, int junk, int dest, int src, long offset)
 		/* don't destroy source */
 		tmp_dest = EAX;
 	    }
-	    x86_clear(c, tmp_dest);
+	    x86_clear(s, tmp_dest);
 	}
 	break;
     case DILL_S: case DILL_US:
@@ -292,9 +287,9 @@ x86_ploadi(dill_stream c, int type, int junk, int dest, int src, long offset)
 		/* don't destroy source */
 		tmp_dest = EAX;
 	    }
-	    x86_clear(c, tmp_dest);
+	    x86_clear(s, tmp_dest);
 	}
-	BYTE_OUT1(c, 0x66);
+	BYTE_OUT1(s, 0x66);
 	break;
     case DILL_L: case DILL_UL: case DILL_P:
     /* fall through */
@@ -302,36 +297,36 @@ x86_ploadi(dill_stream c, int type, int junk, int dest, int src, long offset)
 	break;
     }
     if (smi->pending_prefix != 0) {
-        BYTE_OUT1(c, smi->pending_prefix);
+        BYTE_OUT1(s, smi->pending_prefix);
 	smi->pending_prefix = 0;
     }
     if (((long)offset <= 127) && ((long)offset > -128)) {
-	BYTE_OUT3(c, opcode, ModRM(0x1, tmp_dest, src), offset & 0xff);
+	BYTE_OUT3(s, opcode, ModRM(0x1, tmp_dest, src), offset & 0xff);
     } else {
-	BYTE_OUT2I(c, opcode, ModRM(0x2, tmp_dest, src), offset);
+	BYTE_OUT2I(s, opcode, ModRM(0x2, tmp_dest, src), offset);
     }
     switch(type){
     case DILL_C:
-	x86_lshi(c, dest, tmp_dest, 24);
-	x86_rshi(c, dest, dest, 24);
+	x86_lshi(s, dest, tmp_dest, 24);
+	x86_rshi(s, dest, dest, 24);
 	break;
     case DILL_S:
-	x86_lshi(c, dest, tmp_dest, 16);
-	x86_rshi(c, dest, dest, 16);
+	x86_lshi(s, dest, tmp_dest, 16);
+	x86_rshi(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
-	    x86_movi(c, dest, tmp_dest);
+	    x86_movi(s, dest, tmp_dest);
 	break;
     }
 }
 
 extern void
-x86_pload(dill_stream c, int type, int junk, int dest, int src1, int src2)
+x86_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
     unsigned char opcode = ld_opcodes[type];
     int tmp_dest = dest;
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     switch(type){
     case DILL_C:
     case DILL_UC:
@@ -345,7 +340,7 @@ x86_pload(dill_stream c, int type, int junk, int dest, int src1, int src2)
 		/* don't destroy source */
 		tmp_dest = EAX;
 	    }
-	    x86_clear(c, tmp_dest);
+	    x86_clear(s, tmp_dest);
 	}
 	break;
     case DILL_S: case DILL_US:
@@ -355,24 +350,24 @@ x86_pload(dill_stream c, int type, int junk, int dest, int src1, int src2)
 		/* don't destroy source */
 		tmp_dest = EAX;
 	    }
-	    x86_clear(c, tmp_dest);
+	    x86_clear(s, tmp_dest);
 	}
-	BYTE_OUT1(c, 0x66);
+	BYTE_OUT1(s, 0x66);
 	break;
     case DILL_F:
 	if (smi->pending_prefix != 0) {
-	    BYTE_OUT1(c, smi->pending_prefix);
+	    BYTE_OUT1(s, smi->pending_prefix);
 	    smi->pending_prefix = 0;
 	}
-	BYTE_OUT3(c, 0xd9, ModRM(0x0, 0x0, 0x4), SIB(0, src1, src2));
+	BYTE_OUT3(s, 0xd9, ModRM(0x0, 0x0, 0x4), SIB(0, src1, src2));
 	return;
 	break;
     case DILL_D:
 	if (smi->pending_prefix != 0) {
-	    BYTE_OUT1(c, smi->pending_prefix);
+	    BYTE_OUT1(s, smi->pending_prefix);
 	    smi->pending_prefix = 0;
 	}
-	BYTE_OUT3(c, 0xdd, ModRM(0x0, 0x0, 0x4), SIB(0, src1, src2));
+	BYTE_OUT3(s, 0xdd, ModRM(0x0, 0x0, 0x4), SIB(0, src1, src2));
 	return;
 	break;
     case DILL_L: case DILL_UL: case DILL_P:
@@ -381,30 +376,30 @@ x86_pload(dill_stream c, int type, int junk, int dest, int src1, int src2)
 	}
     }
     if (smi->pending_prefix != 0) {
-        BYTE_OUT1(c, smi->pending_prefix);
+        BYTE_OUT1(s, smi->pending_prefix);
 	smi->pending_prefix = 0;
     }
-    BYTE_OUT3(c, opcode, ModRM(0x0, tmp_dest, 0x4), SIB(0,src1,src2));
+    BYTE_OUT3(s, opcode, ModRM(0x0, tmp_dest, 0x4), SIB(0,src1,src2));
     switch(type){
     case DILL_C:
-	x86_lshi(c, dest, tmp_dest, 24);
-	x86_rshi(c, dest, dest, 24);
+	x86_lshi(s, dest, tmp_dest, 24);
+	x86_rshi(s, dest, dest, 24);
 	break;
     case DILL_S:
-	x86_lshi(c, dest, tmp_dest, 16);
-	x86_rshi(c, dest, dest, 16);
+	x86_lshi(s, dest, tmp_dest, 16);
+	x86_rshi(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
-	    x86_movi(c, dest, tmp_dest);
+	    x86_movi(s, dest, tmp_dest);
 	break;
     }
 }
 
 extern void
-x86_pbsloadi(dill_stream c, int type, int junk, int dest, int src, long offset)
+x86_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     int ltype = type;
     switch (type) {
     case DILL_D:
@@ -416,26 +411,26 @@ x86_pbsloadi(dill_stream c, int type, int junk, int dest, int src, long offset)
 	dest = EAX;
 	break;
     }
-    x86_ploadi(c, ltype, junk, dest, src, offset);
+    x86_ploadi(s, ltype, junk, dest, src, offset);
     switch(type) {
     case DILL_F:
-	x86_bswap(c, 0, DILL_I, EAX, EAX);
-	x86_pstorei(c, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
-	x86_ploadi(c, DILL_F, 0, 0, _frame_reg, smi->conversion_word);
+	x86_bswap(s, 0, DILL_I, EAX, EAX);
+	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
+	x86_ploadi(s, DILL_F, 0, 0, _frame_reg, smi->conversion_word);
 	break;
     case DILL_D:
-	x86_bswap(c, 0, DILL_I, EAX, EAX);
-	x86_pstorei(c, DILL_I, 0, EAX, _frame_reg, smi->conversion_word+4);
-	x86_ploadi(c, ltype, junk, dest, src, offset + 4);
-	x86_bswap(c, 0, DILL_I, EAX, EAX);
-	x86_pstorei(c, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
-	x86_ploadi(c, DILL_D, 0, 0, _frame_reg, smi->conversion_word);
+	x86_bswap(s, 0, DILL_I, EAX, EAX);
+	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word+4);
+	x86_ploadi(s, ltype, junk, dest, src, offset + 4);
+	x86_bswap(s, 0, DILL_I, EAX, EAX);
+	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
+	x86_ploadi(s, DILL_D, 0, 0, _frame_reg, smi->conversion_word);
 	break;
     case DILL_L: case DILL_UL: case DILL_P: case DILL_I: case DILL_U:
-	BYTE_OUT2(c, 0x0f, 0xc8 + dest);   /* byteswap dest */
+	BYTE_OUT2(s, 0x0f, 0xc8 + dest);   /* byteswap dest */
 	break;
     case DILL_S: case DILL_US:
-	BYTE_OUT2(c, 0x86, (0xc0 | (dest << 3)) | (dest+4)); /* xchange dest */
+	BYTE_OUT2(s, 0x86, (0xc0 | (dest << 3)) | (dest+4)); /* xchange dest */
 	break;
     case DILL_C: case DILL_UC:
 	break;
@@ -444,9 +439,9 @@ x86_pbsloadi(dill_stream c, int type, int junk, int dest, int src, long offset)
 
 
 extern void
-x86_pbsload(dill_stream c, int type, int junk, int dest, int src1, int src2)
+x86_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     int fdest = dest;
     int ltype = type;
     switch (type) {
@@ -461,27 +456,27 @@ x86_pbsload(dill_stream c, int type, int junk, int dest, int src1, int src2)
 	dest = EAX;
 	break;
     }
-    x86_pload(c, ltype, junk, dest, src1, src2);
+    x86_pload(s, ltype, junk, dest, src1, src2);
     switch(type) {
     case DILL_F:
-	x86_bswap(c, 0, DILL_I, EAX, EAX);
-	x86_pstorei(c, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
-	x86_ploadi(c, DILL_F, 0, 0, _frame_reg, smi->conversion_word);
+	x86_bswap(s, 0, DILL_I, EAX, EAX);
+	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
+	x86_ploadi(s, DILL_F, 0, 0, _frame_reg, smi->conversion_word);
 	break;
     case DILL_D:
-	x86_bswap(c, 0, DILL_I, EAX, EAX);
-	x86_pstorei(c, DILL_I, 0, EAX, _frame_reg, smi->conversion_word+4);
-	dill_addi(c, EAX, src1, src2);
-	x86_ploadi(c, ltype, junk, dest, EAX, 4);
-	x86_bswap(c, 0, DILL_I, EAX, EAX);
-	x86_pstorei(c, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
-	x86_ploadi(c, DILL_D, 0, 0, _frame_reg, smi->conversion_word);
+	x86_bswap(s, 0, DILL_I, EAX, EAX);
+	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word+4);
+	dill_addi(s, EAX, src1, src2);
+	x86_ploadi(s, ltype, junk, dest, EAX, 4);
+	x86_bswap(s, 0, DILL_I, EAX, EAX);
+	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
+	x86_ploadi(s, DILL_D, 0, 0, _frame_reg, smi->conversion_word);
 	break;
     case DILL_L: case DILL_UL: case DILL_P: case DILL_I: case DILL_U:
-	BYTE_OUT2(c, 0x0f, 0xc8 + dest);   /* byteswap dest */
+	BYTE_OUT2(s, 0x0f, 0xc8 + dest);   /* byteswap dest */
 	break;
     case DILL_S: case DILL_US:
-	BYTE_OUT2(c, 0x86, (0xc0 | (dest << 3)) | (dest+4)); /* xchange dest */
+	BYTE_OUT2(s, 0x86, (0xc0 | (dest << 3)) | (dest+4)); /* xchange dest */
 	break;
     case DILL_C: case DILL_UC:
 	break;
@@ -505,15 +500,15 @@ static unsigned char st_opcodes[] = {
     0x89, /* DILL_EC */
 };
 extern void
-x86_pstorei(dill_stream c, int type, int junk, int dest, int src, long offset)
+x86_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     switch(type) {
     case DILL_C:
     case DILL_UC:
 	if (dest >= ESP) {
 	    /* movb doesn't work for big regs, move to eax */
-	    x86_movi(c, EAX, dest);
+	    x86_movi(s, EAX, dest);
 	    dest = EAX;
 	}
 	break;
@@ -524,32 +519,32 @@ x86_pstorei(dill_stream c, int type, int junk, int dest, int src, long offset)
 	dest = 3;
 	break;
     case DILL_S: case DILL_US:
-	BYTE_OUT1(c, 0x66);
+	BYTE_OUT1(s, 0x66);
 	break;
     default:
 	break;
     }
     if (smi->pending_prefix != 0) {
-        BYTE_OUT1(c, smi->pending_prefix);
+        BYTE_OUT1(s, smi->pending_prefix);
 	smi->pending_prefix = 0;
     }
     if (((long)offset <= 127) && ((long)offset > -128)) {
-	BYTE_OUT3(c, st_opcodes[type], ModRM(0x1, dest, src), offset & 0xff);
+	BYTE_OUT3(s, st_opcodes[type], ModRM(0x1, dest, src), offset & 0xff);
     } else {
-	BYTE_OUT2I(c, st_opcodes[type], ModRM(0x2, dest, src), offset);
+	BYTE_OUT2I(s, st_opcodes[type], ModRM(0x2, dest, src), offset);
     }
 }
 
 extern void
-x86_pstore(dill_stream c, int type, int junk, int dest, int src1, int src2)
+x86_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     switch(type) {
     case DILL_C:
     case DILL_UC:
 	if (dest >= ESP) {
 	    /* movb doesn't work for big regs, move to eax */
-	    x86_movi(c, EAX, dest);
+	    x86_movi(s, EAX, dest);
 	    dest = EAX;
 	}
 	break;
@@ -560,16 +555,16 @@ x86_pstore(dill_stream c, int type, int junk, int dest, int src1, int src2)
 	dest = 3;
 	break;
     case DILL_S: case DILL_US:
-	BYTE_OUT1(c, 0x66);
+	BYTE_OUT1(s, 0x66);
 	break;
     default:
 	break;
     }
     if (smi->pending_prefix != 0) {
-        BYTE_OUT1(c, smi->pending_prefix);
+        BYTE_OUT1(s, smi->pending_prefix);
 	smi->pending_prefix = 0;
     }
-    BYTE_OUT3(c, st_opcodes[type], ModRM(0x0, dest, 0x4), SIB(0,src1,src2));
+    BYTE_OUT3(s, st_opcodes[type], ModRM(0x0, dest, 0x4), SIB(0,src1,src2));
 }
 
 static long dill_hidden_mod(long a, long b)
@@ -577,40 +572,40 @@ static long dill_hidden_mod(long a, long b)
 static long dill_hidden_umod(unsigned long a, unsigned long b)
 { return a % b; }
 
-extern void x86_mod(dill_stream c, int data1, int data2, int dest, int src1, 
+extern void x86_mod(dill_stream s, int data1, int data2, int dest, int src1, 
 		      int src2)
 {
     int return_reg;
     if (data1 == 1) {
 	/* signed case */
-	return_reg = dill_scalll(c, (void*)dill_hidden_mod, "%l%l", src1, src2);
-	dill_movl(c, dest, return_reg);
+	return_reg = dill_scalll(s, (void*)dill_hidden_mod, "%l%l", src1, src2);
+	dill_movl(s, dest, return_reg);
     } else {
 	/* unsigned case */
-	return_reg = dill_scalll(c, (void*)dill_hidden_umod, "%l%l", src1, src2);
-	dill_movul(c, dest, return_reg);
+	return_reg = dill_scalll(s, (void*)dill_hidden_umod, "%l%l", src1, src2);
+	dill_movul(s, dest, return_reg);
     }
 }
 
-extern void x86_modi(dill_stream c, int data1, int data2, int dest, int src1, 
+extern void x86_modi(dill_stream s, int data1, int data2, int dest, int src1, 
 		      long imm)
 {
-    x86_seti(c, _temp_reg, imm);
-    x86_mod(c, data1, data2, dest, src1, _temp_reg);
+    x86_seti(s, _temp_reg, imm);
+    x86_mod(s, data1, data2, dest, src1, _temp_reg);
 }
 
-extern void x86_div(dill_stream c, int op3, int op, int dest, int src1, 
+extern void x86_div(dill_stream s, int op3, int op, int dest, int src1, 
 		      int src2)
 {
 }
 
-extern void x86_divi(dill_stream c, int op3, int op, int dest, int src, 
+extern void x86_divi(dill_stream s, int op3, int op, int dest, int src, 
 		      long imm)
 {
 }
 
 extern void
-x86_mov(dill_stream c, int type, int junk, int dest, int src)
+x86_mov(dill_stream s, int type, int junk, int dest, int src)
 {
     if (src == dest) return;
     switch(type) {
@@ -618,12 +613,12 @@ x86_mov(dill_stream c, int type, int junk, int dest, int src)
     case DILL_F:
 	break;
     default:
-	BYTE_OUT2(c, MOV32, ModRM(0x3, src, dest));
+	BYTE_OUT2(s, MOV32, ModRM(0x3, src, dest));
     }
 }
 
-extern void x86_arith3(c, op, commut, dest, src1, src2)
-dill_stream c;
+extern void x86_arith3(s, op, commut, dest, src1, src2)
+dill_stream s;
 int op;
 int commut;
 int dest;
@@ -631,21 +626,21 @@ int src1;
 int src2;
 {
     if (commut && (dest == src1)) {
-	BYTE_OUT2(c, op, ModRM(0x3, dest, src2));
+	BYTE_OUT2(s, op, ModRM(0x3, dest, src2));
     } else if (commut && (dest == src2)) {
-	BYTE_OUT2(c, op, ModRM(0x3, dest, src1));
+	BYTE_OUT2(s, op, ModRM(0x3, dest, src1));
     } else if (dest == src2) {
 	assert(op == 0x2b);	/* must be subtract */
-	BYTE_OUT2(c, 0xf7, ModRM(0x3, 0x3, dest));   /* neg src2/dest */
-	BYTE_OUT2(c, 0x03, ModRM(0x3, dest, src1));  /* add src1, dest */
+	BYTE_OUT2(s, 0xf7, ModRM(0x3, 0x3, dest));   /* neg src2/dest */
+	BYTE_OUT2(s, 0x03, ModRM(0x3, dest, src1));  /* add src1, dest */
     } else {
-	BYTE_OUT2(c, MOV32, ModRM(0x3, src1, dest));
-	BYTE_OUT2(c, op, ModRM(0x3, dest, src2));
+	BYTE_OUT2(s, MOV32, ModRM(0x3, src1, dest));
+	BYTE_OUT2(s, op, ModRM(0x3, dest, src2));
     }
 }
 
-extern void x86_arith2(c, op, subop, dest, src)
-dill_stream c;
+extern void x86_arith2(s, op, subop, dest, src)
+dill_stream s;
 int op;
 int subop;
 int dest;
@@ -657,22 +652,22 @@ int src;
 	if (dest >= ESP) {
 	    tmp_dest = EAX;
 	}
-	BYTE_OUT3(c, 0x83, ModRM(0x3, 0x7, src), 0);  /* cmp */
-	x86_seti(c, tmp_dest, 0);
-	BYTE_OUT3(c, 0x0f, 0x94, ModRM(0x3, src, tmp_dest));  /* sete dest */
+	BYTE_OUT3(s, 0x83, ModRM(0x3, 0x7, src), 0);  /* cmp */
+	x86_seti(s, tmp_dest, 0);
+	BYTE_OUT3(s, 0x0f, 0x94, ModRM(0x3, src, tmp_dest));  /* sete dest */
 	if (tmp_dest != dest) {
-	    x86_movi(c, dest, tmp_dest);
+	    x86_movi(s, dest, tmp_dest);
 	}	    
     } else {
 	if (src != dest) {
-	    BYTE_OUT2(c, MOV32, ModRM(0x3, src, dest));
+	    BYTE_OUT2(s, MOV32, ModRM(0x3, src, dest));
 	}
-	BYTE_OUT2(c, op, ModRM(0x3, subop, dest));
+	BYTE_OUT2(s, op, ModRM(0x3, subop, dest));
     }
 }
 
-extern void x86_bswap(c, junk, typ, dest, src)
-dill_stream c;
+extern void x86_bswap(s, junk, typ, dest, src)
+dill_stream s;
 int junk;
 int typ;
 int dest;
@@ -680,41 +675,41 @@ int src;
 {
     switch(typ) {
     case DILL_F: 
-/*	BYTE_OUT1R3(c, 0x66, rex, 0x0f, 0x7e, ModRM(0x3, src, EAX));*/
-	BYTE_OUT3(c, 0x0f, 0x7e, ModRM(0x3, src, EAX));
-	x86_bswap(c, 0, DILL_I, EAX, EAX);
-/*	BYTE_OUT1R3(c, 0x66, rex, 0x0f, 0x6e, ModRM(0x3, dest, EAX));*/
-	BYTE_OUT3(c, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
+/*	BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x7e, ModRM(0x3, src, EAX));*/
+	BYTE_OUT3(s, 0x0f, 0x7e, ModRM(0x3, src, EAX));
+	x86_bswap(s, 0, DILL_I, EAX, EAX);
+/*	BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x6e, ModRM(0x3, dest, EAX));*/
+	BYTE_OUT3(s, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
 	break;
     case DILL_D:
-/*	BYTE_OUT1R3(c, 0x66, rex, 0x0f, 0x7e, ModRM(0x3, src, EAX));*/
-	BYTE_OUT3(c, 0x0f, 0x7e, ModRM(0x3, src, EAX));
-	x86_bswap(c, 0, DILL_L, EAX, EAX);
-/*	BYTE_OUT1R3(c, 0x66, rex, 0x0f, 0x6e, ModRM(0x3, dest, EAX));*/
-	BYTE_OUT3(c, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
+/*	BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x7e, ModRM(0x3, src, EAX));*/
+	BYTE_OUT3(s, 0x0f, 0x7e, ModRM(0x3, src, EAX));
+	x86_bswap(s, 0, DILL_L, EAX, EAX);
+/*	BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x6e, ModRM(0x3, dest, EAX));*/
+	BYTE_OUT3(s, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
 	break;
     case DILL_L: case DILL_UL: case DILL_P: 
     case DILL_I: case DILL_U:
 	if (dest != src) {
-	    x86_movi(c, dest, src);
+	    x86_movi(s, dest, src);
 	}
-	BYTE_OUT2(c, 0x0f, 0xc8 + (dest&0x7));   /* byteswap dest */
+	BYTE_OUT2(s, 0x0f, 0xc8 + (dest&0x7));   /* byteswap dest */
 	break;
     case DILL_S: case DILL_US:
 	if (dest != src) {
-	    x86_movi(c, dest, src);
+	    x86_movi(s, dest, src);
 	}
 	/* byteswap 32 bits and shift down 16 */
-	BYTE_OUT2(c, 0x0f, 0xc8 + (dest&0x7));   /* byteswap dest */
-	x86_rshi(c, dest, dest, 16);
+	BYTE_OUT2(s, 0x0f, 0xc8 + (dest&0x7));   /* byteswap dest */
+	x86_rshi(s, dest, dest, 16);
 	break;
     case DILL_C: case DILL_UC:
 	break;
     }
 }
 
-extern void x86_mul(c, sign, imm, dest, src1, src2)
-dill_stream c;
+extern void x86_mul(s, sign, imm, dest, src1, src2)
+dill_stream s;
 int sign;
 int imm;
 int dest;
@@ -723,10 +718,10 @@ int src2;
 {
     /* make src1 be EAX */
     if (dest != EAX) {
-	x86_push_reg(c, EAX);
+	x86_push_reg(s, EAX);
     }
     if (dest != EDX) {
-	x86_push_reg(c, EDX);
+	x86_push_reg(s, EDX);
     }
 	
     if ((src2 == EAX) && !imm){
@@ -735,44 +730,44 @@ int src2;
 	src2 = tmp;
     }
     if (src1 != EAX) {
-	x86_movi(c, EAX, src1);
+	x86_movi(s, EAX, src1);
     }
     if (imm == 0) {
-	BYTE_OUT2(c, 0xf7, ModRM(0x3, sign ? 0x5 : 0x4, src2));
+	BYTE_OUT2(s, 0xf7, ModRM(0x3, sign ? 0x5 : 0x4, src2));
     } else {
 	/* src2 is really immediate */
 	if (sign) {
-	    BYTE_OUT2I(c, 0x69, ModRM(0x3, 0, EAX), src2);
+	    BYTE_OUT2I(s, 0x69, ModRM(0x3, 0, EAX), src2);
 	} else {
-	    x86_seti(c, EDX, src2);
-	    BYTE_OUT2(c, 0xf7, ModRM(0x3, 0x4, EDX));
+	    x86_seti(s, EDX, src2);
+	    BYTE_OUT2(s, 0xf7, ModRM(0x3, 0x4, EDX));
 	}
     }
     if (dest != EDX) {
-	x86_pop_reg(c, EDX);
+	x86_pop_reg(s, EDX);
     }
     if (dest != EAX) {
-	x86_movi(c, dest, EAX);
-	x86_pop_reg(c, EAX);
+	x86_movi(s, dest, EAX);
+	x86_pop_reg(s, EAX);
     }
 }
 
-extern void x86_div_modi(c, sign, div, dest, src1, imm)
-dill_stream c;
+extern void x86_div_modi(s, sign, div, dest, src1, imm)
+dill_stream s;
 int sign;
 int div;
 int dest;
 int src1;
 long imm;
 {
-    x86_push_reg(c, EBP);
-    x86_seti(c, EBP, imm);
-    x86_div_mod(c, sign, div, dest, src1, EBP);
-    x86_pop_reg(c, EBP);
+    x86_push_reg(s, EBP);
+    x86_seti(s, EBP, imm);
+    x86_div_mod(s, sign, div, dest, src1, EBP);
+    x86_pop_reg(s, EBP);
 }
 
-extern void x86_div_mod(c, sign, div, dest, src1, src2)
-dill_stream c;
+extern void x86_div_mod(s, sign, div, dest, src1, src2)
+dill_stream s;
 int sign;
 int div;
 int dest;
@@ -783,40 +778,40 @@ int src2;
 
     /* make src1 be EAX */
     if (dest != EAX) {
-	x86_push_reg(c, EAX);
+	x86_push_reg(s, EAX);
     }
     if (dest != EDX) {
-	x86_push_reg(c, EDX);
+	x86_push_reg(s, EDX);
     }
 	
     if (src1 != EAX) {
-	x86_movi(c, EAX, src1);
+	x86_movi(s, EAX, src1);
     }
     if (src2 == EDX) {
 	tmp_src2 = EBP;
-	x86_push_reg(c, EBP);
-	x86_movi(c, EBP, src2);
+	x86_push_reg(s, EBP);
+	x86_movi(s, EBP, src2);
     }
     if (sign) {
-	x86_rshai(c, EDX, EAX, 31);
+	x86_rshai(s, EDX, EAX, 31);
     } else {
-	x86_seti(c, EDX, 0);
+	x86_seti(s, EDX, 0);
     }
-    BYTE_OUT2(c, 0xf7, ModRM(0x3, sign ? 0x7 : 0x6, tmp_src2));
+    BYTE_OUT2(s, 0xf7, ModRM(0x3, sign ? 0x7 : 0x6, tmp_src2));
     if (src2 == EDX) {
-	x86_pop_reg(c, EBP);
+	x86_pop_reg(s, EBP);
     }
     if (div && (dest != EAX)) {
-	x86_movi(c, dest, EAX);
+	x86_movi(s, dest, EAX);
     }
     if (!div && (dest != EDX)) {
-	x86_movi(c, dest, EDX);
+	x86_movi(s, dest, EDX);
     }
     if (dest != EDX) {
-	x86_pop_reg(c, EDX);
+	x86_pop_reg(s, EDX);
     }
     if (dest != EAX) {
-	x86_pop_reg(c, EAX);
+	x86_pop_reg(s, EAX);
     }
 	
 }
@@ -832,8 +827,8 @@ static int group1_eax_op[] = {
     0x3d /* cmp */
 };
 
-extern void x86_arith3i(c, op, junk, dest, src, imm)
-dill_stream c;
+extern void x86_arith3i(s, op, junk, dest, src, imm)
+dill_stream s;
 int op;
 int junk;
 int dest;
@@ -841,21 +836,21 @@ int src;
 long imm;
 {
     if (dest != src) {
-	BYTE_OUT2(c, MOV32, ModRM(0x3, src, dest));
+	BYTE_OUT2(s, MOV32, ModRM(0x3, src, dest));
     }
     if ((imm <= 127) && (imm > -128)) {
-	BYTE_OUT3(c, 0x83, ModRM(0x3, op, dest), imm & 0xff);
+	BYTE_OUT3(s, 0x83, ModRM(0x3, op, dest), imm & 0xff);
 	return;
     }
     if (dest == EAX) {
-	BYTE_OUT1I(c, group1_eax_op[op], imm);
+	BYTE_OUT1I(s, group1_eax_op[op], imm);
     } else {
-	BYTE_OUT2I(c, 0x81, ModRM(0x3, op, dest), imm);
+	BYTE_OUT2I(s, 0x81, ModRM(0x3, op, dest), imm);
     }
 }
 
-extern void x86_shift(c, op, junk, dest, src1, src2)
-dill_stream c;
+extern void x86_shift(s, op, junk, dest, src1, src2)
+dill_stream s;
 int op;
 int junk;
 int dest;
@@ -864,28 +859,28 @@ int src2;
 {
     int tmp_dest = dest;
     if ((dest == ECX) || (dest == src2)) {
-	x86_push_reg(c, EAX);
+	x86_push_reg(s, EAX);
 	tmp_dest = EAX;
     }
     if (tmp_dest != src1) {
-	x86_movi(c, tmp_dest, src1);
+	x86_movi(s, tmp_dest, src1);
     }
     if (src2 != ECX) {
-	x86_push_reg(c, ECX);
-	x86_movi(c, ECX, src2);
+	x86_push_reg(s, ECX);
+	x86_movi(s, ECX, src2);
     }
-    BYTE_OUT2(c, 0xd3, ModRM(0x3, op, tmp_dest));
+    BYTE_OUT2(s, 0xd3, ModRM(0x3, op, tmp_dest));
     if (src2 != ECX) {
-	x86_pop_reg(c, ECX);
+	x86_pop_reg(s, ECX);
     }
     if ((dest == ECX) || (dest == src2)) {
-	x86_movi(c, dest, tmp_dest);
-	x86_pop_reg(c, EAX);
+	x86_movi(s, dest, tmp_dest);
+	x86_pop_reg(s, EAX);
     }
 }
 
-extern void x86_shifti(c, op, junk, dest, src, imm)
-dill_stream c;
+extern void x86_shifti(s, op, junk, dest, src, imm)
+dill_stream s;
 int op;
 int junk;
 int dest;
@@ -893,17 +888,17 @@ int src;
 long imm;
 {
     if (dest != src) {
-	x86_movi(c, dest, src);
+	x86_movi(s, dest, src);
     }
-    BYTE_OUT3(c, 0xc1, ModRM(0x3, op, dest), imm & 0xff);
+    BYTE_OUT3(s, 0xc1, ModRM(0x3, op, dest), imm & 0xff);
 }
 
 #define CONV(x,y) ((x*100)+y)
 extern void
-x86_convert(dill_stream c, int from_type, int to_type, 
+x86_convert(dill_stream s, int from_type, int to_type, 
 	      int dest, int src)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
 
     switch(CONV(from_type, to_type)) {
     case CONV(DILL_I, DILL_U):
@@ -921,7 +916,7 @@ x86_convert(dill_stream c, int from_type, int to_type,
     case CONV(DILL_P,DILL_UL):
     case CONV(DILL_UL,DILL_P):
 	if(src == dest) return;
-	x86_movi(c, dest,src);
+	x86_movi(s, dest,src);
 	break;
     case CONV(DILL_D,DILL_F):
     case CONV(DILL_F,DILL_D):
@@ -936,68 +931,68 @@ x86_convert(dill_stream c, int from_type, int to_type,
     case CONV(DILL_D,DILL_L):
 	/* use dest for float control word */
 	/* fstcw (store control word) */
-	BYTE_OUT3(c, 0xd9, ModRM(0x1, 0x7, _frame_reg), smi->fcu_word);
-	x86_push_reg(c, EAX);
+	BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x7, _frame_reg), smi->fcu_word);
+	x86_push_reg(s, EAX);
 	/* movsw eax, fcu(ebx)   Load control word to reg */
-	BYTE_OUT3I(c, 0x66, 0x8b, ModRM(0x2, EAX, _frame_reg), smi->fcu_word);
+	BYTE_OUT3I(s, 0x66, 0x8b, ModRM(0x2, EAX, _frame_reg), smi->fcu_word);
 	/* modify control word OR it with 0x60 to set RC to 11 */
-	BYTE_OUT1(c, 0x66);
-	BYTE_OUT3(c, 0x0d,0x0, 0xc);
+	BYTE_OUT1(s, 0x66);
+	BYTE_OUT3(s, 0x0d,0x0, 0xc);
 	/* movsw fcu(ebx), eax   store mod control word */
-	BYTE_OUT3I(c, 0x66, 0x89, ModRM(0x2, EAX, _frame_reg), smi->fcu_word +2);
+	BYTE_OUT3I(s, 0x66, 0x89, ModRM(0x2, EAX, _frame_reg), smi->fcu_word +2);
 	/* fldcw (load modified control word) */
-	BYTE_OUT3(c, 0xd9, ModRM(0x1, 0x5, _frame_reg), smi->fcu_word + 2);
-	x86_pop_reg(c, EAX);
+	BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x5, _frame_reg), smi->fcu_word + 2);
+	x86_pop_reg(s, EAX);
 	/* fistpl (do the conversion) */
 	switch(to_type){
 	case DILL_U: case DILL_UL:
-	    BYTE_OUT3(c, 0xdf, ModRM(0x1, 0x7, _frame_reg), smi->conversion_word);
+	    BYTE_OUT3(s, 0xdf, ModRM(0x1, 0x7, _frame_reg), smi->conversion_word);
 	    break;
 	case DILL_I: case DILL_L:
-	    BYTE_OUT3(c, 0xdb, ModRM(0x1, 0x3, _frame_reg), smi->conversion_word);
+	    BYTE_OUT3(s, 0xdb, ModRM(0x1, 0x3, _frame_reg), smi->conversion_word);
 	    break;
 	}
 	/* fldcw (restore original) */
-	BYTE_OUT3(c, 0xd9, ModRM(0x1, 0x5, _frame_reg), smi->fcu_word);
-	x86_ploadi(c, DILL_I, 0, dest, _frame_reg, smi->conversion_word);
+	BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x5, _frame_reg), smi->fcu_word);
+	x86_ploadi(s, DILL_I, 0, dest, _frame_reg, smi->conversion_word);
 	break;
     case CONV(DILL_I,DILL_D):
     case CONV(DILL_L,DILL_D):
     case CONV(DILL_I,DILL_F):
     case CONV(DILL_L,DILL_F):
-	x86_pstorei(c, DILL_I, 0, src, _frame_reg, smi->conversion_word);
-	BYTE_OUT3(c, 0xdb, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
+	x86_pstorei(s, DILL_I, 0, src, _frame_reg, smi->conversion_word);
+	BYTE_OUT3(s, 0xdb, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
 	break;
     case CONV(DILL_U,DILL_D):
     case CONV(DILL_UL,DILL_D):
     case CONV(DILL_U,DILL_F):
     case CONV(DILL_UL,DILL_F):
-	x86_pstorei(c, DILL_I, 0, src, _frame_reg, smi->conversion_word);
-	BYTE_OUT3I(c, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+	x86_pstorei(s, DILL_I, 0, src, _frame_reg, smi->conversion_word);
+	BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
 		   smi->conversion_word + 4, 0);
-	BYTE_OUT3(c, 0xdf, ModRM(0x1, 0x5, _frame_reg), smi->conversion_word);
+	BYTE_OUT3(s, 0xdf, ModRM(0x1, 0x5, _frame_reg), smi->conversion_word);
 	break;
     case CONV(DILL_C,DILL_I):
     case CONV(DILL_C,DILL_L):
     case CONV(DILL_C,DILL_U):
     case CONV(DILL_C,DILL_UL):
 	/* signext24 - lsh24, rsha24 */
-	x86_lshi(c, dest, src, 24);
-	x86_rshai(c, dest, dest, 24);
+	x86_lshi(s, dest, src, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case CONV(DILL_I, DILL_C):
     case CONV(DILL_U, DILL_C):
     case CONV(DILL_L, DILL_C):
     case CONV(DILL_UL, DILL_C):
-	x86_andi(c, dest, src, 0xff);
+	x86_andi(s, dest, src, 0xff);
 	break;
     case CONV(DILL_S,DILL_I):
     case CONV(DILL_S,DILL_L):
     case CONV(DILL_S,DILL_U):
     case CONV(DILL_S,DILL_UL):
 	/* signext16 - lsh16, rsha16 */
-	x86_lshi(c, dest, src, 16);
-	x86_rshai(c, dest, dest, 16);
+	x86_lshi(s, dest, src, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case CONV(DILL_US,DILL_I):
     case CONV(DILL_US,DILL_L):
@@ -1012,15 +1007,63 @@ x86_convert(dill_stream c, int from_type, int to_type,
     case CONV(DILL_L, DILL_US):
     case CONV(DILL_UL, DILL_US):
 	/* zero uppper 16 - lsh16, rsh16 */
-	x86_lshi(c, dest, src, 16);
-	x86_rshi(c, dest, dest, 16);
+	x86_lshi(s, dest, src, 16);
+	x86_rshi(s, dest, dest, 16);
 	break;
     default:
 	printf("Unknown case in x86 convert %d\n", CONV(from_type,to_type));
     }
 }
 
-static unsigned char op_conds[] = {
+static unsigned char set_op_conds[] = {
+    0x94, /* dill_beq_code */  /* signed */
+    0x9d, /* dill_bge_code */
+    0x9F, /* dill_bgt_code */
+    0x9e, /* dill_ble_code */
+    0x9c, /* dill_blt_code */
+    0x95, /* dill_bne_code */
+
+    0x94, /* dill_beq_code */  /* unsigned */
+    0x93, /* dill_bge_code */
+    0x97, /* dill_bgt_code */ 
+    0x96, /* dill_ble_code */
+    0x92, /* dill_blt_code */
+    0x95, /* dill_bne_code */
+};
+
+extern void
+x86_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
+{
+    switch(type) {
+    case DILL_UC:
+    case DILL_US:
+    case DILL_U:
+    case DILL_UL:
+	op += 6; /* second set of codes */
+	/* fall through */
+    }
+    BYTE_OUT2(s, 0x39, ModRM(0x3, src2, src1));   /* compare */
+    BYTE_OUT3(s, 0x0f, set_op_conds[op],ModRM(0x3, EAX,EAX));	  /* sete */
+    BYTE_OUT3(s, 0x0f, 0xb6, ModRM(0x3, dest, EAX));	/* movzbl */
+}
+
+extern void
+x86_comparei(dill_stream s, int op, int type, int dest, int src, long imm)
+{
+    switch(type) {
+    case DILL_UC:
+    case DILL_US:
+    case DILL_U:
+    case DILL_UL:
+	op += 6; /* second set of codes */
+	/* fall through */
+    }
+    BYTE_OUT2I(s, 0x81, ModRM(0x3, 0x7, src), imm);  /* cmp */
+    BYTE_OUT3(s, 0x0f, set_op_conds[op],ModRM(0x3, EAX,EAX));	  /* sete */
+    BYTE_OUT3(s, 0x0f, 0xb6, ModRM(0x3, dest, EAX));	/* movzbl */
+}
+
+static unsigned char br_op_conds[] = {
     0x84, /* dill_beq_code */  /* signed */
     0x8d, /* dill_bge_code */
     0x8F, /* dill_bgt_code */
@@ -1036,7 +1079,7 @@ static unsigned char op_conds[] = {
     0x85, /* dill_bne_code */
 };
 
-static unsigned char fop_conds[] = {
+static unsigned char br_fop_conds[] = {
     0x84, /* dill_beq_code */   /* z = 1*/
     0x86, /* dill_bge_code */
     0x82, /* dill_bgt_code */
@@ -1046,57 +1089,57 @@ static unsigned char fop_conds[] = {
 };
 
 extern void
-x86_branch(dill_stream c, int op, int type, int src1, int src2, int label)
+x86_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 {
     switch(type) {
     case DILL_F:
     case DILL_D:
-	BYTE_OUT2(c, 0xde, 0xd9);   /* fcompp */
-	BYTE_OUT2(c, 0xdf, 0xe0);   /* fnstsw ax */
-	BYTE_OUT1(c, 0x9e);	    /* sahf */
-	dill_mark_branch_location(c, label);
-	BYTE_OUT2I(c, 0x0f, fop_conds[op], 0);
+	BYTE_OUT2(s, 0xde, 0xd9);   /* fcompp */
+	BYTE_OUT2(s, 0xdf, 0xe0);   /* fnstsw ax */
+	BYTE_OUT1(s, 0x9e);	    /* sahf */
+	dill_mark_branch_location(s, label);
+	BYTE_OUT2I(s, 0x0f, br_fop_conds[op], 0);
 	break;
     case DILL_U:
     case DILL_UL:
 	op += 6; /* second set of codes */
 	/* fall through */
     default:
-	BYTE_OUT2(c, 0x39, ModRM(0x3, src2, src1));
-	dill_mark_branch_location(c, label);
-	BYTE_OUT2I(c, 0x0f, op_conds[op], 0);
+	BYTE_OUT2(s, 0x39, ModRM(0x3, src2, src1));
+	dill_mark_branch_location(s, label);
+	BYTE_OUT2I(s, 0x0f, br_op_conds[op], 0);
     }
     x86_nop(c);
 }
 
 extern void 
-x86_jump_to_label(dill_stream c, unsigned long label)
+x86_jump_to_label(dill_stream s, unsigned long label)
 {
-    dill_mark_branch_location(c, label);
-    BYTE_OUT1I(c, 0xe9, 0);
+    dill_mark_branch_location(s, label);
+    BYTE_OUT1I(s, 0xe9, 0);
 }
 
-extern void x86_jump_to_reg(dill_stream c, unsigned long reg)
+extern void x86_jump_to_reg(dill_stream s, unsigned long reg)
 {
-    BYTE_OUT2(c, 0xff, ModRM(0x3, 0x4, reg));
+    BYTE_OUT2(s, 0xff, ModRM(0x3, 0x4, reg));
 }
 
-extern void x86_jump_to_imm(dill_stream c, void *imm)
+extern void x86_jump_to_imm(dill_stream s, void *imm)
 {
-    x86_setp(c, EAX, imm);
-    BYTE_OUT2(c, 0xff, ModRM(0x3, 0x4, EAX));
-}
-
-extern void 
-x86_jal(dill_stream c, int return_addill_reg, int target)
-{
-/* jump, source addr to return_addill_reg */
+    x86_setp(s, EAX, imm);
+    BYTE_OUT2(s, 0xff, ModRM(0x3, 0x4, EAX));
 }
 
 extern void 
-x86_special(dill_stream c, special_operations type, long param)
+x86_jal(dill_stream s, int return_addr_reg, int target)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+/* jump, source addr to return_addr_reg */
+}
+
+extern void 
+x86_special(dill_stream s, special_operations type, long param)
+{
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
 
     switch (type) {
     case DILL_NOP:
@@ -1128,93 +1171,93 @@ x86_special(dill_stream c, special_operations type, long param)
     }
 }
 
-static void internal_push(dill_stream c, int type, int immediate, 
+static void internal_push(dill_stream s, int type, int immediate, 
 			  void *value_ptr)
 {
     if (!immediate) {
-	x86_push_reg(c, *(int*)value_ptr);
+	x86_push_reg(s, *(int*)value_ptr);
     } else {
-	BYTE_OUT1I(c, 0x68, *(int*)value_ptr);
+	BYTE_OUT1I(s, 0x68, *(int*)value_ptr);
     }
 }
 
-static void push_init(dill_stream c)
+static void push_init(dill_stream s)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     smi->cur_arg_offset = 0;
 }
 
-extern void x86_push(dill_stream c, int type, int reg)
+extern void x86_push(dill_stream s, int type, int reg)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     if ((type == DILL_V) && (reg == -1)) {
-	push_init(c);
+	push_init(s);
     } else if ((type == DILL_F) || (type == DILL_D)) {
-	x86_pstorei(c, DILL_D, 0, reg, _frame_reg, smi->conversion_word);
-	BYTE_OUT3(c, 0xff, ModRM(0x1, 0x6, _frame_reg), smi->conversion_word+4);
-	BYTE_OUT3(c, 0xff, ModRM(0x1, 0x6, _frame_reg), smi->conversion_word);
+	x86_pstorei(s, DILL_D, 0, reg, _frame_reg, smi->conversion_word);
+	BYTE_OUT3(s, 0xff, ModRM(0x1, 0x6, _frame_reg), smi->conversion_word+4);
+	BYTE_OUT3(s, 0xff, ModRM(0x1, 0x6, _frame_reg), smi->conversion_word);
 	smi->cur_arg_offset += 8;
     } else {
-	internal_push(c, type, 0, &reg);
+	internal_push(s, type, 0, &reg);
 	smi->cur_arg_offset += 4;
     }
 }
 
-extern void x86_pushi(dill_stream c, int type, long value)
+extern void x86_pushi(dill_stream s, int type, long value)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
-    internal_push(c, type, 1, &value);
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    internal_push(s, type, 1, &value);
     smi->cur_arg_offset += 4;
 }
 
-extern void x86_pushfi(dill_stream c, int type, double value)
+extern void x86_pushfi(dill_stream s, int type, double value)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
-    internal_push(c, type, 1, &value);
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    internal_push(s, type, 1, &value);
     smi->cur_arg_offset += 8;
 }
 
-extern void x86_pushpi(dill_stream c, int type, void *value)
+extern void x86_pushpi(dill_stream s, int type, void *value)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
-    internal_push(c, type, 1, &value);
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    internal_push(s, type, 1, &value);
     smi->cur_arg_offset += 4;
 }
 
-extern int x86_calli(dill_stream c, int type, void *xfer_address)
+extern int x86_calli(dill_stream s, int type, void *xfer_address)
 {
     int caller_side_ret_reg = EAX;
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
 
     /* save temporary registers */
-    dill_mark_call_location(c, NULL, xfer_address);
-    BYTE_OUT1I(c, 0xe8, 0);
+    dill_mark_call_location(s, NULL, xfer_address);
+    BYTE_OUT1I(s, 0xe8, 0);
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
 /*	caller_side_ret_reg = _f0;*/
     }
-    dill_addii(c, ESP, ESP, smi->cur_arg_offset);
+    dill_addii(s, ESP, ESP, smi->cur_arg_offset);
     return caller_side_ret_reg;
 }
 
-extern int x86_callr(dill_stream c, int type, int src)
+extern int x86_callr(dill_stream s, int type, int src)
 {
     int caller_side_ret_reg = EAX;
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
 
     /* save temporary registers */
     /* call through reg */
-    BYTE_OUT2(c, 0xff, ModRM(0x3, 0x2, src));
+    BYTE_OUT2(s, 0xff, ModRM(0x3, 0x2, src));
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
 /*	caller_side_ret_reg = _f0;*/
     }
-    dill_addii(c, ESP, ESP, smi->cur_arg_offset);
+    dill_addii(s, ESP, ESP, smi->cur_arg_offset);
     return caller_side_ret_reg;
 }
 
 extern void
-x86_branchi(dill_stream c, int op, int type, int src, long imm, int label)
+x86_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 {
     switch(type) {
     case DILL_F:
@@ -1240,14 +1283,14 @@ x86_branchi(dill_stream c, int op, int type, int src, long imm, int label)
 	op += 6; /* second set of codes */
 	/* fall through */
     default:
-/*	BYTE_OUT2(c, 0x39, ModRM(0x3, src2, src1));*/
-	BYTE_OUT2I(c, 0x81, ModRM(0x3, 0x7, src), imm);  /* cmp */
-	dill_mark_branch_location(c, label);
-	BYTE_OUT2I(c, 0x0f, op_conds[op], 0);
+/*	BYTE_OUT2(s, 0x39, ModRM(0x3, src2, src1));*/
+	BYTE_OUT2I(s, 0x81, ModRM(0x3, 0x7, src), imm);  /* cmp */
+	dill_mark_branch_location(s, label);
+	BYTE_OUT2I(s, 0x0f, br_op_conds[op], 0);
     }
 }
 
-extern void x86_ret(dill_stream c, int data1, int data2, int src)
+extern void x86_ret(dill_stream s, int data1, int data2, int src)
 {
     switch (data1) {
     case DILL_C:
@@ -1259,18 +1302,18 @@ extern void x86_ret(dill_stream c, int data1, int data2, int src)
     case DILL_L:
     case DILL_UL:
     case DILL_P:
-	if (src != EAX) x86_movi(c, EAX, src);
+	if (src != EAX) x86_movi(s, EAX, src);
 	break;
 /*    case DILL_F:
-	if (src != _f0) x86_movf(c, _f0, src);
+	if (src != _f0) x86_movf(s, _f0, src);
     case DILL_D:
-	if (src != _f0) x86_movd(c, _f0, src);
+	if (src != _f0) x86_movd(s, _f0, src);
 */
     }
     x86_simple_ret(c);
 }
 
-extern void x86_reti(dill_stream c, int data1, int data2, long imm)
+extern void x86_reti(dill_stream s, int data1, int data2, long imm)
 {
     switch (data1) {
     case DILL_C:
@@ -1282,38 +1325,38 @@ extern void x86_reti(dill_stream c, int data1, int data2, long imm)
     case DILL_L:
     case DILL_UL:
     case DILL_P:
-	x86_seti(c, EAX, imm);
+	x86_seti(s, EAX, imm);
 	break;
 /*    case DILL_F:
-	x86_setf(c, _f0, imm);
+	x86_setf(s, _f0, imm);
     case DILL_D:
-    x86_setd(c, _f0, imm);*/
+    x86_setd(s, _f0, imm);*/
     }
     x86_simple_ret(c);
 }
 
 static void
-x86_data_link(dill_stream c)
+x86_data_link(dill_stream s)
 {
-    struct branch_table *t = &c->p->branch_table;
+    struct branch_table *t = &s->p->branch_table;
     int i;
     for (i=0; i < t->data_mark_count; i++) {
 	int label = t->data_marks[i].label;
-	void *label_addr = t->label_locs[label] + (char*)c->p->code_base;
+	void *label_addr = t->label_locs[label] + (char*)s->p->code_base;
 	*t->data_marks[i].addr = label_addr;
     }
 }
 
 static void
-x86_branch_link(dill_stream c)
+x86_branch_link(dill_stream s)
 {
-    struct branch_table *t = &c->p->branch_table;
+    struct branch_table *t = &s->p->branch_table;
     int i;
 
     for(i=0; i< t->branch_count; i++) {
 	int label = t->branch_locs[i].label;
 	int label_offset = t->label_locs[label] - t->branch_locs[i].loc;
-	char *branch_addr = (char*)((char *)c->p->code_base + 
+	char *branch_addr = (char*)((char *)s->p->code_base + 
 				  t->branch_locs[i].loc);
 	int offset;
 	if (*branch_addr == 0x0f) {
@@ -1328,13 +1371,13 @@ x86_branch_link(dill_stream c)
 }
 
 static void
-x86_call_link(dill_stream c)
+x86_call_link(dill_stream s)
 {
-    call_t *t = &c->p->call_table;
+    call_t *t = &s->p->call_table;
     int i;
 
     for(i=0; i< t->call_count; i++) {
-	int *call_addr = (int*) ((char *)c->p->code_base + 
+	int *call_addr = (int*) ((char *)s->p->code_base + 
 				 t->call_locs[i].loc + 1);
 	int call_offset = (int)(((char*)t->call_locs[i].xfer_addr) - 
 	    ((char*)call_addr + 4));  /* add len of call insn */
@@ -1344,69 +1387,69 @@ x86_call_link(dill_stream c)
 }
 
 static void
-x86_emit_save(dill_stream c)
+x86_emit_save(dill_stream s)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
-    void *save_ip = c->p->cur_ip;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    void *save_ip = s->p->cur_ip;
     int ar_size = smi->act_rec_size;
     ar_size = roundup(ar_size, 8) + 16;
 
-    c->p->cur_ip = (char*)c->p->code_base + smi->backpatch_offset;
+    s->p->cur_ip = (char*)s->p->code_base + smi->backpatch_offset;
 
     /* do local space reservation */
-    dill_subii(c, ESP, ESP, ar_size);
+    dill_subii(s, ESP, ESP, ar_size);
 
-    c->p->fp = (char*)c->p->code_base;
-    c->p->cur_ip = save_ip;
+    s->p->fp = (char*)s->p->code_base;
+    s->p->cur_ip = save_ip;
 }
     
 extern void
-x86_end(c)
-dill_stream c;
+x86_end(s)
+dill_stream s;
 {
-    x86_simple_ret(c);
-    x86_branch_link(c);
-    x86_call_link(c);
-    x86_data_link(c);
-    x86_emit_save(c);
+    x86_simple_ret(s);
+    x86_branch_link(s);
+    x86_call_link(s);
+    x86_data_link(s);
+    x86_emit_save(s);
 }
 
 extern void *
-x86_clone_code(c, new_base, available_size)
-dill_stream c;
+x86_clone_code(s, new_base, available_size)
+dill_stream s;
 void *new_base;
 int available_size;
 {
-    int size = dill_code_size(c);
-    void *old_base = c->p->code_base;
-    void *native_base = c->p->code_base;
+    int size = dill_code_size(s);
+    void *old_base = s->p->code_base;
+    void *native_base = s->p->code_base;
     if (available_size < size) {
 	return NULL;
     }
-    if (native_base == NULL) native_base = c->p->native.code_base;
+    if (native_base == NULL) native_base = s->p->native.code_base;
     memcpy(new_base, native_base, size);
-    c->p->code_base = new_base;
-    c->p->cur_ip = (char*)new_base + size;
-    c->p->fp = new_base;
-    x86_branch_link(c);
-    x86_call_link(c);
-    x86_data_link(c);
-    c->p->code_base = old_base;
-    c->p->cur_ip = (char*)old_base + size;
-    c->p->fp = old_base;
+    s->p->code_base = new_base;
+    s->p->cur_ip = (char*)new_base + size;
+    s->p->fp = new_base;
+    x86_branch_link(s);
+    x86_call_link(s);
+    x86_data_link(s);
+    s->p->code_base = old_base;
+    s->p->cur_ip = (char*)old_base + size;
+    s->p->fp = old_base;
     return new_base;
 }
 
 extern void
-x86_pset(dill_stream c, int type, int junk, int dest, long imm)
+x86_pset(dill_stream s, int type, int junk, int dest, long imm)
 {
-    x86_seti(c, dest, imm);
+    x86_seti(s, dest, imm);
 }	
 
 extern void
-x86_setf(dill_stream c, int type, int junk, int dest, double imm)
+x86_setf(dill_stream s, int type, int junk, int dest, double imm)
 {
-    x86_mach_info smi = (x86_mach_info) c->p->mach_info;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     union {
 	float f;
 	int i;
@@ -1417,18 +1460,18 @@ x86_setf(dill_stream c, int type, int junk, int dest, double imm)
     } b;
     if (type == DILL_F) {
 	a.f = (float) imm;
-	BYTE_OUT3I(c, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+	BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
 		   smi->conversion_word, a.i);
 	/* flds */
-	BYTE_OUT3(c, 0xd9, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
+	BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
     } else {
 	b.d = imm;
-	BYTE_OUT3I(c, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+	BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
 		   smi->conversion_word, b.i[0]);
-	BYTE_OUT3I(c, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+	BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
 		   smi->conversion_word + 4, b.i[1]);
 	/* fldd */
-	BYTE_OUT3(c, 0xdd, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
+	BYTE_OUT3(s, 0xdd, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
     }
 }	
 
@@ -1436,29 +1479,29 @@ x86_setf(dill_stream c, int type, int junk, int dest, double imm)
 #define bit_R(x) (1<<x)
 
 extern void
-x86_reg_init(dill_stream c)
+x86_reg_init(dill_stream s)
 {
-    c->p->var_i.init_avail[0] = (bit_R(EBX)|bit_R(ESI)|bit_R(EDI));
-    c->p->var_i.members[0] = c->p->var_i.init_avail[0];
-    c->p->tmp_i.init_avail[0] = (bit_R(EDX)|bit_R(ECX));
-    c->p->tmp_i.members[0] = c->p->tmp_i.init_avail[0] | bit_R(EAX);
-    c->p->var_f.init_avail[0] = 0;
-    c->p->var_f.members[0] = c->p->var_f.init_avail[0];
-    c->p->tmp_f.init_avail[0] = 0;
-    c->p->tmp_f.members[0] = c->p->tmp_f.init_avail[0];
+    s->p->var_i.init_avail[0] = (bit_R(EBX)|bit_R(ESI)|bit_R(EDI));
+    s->p->var_i.members[0] = s->p->var_i.init_avail[0];
+    s->p->tmp_i.init_avail[0] = (bit_R(EDX)|bit_R(ECX));
+    s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0] | bit_R(EAX);
+    s->p->var_f.init_avail[0] = 0;
+    s->p->var_f.members[0] = s->p->var_f.init_avail[0];
+    s->p->tmp_f.init_avail[0] = 0;
+    s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
 
 extern void*
-gen_x86_mach_info(c)
-dill_stream c;
+gen_x86_mach_info(s)
+dill_stream s;
 {
     x86_mach_info smi = malloc(sizeof(*smi));
-    if (c->p->mach_info != NULL) {
-	free(c->p->mach_info);
-	c->p->mach_info = NULL;
-	c->p->native.mach_info = NULL;
+    if (s->p->mach_info != NULL) {
+	free(s->p->mach_info);
+	s->p->mach_info = NULL;
+	s->p->native.mach_info = NULL;
     }
-    x86_reg_init(c);
+    x86_reg_init(s);
     smi->act_rec_size = 0;
     smi->stack_align = 4; /* 8 for x86v9 */
     smi->stack_constant_offset = 0; /* 2047 for x86v9 */
@@ -1495,7 +1538,7 @@ kfprintf(FILE *file, const char *fmt, ...)
 #define FPRINTF_FUNCTION fprintf
 #endif
 extern int
-x86_init_disassembly_info(dill_stream c, void * ptr)
+x86_init_disassembly_info(dill_stream s, void * ptr)
 {
     struct disassemble_info *i = ptr;
 #ifdef INIT_DISASSEMBLE_INFO_THREE_ARG
@@ -1505,12 +1548,12 @@ x86_init_disassembly_info(dill_stream c, void * ptr)
     INIT_DISASSEMBLE_INFO(*i, stdout);
 #endif
     i->mach = bfd_mach_i386_i386;
-    if (c->p->code_base != NULL) {
-	i->buffer = (bfd_byte *)c->p->code_base;
-	i->buffer_vma = (bfd_vma)c->p->code_base;
+    if (s->p->code_base != NULL) {
+	i->buffer = (bfd_byte *)s->p->code_base;
+	i->buffer_vma = (bfd_vma)s->p->code_base;
     } else {
-	i->buffer = (bfd_byte *)c->p->native.code_base;
-	i->buffer_vma = (bfd_vma)c->p->native.code_base;
+	i->buffer = (bfd_byte *)s->p->native.code_base;
+	i->buffer_vma = (bfd_vma)s->p->native.code_base;
     }
     i->buffer_length = MAXLENGTH;
 #ifdef HAVE_PRINT_INSN_I386
@@ -1521,7 +1564,7 @@ x86_init_disassembly_info(dill_stream c, void * ptr)
 }
 
 extern int
-x86_print_insn(dill_stream c, void *info_ptr, void *insn)
+x86_print_insn(dill_stream s, void *info_ptr, void *insn)
 {
 #ifdef HAVE_PRINT_INSN_I386
     return print_insn_i386((bfd_vma)insn, info_ptr);
@@ -1532,7 +1575,7 @@ x86_print_insn(dill_stream c, void *info_ptr, void *insn)
 
 extern void null_func(){}
 extern int
-x86_count_insn(dill_stream c, int start, int end)
+x86_count_insn(dill_stream s, int start, int end)
 {
 #ifdef HAVE_PRINT_INSN_I386
     struct disassemble_info i;
@@ -1545,16 +1588,16 @@ x86_count_insn(dill_stream c, int start, int end)
     INIT_DISASSEMBLE_INFO(i, stdout);
 #endif
     i.mach = bfd_mach_i386_i386;
-    if (c->p->code_base != NULL) {
-	i.buffer = (bfd_byte *)c->p->code_base;
-	i.buffer_vma = (bfd_vma)c->p->code_base;
+    if (s->p->code_base != NULL) {
+	i.buffer = (bfd_byte *)s->p->code_base;
+	i.buffer_vma = (bfd_vma)s->p->code_base;
     } else {
-	i.buffer = (bfd_byte *)c->p->native.code_base;
-	i.buffer_vma = (bfd_vma)c->p->native.code_base;
+	i.buffer = (bfd_byte *)s->p->native.code_base;
+	i.buffer_vma = (bfd_vma)s->p->native.code_base;
     }
     i.buffer_length = MAXLENGTH;
     count = 0;
-    insn_ptr = i.buffer + start;
+    insn_ptr = (char*)i.buffer + start;
     while((long)insn_ptr < (long)i.buffer + end) {
 	insn_ptr += print_insn_i386((bfd_vma)insn_ptr, &i);
 	count++;
@@ -1567,21 +1610,21 @@ x86_count_insn(dill_stream c, int start, int end)
 }
 #else
 extern int
-x86_count_insn(dill_stream c, int start, int end)
+x86_count_insn(dill_stream s, int start, int end)
 {   /* no print insn, just return the buffer length */
     return end - start;
 }
 extern int
-x86_init_disassembly_info(dill_stream c, void * ptr){return 0;}
-extern int x86_print_insn(dill_stream c, void *info_ptr, void *insn){return 0;}
+x86_init_disassembly_info(dill_stream s, void * ptr){return 0;}
+extern int x86_print_insn(dill_stream s, void *info_ptr, void *insn){return 0;}
 #endif
 
-char *char_regs[] = {"AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH"};
-char *short_regs[] = {"AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"};
-char *int_regs[] = {"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"};
+static char *char_regs[] = {"AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH"};
+static char *short_regs[] = {"AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"};
+static char *int_regs[] = {"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"};
 
 extern void
-x86_print_reg(dill_stream c, int typ, int reg)
+x86_print_reg(dill_stream s, int typ, int reg)
 {
     switch(typ) {
     case DILL_C: case DILL_UC:

@@ -19,7 +19,7 @@ noinst_HEADERS = config.h dill_internal.h
 if MULTI_TARGET
 libdill_la_SOURCES = dill_sparc.c dill_util.c sparc.c dill_x86.c x86.c \
 		dill_arm5.c arm5.c dill_virtual.c dill_x86_64.c x86_64.c \
-		virtual.c dill.c vm.c version.c
+		dill_ia64.c ia64.c virtual.c dill.c vm.c version.c
 else !MULTI_TARGET
 if NATIVE_CG
 libdill_la_SOURCES = dill_util.c  dill_virtual.c virtual.c dill.c vm.c dill_${ARCH_FILE}.c ${ARCH_FILE}.c  version.c

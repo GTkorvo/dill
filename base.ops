@@ -18,6 +18,8 @@ sub upperc {
 &arith2( "neg", "f d");
     $branch = 0;
 &branch( "eq ge gt le lt ne", "i u ul l p d f");
+    $compare = 0;
+&compare( "eq ge gt le lt ne", "i u ul l p d f");
     $convert = 0;
 &convert( "c d f i l s u ul us uc", "i u ul l");
 &convert( "d f i l u ul", "f d");
@@ -34,14 +36,15 @@ sub upperc {
 print HOUT "#define dill_jmp_a3_size $arith3\n";
 print HOUT "#define dill_jmp_a2_size $arith2\n";
 print HOUT "#define dill_jmp_branch_size $branch\n";
+print HOUT "#define dill_jmp_compare_size $compare\n";
 print HOUT "#define dill_jmp_convert_size $convert\n";
 
-print HOUT "#define dill_jv(c, label) (c->j->jv)(c, (unsigned long) label)\n";
-print HOUT "#define dill_jp(c, dest_reg) (c->j->jp)(c, (unsigned long) dest_reg)\n";
-print HOUT "#define dill_jpi(c, dest_imm) (c->j->jpi)(c, dest_imm)\n";
-print HOUT "#define dill_jalp(c, return_addill_reg, target) (c->j->jal)(c, return_addill_reg, target)\n";
+print HOUT "#define dill_jv(s, label) (s->j->jv)(s, (unsigned long) label)\n";
+print HOUT "#define dill_jp(s, dest_reg) (s->j->jp)(s, (unsigned long) dest_reg)\n";
+print HOUT "#define dill_jpi(s, dest_imm) (s->j->jpi)(s, dest_imm)\n";
+print HOUT "#define dill_jalp(s, return_addr_reg, target) (s->j->jal)(s, return_addr_reg, target)\n";
 
-print HOUT "#define dill_special(c, type, param) if (c->j->special) (c->j->special)(c, type, param)\n";
+print HOUT "#define dill_special(s, type, param) if (s->j->special) (s->j->special)(s, type, param)\n";
 
 print COUT "\n/* This file is generated from base.ops.  Do not edit directly. */\n\n";
 print COUT "#include <dill.h>\n";
@@ -51,7 +54,7 @@ foreach $key (keys %poly_array) {
    $poly_array{$key} .= " ";
    print COUT "int dill_${key}_poly_map[] = {\n";
    print HOUT "extern int dill_${key}_poly_map[];\n";
-   print HOUT "#define dill_P$key(c, typ, dest, src1, src2) (c->j->jmp_a3)[dill_${key}_poly_map[typ]](c, c->j->a3_data[dill_${key}_poly_map[typ]].data1, c->j->a3_data[dill_${key}_poly_map[typ]].data2, dest, src1, src2)\n";
+   print HOUT "#define dill_P$key(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_${key}_poly_map[typ]](s, s->j->a3_data[dill_${key}_poly_map[typ]].data1, s->j->a3_data[dill_${key}_poly_map[typ]].data2, dest, src1, src2)\n";
    foreach (split(' ', "c uc s us i u l ul p f d v b")) {
        $typ = $_;
        if ($poly_array{$key} =~ m/\W$typ\W/) {
@@ -61,25 +64,6 @@ foreach $key (keys %poly_array) {
 	       print COUT ("dill_jmp_${key}ul, ");
 	   } else {
 	       print COUT ("dill_jmp_${key}l, ");
-	   }
-       }
-   }
-   print COUT "0};\n";
-}
-foreach $key (keys %poly_branch_array) {
-   $poly_branch_array{$key} .= " ";
-   print COUT "int dill_${key}_poly_map[] = {\n";
-   print HOUT "extern int dill_b${key}_poly_map[];\n";
-   print HOUT "#define dill_Pb$key(c, typ, dest, src1, src2) (c->j->jmp_b)[dill_b${key}_poly_map[typ]](c, c->j->b_data[dill_b${key}_poly_map[typ]].data1, c->j->b_data[dill_b${key}_poly_map[typ]].data2, src1, src2, label)\n";
-   foreach (split(' ', "c uc s us i u l ul p f d v b")) {
-       $typ = $_;
-       if ($poly_branch_array{$key} =~ m/\W$typ\W/) {
-	   print COUT ("dill_jmp_b$key$typ, ");
-       } else {
-	   if (substr ($typ, 0, 1) eq "u") {
-	       print COUT ("dill_jmp_b${key}ul, ");
-	   } else {
-	       print COUT ("dill_jmp_b${key}l, ");
 	   }
        }
    }
@@ -114,33 +98,19 @@ EOF
 
 sub loadstore {
     local ($types) = @_;
-    print HOUT "#define dill_Pload(c, typ, dest, src1, src2) (c->j->load)(c, typ, 0, dest, src1, src2)\n";
-    print HOUT "#define dill_Ploadi(c, typ, dest, src, imm) (c->j->loadi)(c, typ, 0, dest, src, imm)\n";
-    print HOUT "#define dill_Pstore(c, typ, dest, src1, src2) (c->j->store)(c, typ, 0, dest, src1, src2)\n";
-    print HOUT "#define dill_Pstorei(c, typ, dest, src, imm) (c->j->storei)(c, typ, 0, dest, src, imm)\n";
+    print HOUT "#define dill_Pload(s, typ, dest, src1, src2) (s->j->load)(s, typ, 0, dest, src1, src2)\n";
+    print HOUT "#define dill_Ploadi(s, typ, dest, src, imm) (s->j->loadi)(s, typ, 0, dest, src, imm)\n";
+    print HOUT "#define dill_Pstore(s, typ, dest, src1, src2) (s->j->store)(s, typ, 0, dest, src1, src2)\n";
+    print HOUT "#define dill_Pstorei(s, typ, dest, src, imm) (s->j->storei)(s, typ, 0, dest, src, imm)\n";
     foreach (split(' ', $types)) {
-	print VHOUT "#define dill_ld${_}(c, dest, src1, src2) v_ld${_}(dest, src1, src2)\n";
-	print VHOUT "#define dill_ld${_}i(c, dest, src1, imm) v_ld${_}i(dest, src1, imm)\n";
-	print IHOUT "#define dill_ld${_}(c, dest, src1, src2) i_ld${_}(dest, src1, src2)\n";
-	print IHOUT "#define dill_ld${_}i(c, dest, src1, imm) i_ld${_}i(dest, src1, imm)\n";
-	print HOUT "#define dill_ld${_}(c, dest, src1, src2) (c->j->load)(c, DILL_" . &upperc($_) . ", 0, dest, src1, src2)\n";
-	print HOUT "#define dill_ld${_}i(c, dest, src, imm) (c->j->loadi)(c, DILL_" . &upperc($_) . ", 0, dest, src, imm)\n";
-	print VHOUT "#define dill_st${_}(c, dest, src1, src2) v_st${_}(dest, src1, src2)\n";
-	print VHOUT "#define dill_st${_}i(c, dest, src1, imm) v_st${_}i(dest, src1, imm)\n";
-	print IHOUT "#define dill_st${_}(c, dest, src1, src2) i_st${_}(dest, src1, src2)\n";
-	print IHOUT "#define dill_st${_}i(c, dest, src1, imm) i_st${_}i(dest, src1, imm)\n";
-	print HOUT "#define dill_st${_}(c, dest, src1, src2) (c->j->store)(c, DILL_" . &upperc($_) . ", 0, dest, src1, src2)\n";
-	print HOUT "#define dill_st${_}i(c, dest, src, imm) (c->j->storei)(c, DILL_" . &upperc($_) . ", 0, dest, src, imm)\n";
-	print VHOUT "#define dill_has_ldbs(c) 1\n";
-	print VHOUT "#define dill_ldbs${_}(c, dest, src1, src2) v_ldbs${_}(dest, src1, src2)\n";
-	print VHOUT "#define dill_ldbs${_}i(c, dest, src1, imm) v_ldbs${_}i(dest, src1, imm)\n";
-	print IHOUT "#define dill_has_ldbs(c) 1\n";
-	print IHOUT "#define dill_ldbs${_}(c, dest, src1, src2) i_ldbs${_}(dest, src1, src2)\n";
-	print IHOUT "#define dill_ldbs${_}i(c, dest, src1, imm) i_ldbs${_}i(dest, src1, imm)\n";
-	print HOUT "#define dill_has_ldbs(c) (c->j->bsload != 0)\n";
-	print HOUT "#define dill_ldbs${_}(c, dest, src1, src2) (c->j->bsload)(c, DILL_" . &upperc($_) . ", 0, dest, src1, src2)\n";
-	print HOUT "#define dill_ldbs${_}i(c, dest, src, imm) (c->j->bsloadi)(c, DILL_" . &upperc($_) . ", 0, dest, src, imm)\n";
-	print HOUT "#define dill_lea(c, dest, src, imm) (c->j->lea)(c, 0, 0, dest, src, imm)\n";
+	print HOUT "#define dill_ld${_}(s, dest, src1, src2) (s->j->load)(s, DILL_" . &upperc($_) . ", 0, dest, src1, src2)\n";
+	print HOUT "#define dill_ld${_}i(s, dest, src, imm) (s->j->loadi)(s, DILL_" . &upperc($_) . ", 0, dest, src, imm)\n";
+	print HOUT "#define dill_st${_}(s, dest, src1, src2) (s->j->store)(s, DILL_" . &upperc($_) . ", 0, dest, src1, src2)\n";
+	print HOUT "#define dill_st${_}i(s, dest, src, imm) (s->j->storei)(s, DILL_" . &upperc($_) . ", 0, dest, src, imm)\n";
+	print HOUT "#define dill_has_ldbs(s) (s->j->bsload != 0)\n";
+	print HOUT "#define dill_ldbs${_}(s, dest, src1, src2) (s->j->bsload)(s, DILL_" . &upperc($_) . ", 0, dest, src1, src2)\n";
+	print HOUT "#define dill_ldbs${_}i(s, dest, src, imm) (s->j->bsloadi)(s, DILL_" . &upperc($_) . ", 0, dest, src, imm)\n";
+	print HOUT "#define dill_lea(s, dest, src, imm) (s->j->lea)(s, 0, 0, dest, src, imm)\n";
     }
 }
 
@@ -158,15 +128,11 @@ sub arith3 {
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
-	    print VHOUT "#define dill_$op${_}(c, dest, src1, src2) v_$op${_}(dest, src1, src2)\n";
-	    print VHOUT "#define dill_${op}${_}i(c, dest, src1, imm) v_$op${_}i(dest, src1, imm)\n";
-	    print IHOUT "#define dill_$op${_}(c, dest, src1, src2) i_$op${_}(dest, src1, src2)\n";
-	    print IHOUT "#define dill_${op}${_}i(c, dest, src1, imm) i_$op${_}i(dest, src1, imm)\n";
-	    print HOUT "#define dill_$op${_}(c, dest, src1, src2) (c->j->jmp_a3)[dill_jmp_${op}${_}](c, c->j->a3_data[dill_jmp_${op}${_}].data1, c->j->a3_data[dill_jmp_${op}${_}].data2, dest, src1, src2)\n";
+	    print HOUT "#define dill_$op${_}(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_${op}${_}](s, s->j->a3_data[dill_jmp_${op}${_}].data1, s->j->a3_data[dill_jmp_${op}${_}].data2, dest, src1, src2)\n";
 	    if (($_ eq 'f') || ($_ eq 'd')) {
-		print HOUT "#define dill_$op${_}i(c, dest, src1, imm) (c->j->jmp_f3i)[dill_jmp_${op}${_}](c, c->j->a3f_data[dill_jmp_${op}${_}].data1, c->j->a3f_data[dill_jmp_${op}${_}].data2, dest, src1, imm)\n";
+		print HOUT "#define dill_$op${_}i(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_${op}${_}](s, s->j->a3f_data[dill_jmp_${op}${_}].data1, s->j->a3f_data[dill_jmp_${op}${_}].data2, dest, src1, imm)\n";
 	    } else {
-		print HOUT "#define dill_$op${_}i(c, dest, src1, imm) (c->j->jmp_a3i)[dill_jmp_${op}${_}](c, c->j->a3i_data[dill_jmp_${op}${_}].data1, c->j->a3i_data[dill_jmp_${op}${_}].data2, dest, src1, imm)\n";
+		print HOUT "#define dill_$op${_}i(s, dest, src1, imm) (s->j->jmp_a3i)[dill_jmp_${op}${_}](s, s->j->a3i_data[dill_jmp_${op}${_}].data1, s->j->a3i_data[dill_jmp_${op}${_}].data2, dest, src1, imm)\n";
 	    }
 	}
     }
@@ -185,15 +151,11 @@ sub arith2 {
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
-	    print VHOUT "#define dill_$op${_}(c, dest, src) v_$op${_}(dest, src)\n";
-	    print VHOUT "#define dill_${op}${_}i(c, dest, imm) v_$op${_}i(dest, imm)\n";
-	    print IHOUT "#define dill_$op${_}(c, dest, src) i_$op${_}(dest, src)\n";
-	    print IHOUT "#define dill_${op}${_}i(c, dest, imm) i_$op${_}i(dest, imm)\n";
-	    print HOUT "#define dill_$op${_}(c, dest, src) (c->j->jmp_a2)[dill_jmp_${op}${_}](c, c->j->a2_data[dill_jmp_${op}${_}].data1, c->j->a2_data[dill_jmp_${op}${_}].data2, dest, src)\n";
+	    print HOUT "#define dill_$op${_}(s, dest, src) (s->j->jmp_a2)[dill_jmp_${op}${_}](s, s->j->a2_data[dill_jmp_${op}${_}].data1, s->j->a2_data[dill_jmp_${op}${_}].data2, dest, src)\n";
 	    if (($_ eq 'f') || ($_ eq 'd')) {
-		print HOUT "#define dill_$op${_}i(c, dest, imm) (c->j->jmp_f2i)[dill_jmp_${op}${_}](c, c->j->a2f_data[dill_jmp_${op}${_}].data1, c->j->a2f_data[dill_jmp_${op}${_}].data2, dest, imm)\n";
+		print HOUT "#define dill_$op${_}i(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_${op}${_}](s, s->j->a2f_data[dill_jmp_${op}${_}].data1, s->j->a2f_data[dill_jmp_${op}${_}].data2, dest, imm)\n";
 	    } else {
-		print HOUT "#define dill_$op${_}i(c, dest, imm) (c->j->jmp_a2i)[dill_jmp_${op}${_}](c, c->j->a2_data[dill_jmp_${op}${_}].data1, c->j->a2_data[dill_jmp_${op}${_}].data2, dest, imm)\n";
+		print HOUT "#define dill_$op${_}i(s, dest, imm) (s->j->jmp_a2i)[dill_jmp_${op}${_}](s, s->j->a2_data[dill_jmp_${op}${_}].data1, s->j->a2_data[dill_jmp_${op}${_}].data2, dest, imm)\n";
 	    }
 	}
     }
@@ -203,7 +165,7 @@ sub branch {
     local($ops, $types) = @_;
     $brcode = 0;
     foreach (split(' ', $ops)) {
-	print HOUT "#define dill_b${_}_code " . $brcode++ . "\n";
+	print HOUT "#define dill_${_}_code " . $brcode++ . "\n";
     }
     print COUT "char *branch_op_names[] = {";
     foreach (split(' ', $ops)) {
@@ -211,7 +173,6 @@ sub branch {
 	foreach (split(' ', $types)) {
 	    print HOUT "#define dill_jmp_b${op}${_} $branch\n";
 	    print COUT "\"${op}${_}\", ";
-	    $poly_branch_array{$op} = $poly_branch_array{$op} . " ${_}";
 	    $branch = $branch + 1;
 	}
     }
@@ -219,15 +180,36 @@ sub branch {
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
-	    print VHOUT "#define dill_b$op${_}(c, src1, src2, label) v_b$op${_}(src1, src2, label)\n";
-	    print VHOUT "#define dill_b${op}${_}i(c, src, imm, label) v_b$op${_}i(src, imm, label)\n";
-	    print IHOUT "#define dill_b$op${_}(c, src1, src2, label) i_b$op${_}(src1, src2, label)\n";
-	    print IHOUT "#define dill_b${op}${_}i(c, src, imm, label) i_b$op${_}i(src, imm, label)\n";
-	    print HOUT "#define dill_b$op${_}(c, src1, src2, label) (c->j->jmp_b)[dill_jmp_b${op}${_}](c, c->j->b_data[dill_jmp_b${op}${_}].data1, c->j->b_data[dill_jmp_b${op}${_}].data2, src1, src2, label)\n";
+	    print HOUT "#define dill_b$op${_}(s, src1, src2, label) (s->j->jmp_b)[dill_jmp_b${op}${_}](s, s->j->b_data[dill_jmp_b${op}${_}].data1, s->j->b_data[dill_jmp_b${op}${_}].data2, src1, src2, label)\n";
 	    if (($_ eq 'f') || ($_ eq 'd')) {
 		#% no immediate form 
 	    } else {
-		print HOUT "#define dill_b$op${_}i(c, src, imm, label) (c->j->jmp_bi)[dill_jmp_b${op}${_}](c, c->j->b_data[dill_jmp_b${op}${_}].data1, c->j->b_data[dill_jmp_b${op}${_}].data2, src, imm, label)\n";
+		print HOUT "#define dill_b$op${_}i(s, src, imm, label) (s->j->jmp_bi)[dill_jmp_b${op}${_}](s, s->j->b_data[dill_jmp_b${op}${_}].data1, s->j->b_data[dill_jmp_b${op}${_}].data2, src, imm, label)\n";
+	    }
+	}
+    }
+}
+
+sub compare {
+    local($ops, $types) = @_;
+    print COUT "char *compare_op_names[] = {";
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    print HOUT "#define dill_jmp_c${op}${_} $compare\n";
+	    print COUT "\"${op}${_}\", ";
+	    $compare = $compare + 1;
+	}
+    }
+    print COUT "0};\n";
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    print HOUT "#define dill_$op${_}(s, dest, src1, src2) (s->j->jmp_c)[dill_jmp_c${op}${_}](s, s->j->c_data[dill_jmp_c${op}${_}].data1, s->j->c_data[dill_jmp_c${op}${_}].data2, dest, src1, src2)\n";
+	    if (($_ eq 'f') || ($_ eq 'd')) {
+		#% no immediate form 
+	    } else {
+		print HOUT "#define dill_$op${_}i(s, dest, src, imm) (s->j->jmp_ci)[dill_jmp_c${op}${_}](s, s->j->c_data[dill_jmp_c${op}${_}].data1, s->j->c_data[dill_jmp_c${op}${_}].data2, dest, src, imm)\n";
 	    }
 	}
     }
@@ -241,11 +223,7 @@ sub convert {
 	    if (${from} eq ${_}) { 
 	        next;
 	    } 
-	    print VHOUT "#define dill_cv${from}2${_}(c, dest, src) v_cv${from}2${_}(dest, src)\n";
-	    print VHOUT "#define dill_cv${from}2${_}i(c, src, imm) v_cv${from}2${_}i(src, imm)\n";
-	    print IHOUT "#define dill_cv${from}2${_}(c, dest, src) i_cv${from}2${_}(dest, src)\n";
-	    print IHOUT "#define dill_cv${from}2${_}i(c, src, imm) i_cv${from}2${_}i(src, imm)\n";
-	    print HOUT "#define dill_cv${from}2${_}(c, dest, src) (c->j->convert)(c, DILL_" . &upperc(${from}) . ", DILL_" . &upperc($_) . ", dest, src)\n";
+	    print HOUT "#define dill_cv${from}2${_}(s, dest, src) (s->j->convert)(s, DILL_" . &upperc(${from}) . ", DILL_" . &upperc($_) . ", dest, src)\n";
 	}
     }
 }
@@ -257,66 +235,54 @@ sub ret {
 	$dill_type = $_;
 	if (($type eq 'c') || ($type eq 'uc') || ($type eq 's') || 
 	    ($type eq 'us')) { $dill_type = "i";}
-	print VHOUT "#define dill_ret${type}(c, src) v_ret${type}(src)\n";
-	print VHOUT "#define dill_ret${type}i(c, imm) v_ret${type}i(imm)\n";
-	print IHOUT "#define dill_ret${type}(c, src) i_ret${type}(src)\n";
-	print IHOUT "#define dill_ret${type}i(c, imm) i_ret${type}i(imm)\n";
-	print HOUT "#define dill_ret${type}(c, src) (c->j->ret)(c, DILL_" . &upperc($dill_type) . ", 0, src)\n";
+	print HOUT "#define dill_ret${type}(s, src) (s->j->ret)(s, DILL_" . &upperc($dill_type) . ", 0, src)\n";
 	if ($_ eq 'p') {
-	    print HOUT "#define dill_ret${type}i(c, imm) (c->j->reti)(c, DILL_" . &upperc($type) . ", 0, (unsigned long) imm)\n";
+	    print HOUT "#define dill_ret${type}i(s, imm) (s->j->reti)(s, DILL_" . &upperc($type) . ", 0, (unsigned long) imm)\n";
 	} elsif (($_ eq 'f') || ($_ eq 'd')) {
-	    print HOUT "#define dill_ret${type}i(c, imm) (c->j->retf)(c, DILL_" . &upperc($type) . ", 0, imm)\n";
+	    print HOUT "#define dill_ret${type}i(s, imm) (s->j->retf)(s, DILL_" . &upperc($type) . ", 0, imm)\n";
 	} else {
-	    print HOUT "#define dill_ret${type}i(c, imm) (c->j->reti)(c, DILL_" . &upperc($type) . ", 0, imm)\n";
+	    print HOUT "#define dill_ret${type}i(s, imm) (s->j->reti)(s, DILL_" . &upperc($type) . ", 0, imm)\n";
 	}
 
     }
-    print HOUT "#define dill_pret(c, type, src) (c->j->ret)(c, type, 0, src)\n";
+    print HOUT "#define dill_pret(s, type, src) (s->j->ret)(s, type, 0, src)\n";
 }
 
 sub mov {
     local($types) = @_;
     foreach (split(' ', $types)) {
 	$type = $_;
-	print VHOUT "#define dill_mov${type}(c, dest, src) v_mov${type}(dest, src)\n";
-	print IHOUT "#define dill_mov${type}(c, dest, src) i_mov${type}(dest, src)\n";
-	print HOUT "#define dill_mov${type}(c, dest, src) (c->j->mov)(c, DILL_" . &upperc($type) . ", 0, dest, src)\n";
+	print HOUT "#define dill_mov${type}(s, dest, src) (s->j->mov)(s, DILL_" . &upperc($type) . ", 0, dest, src)\n";
     }
-    print HOUT "#define dill_pmov(c, type, dest, src) (c->j->mov)(c, type, 0, dest, src)\n";
+    print HOUT "#define dill_pmov(s, type, dest, src) (s->j->mov)(s, type, 0, dest, src)\n";
 }
 
 sub set {
     local($types) = @_;
     foreach (split(' ', $types)) {
 	$type = $_;
-	print VHOUT "#define dill_set${type}(c, dest, imm) v_set${type}(dest, imm)\n";
-	print IHOUT "#define dill_set${type}(c, dest, imm) i_set${type}(dest, imm)\n";
 	if (($_ eq 'f') || ($_ eq 'd')) {
-	    print HOUT "#define dill_set${type}(c, dest, imm) (c->j->setf)(c, DILL_" . &upperc($type) . ", 0, dest, imm)\n";
+	    print HOUT "#define dill_set${type}(s, dest, imm) (s->j->setf)(s, DILL_" . &upperc($type) . ", 0, dest, imm)\n";
 	} else {
-	    print HOUT "#define dill_set${type}(c, dest, imm) (c->j->set)(c, DILL_" . &upperc($type) . ", 0, dest, imm)\n";
+	    print HOUT "#define dill_set${type}(s, dest, imm) (s->j->set)(s, DILL_" . &upperc($type) . ", 0, dest, imm)\n";
 	}
     }
-    print HOUT "#define dill_piset(c, type, dest, imm) (c->j->set)(c, type, 0, dest, imm)\n";
+    print HOUT "#define dill_piset(s, type, dest, imm) (s->j->set)(s, type, 0, dest, imm)\n";
 }
 
 sub push {
     local($types) = @_;
-    print HOUT "#define dill_push_arg(c, type, reg) (c->j->push)(c, type, reg)\n";
-    print HOUT "#define dill_push_init(c) (c->j->push)(c, DILL_V, -1)\n";
+    print HOUT "#define dill_push_arg(s, type, reg) (s->j->push)(s, type, reg)\n";
+    print HOUT "#define dill_push_init(s) (s->j->push)(s, DILL_V, -1)\n";
     foreach (split(' ', $types)) {
 	$type = $_;
-	print VHOUT "#define dill_push_arg${type}i(c, imm) v_push_arg${type}i(imm)\n";
-	print VHOUT "#define dill_push_arg${type}(c, reg) v_push_arg${type}(reg)\n";
-	print IHOUT "#define dill_push_arg${type}i(c, imm) i_arg${type}i(imm)\n";
-	print IHOUT "#define dill_push_arg${type}(c, reg) i_arg${type}(reg)\n";
-	print HOUT "#define dill_push_arg${type}(c, reg) (c->j->push)(c, DILL_" . &upperc($type) . ", reg)\n";
+	print HOUT "#define dill_push_arg${type}(s, reg) (s->j->push)(s, DILL_" . &upperc($type) . ", reg)\n";
 	if (($_ eq 'f') || ($_ eq 'd')) {
-	    print HOUT "#define dill_push_arg${type}i(c, imm) (c->j->pushfi)(c, DILL_" . &upperc($type) . ", imm)\n";
+	    print HOUT "#define dill_push_arg${type}i(s, imm) (s->j->pushfi)(s, DILL_" . &upperc($type) . ", imm)\n";
 	} elsif ($_ eq 'p') {
-	    print HOUT "#define dill_push_arg${type}i(c, imm) (c->j->pushpi)(c, DILL_" . &upperc($type) . ", imm)\n";
+	    print HOUT "#define dill_push_arg${type}i(s, imm) (s->j->pushpi)(s, DILL_" . &upperc($type) . ", imm)\n";
 	} else {
-	    print HOUT "#define dill_push_arg${type}i(c, imm) (c->j->pushi)(c, DILL_" . &upperc($type) . ", imm)\n";
+	    print HOUT "#define dill_push_arg${type}i(s, imm) (s->j->pushi)(s, DILL_" . &upperc($type) . ", imm)\n";
 	}
     }
 }
@@ -326,27 +292,23 @@ sub call {
     foreach (split(' ', $types)) {
 	$type = $_;
 	if ($type eq 'v') {
-	    print HOUT "extern void dill_scall${type}(dill_stream c, void *ptr, char *arg_str, ...);\n";
+	    print HOUT "extern void dill_scall${type}(dill_stream s, void *ptr, char *arg_str, ...);\n";
 	} else {
-	    print HOUT "extern int dill_scall${type}(dill_stream c, void *ptr, char *arg_str, ...);\n";
+	    print HOUT "extern int dill_scall${type}(dill_stream s, void *ptr, char *arg_str, ...);\n";
 	}
-	print HOUT "#define dill_call${type}(c, ptr) c->j->calli(c, DILL_" . &upperc($type) . " , ptr)\n";
-	print HOUT "#define dill_callr${type}(c, src) c->j->callr(c, DILL_" . &upperc($type) . " , src)\n";
-	print VHOUT "#define dill_call${type}(c, ptr) v_ccall${type}(ptr)\n";
-	print IHOUT "#define dill_call${type}(c, ptr) i_call${type}i(ptr)\n";
+	print HOUT "#define dill_call${type}(s, ptr) s->j->calli(s, DILL_" . &upperc($type) . " , ptr)\n";
+	print HOUT "#define dill_callr${type}(s, src) s->j->callr(s, DILL_" . &upperc($type) . " , src)\n";
     }
-    print HOUT "#define dill_pcall(c, type, ptr) c->j->calli(c, type, ptr)\n";
-    print HOUT "#define dill_pcallr(c, type, src) c->j->callr(c, type, src)\n";
+    print HOUT "#define dill_pcall(s, type, ptr) s->j->calli(s, type, ptr)\n";
+    print HOUT "#define dill_pcallr(s, type, src) s->j->callr(s, type, src)\n";
 }
 
 sub save_restore {
     local($types) = @_;
     foreach (split(' ', $types)) {
 	$type = $_;
-	print HOUT "#define dill_save${type}(c, reg) c->j->save_restore(c, 0, DILL_" . &upperc($_) . ", reg)\n";
-	print HOUT "#define dill_restore${type}(c, reg) c->j->save_restore(c, 1, DILL_" . &upperc($_) . ", reg)\n";
-	print VHOUT "#define dill_save${type}(c, reg) v_save${type}(reg)\n";
-	print VHOUT "#define dill_restore${type}(c, reg) v_restore${type}(reg)\n";
+	print HOUT "#define dill_save${type}(s, reg) s->j->save_restore(s, 0, DILL_" . &upperc($_) . ", reg)\n";
+	print HOUT "#define dill_restore${type}(s, reg) s->j->save_restore(s, 1, DILL_" . &upperc($_) . ", reg)\n";
 	
     }
 }
@@ -360,10 +322,10 @@ print HOUT<<EOF;
 #define __DILL_H__
 
 /* This file is generated from base.ops.  Do not edit directly. */
-
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
+
 
 struct dill_private_ctx;
 
@@ -392,42 +354,44 @@ typedef enum {DILL_X86_CS_PREFIX = 0, DILL_X86_SS_PREFIX,
               DILL_X86_DS_PREFIX, DILL_X86_ES_PREFIX,
               DILL_X86_FS_PREFIX, DILL_X86_GS_PREFIX} segment_prefix;
 
-typedef void (*dill_mach_init_routine)(dill_stream c);
-typedef void (*dill_mach_proc_start)(dill_stream c, char *name, int param_count, void *params, dill_reg *arg_reg_list);
-typedef void (*dill_mach_end)(dill_stream c);
-typedef void *(*dill_mach_clone_code)(dill_stream c, void *new_base, int size);
-typedef void (*arith_op3)(dill_stream c, int data1, int data2, int dest, int src1, int src2);
-typedef void (*arith_op3i)(dill_stream c, int data1, int data2, int dest, int src1, long imm);
-typedef void (*arith_op3fi)(dill_stream c, int data1, int data2, int dest, int src1, double imm);
-typedef void (*arith_op2)(dill_stream c, int data1, int data2, int dest, int src);
-typedef void (*arith_op2i)(dill_stream c, int data1, int data2, int dest, long imm);
-typedef void (*branch_op)(dill_stream c, int data1, int data2, int src1, int src2, int label);
-typedef void (*branch_opi)(dill_stream c, int data1, int data2, int src, long imm, int label);
-typedef void (*cvt_op)(dill_stream c, int data1, int data2, int dest, int src);
-typedef void (*cvt_opi)(dill_stream c, int data1, int data2, int dest, long imm);
-typedef void (*ldst_op)(dill_stream c, int data1, int data2, int dest, int src1, int src2);
-typedef void (*ldst_opi)(dill_stream c, int data1, int data2, int dest, int src1, long imm);
-typedef void (*ret_op)(dill_stream c, int data1, int data2, int src);
-typedef void (*ret_opi)(dill_stream c, int data1, int data2, long imm);
-typedef void (*ret_opf)(dill_stream c, int data1, int data2, double imm);
-typedef void (*jmp_op)(dill_stream c, unsigned long arg);
-typedef void (*jmp_opa)(dill_stream c, void *arg);
-typedef void (*jal_op)(dill_stream c, int dest, int target);
-typedef void (*special_op)(dill_stream c, special_operations type, long param);
-typedef int (*call_opi)(dill_stream c, int type, void *xfer_address);
-typedef int (*call_opr)(dill_stream c, int type, int src);
-typedef void (*setf_opi)(dill_stream c, int data1, int data2, int dest, double imm);
-typedef void (*push_op)(dill_stream c, int type, int reg);
-typedef void (*push_opi)(dill_stream c, int type, long value);
-typedef void (*push_oppi)(dill_stream c, int type, void *value);
-typedef void (*push_opfi)(dill_stream c, int type, double value);
-typedef int (*local_op)(dill_stream c, int flag, int val);
-typedef void (*save_restore_op)(dill_stream c, int save_restore_flag, int type, int reg);
-typedef void (*lea_op)(dill_stream c, int data1, int data2, int dest, int src, long offset);
-typedef int (*init_disassembly_op)(dill_stream c, void *dis_info);
-typedef int (*print_insn_op)(dill_stream c, void *dis_info, void *insn);
-typedef void (*print_reg_op)(dill_stream c, int typ, int reg);
-typedef int (*count_insn_op)(dill_stream c, int start, int end);
+typedef void (*dill_mach_init_routine)(dill_stream s);
+typedef void (*dill_mach_proc_start)(dill_stream s, char *name, int param_count, void *params, dill_reg *arg_reg_list);
+typedef void (*dill_mach_end)(dill_stream s);
+typedef void *(*dill_mach_clone_code)(dill_stream s, void *new_base, int size);
+typedef void (*arith_op3)(dill_stream s, int data1, int data2, int dest, int src1, int src2);
+typedef void (*arith_op3i)(dill_stream s, int data1, int data2, int dest, int src1, long imm);
+typedef void (*arith_op3fi)(dill_stream s, int data1, int data2, int dest, int src1, double imm);
+typedef void (*arith_op2)(dill_stream s, int data1, int data2, int dest, int src);
+typedef void (*arith_op2i)(dill_stream s, int data1, int data2, int dest, long imm);
+typedef void (*branch_op)(dill_stream s, int data1, int data2, int src1, int src2, int label);
+typedef void (*branch_opi)(dill_stream s, int data1, int data2, int src, long imm, int label);
+typedef void (*compare_op)(dill_stream s, int data1, int data2, int dest, int src1, int src2);
+typedef void (*compare_opi)(dill_stream s, int data1, int data2, int dest, int src, long imm);
+typedef void (*cvt_op)(dill_stream s, int data1, int data2, int dest, int src);
+typedef void (*cvt_opi)(dill_stream s, int data1, int data2, int dest, long imm);
+typedef void (*ldst_op)(dill_stream s, int data1, int data2, int dest, int src1, int src2);
+typedef void (*ldst_opi)(dill_stream s, int data1, int data2, int dest, int src1, long imm);
+typedef void (*ret_op)(dill_stream s, int data1, int data2, int src);
+typedef void (*ret_opi)(dill_stream s, int data1, int data2, long imm);
+typedef void (*ret_opf)(dill_stream s, int data1, int data2, double imm);
+typedef void (*jmp_op)(dill_stream s, unsigned long arg);
+typedef void (*jmp_opa)(dill_stream s, void *arg);
+typedef void (*jal_op)(dill_stream s, int dest, int target);
+typedef void (*special_op)(dill_stream s, special_operations type, long param);
+typedef int (*call_opi)(dill_stream s, int type, void *xfer_address);
+typedef int (*call_opr)(dill_stream s, int type, int src);
+typedef void (*setf_opi)(dill_stream s, int data1, int data2, int dest, double imm);
+typedef void (*push_op)(dill_stream s, int type, int reg);
+typedef void (*push_opi)(dill_stream s, int type, long value);
+typedef void (*push_oppi)(dill_stream s, int type, void *value);
+typedef void (*push_opfi)(dill_stream s, int type, double value);
+typedef int (*local_op)(dill_stream s, int flag, int val);
+typedef void (*save_restore_op)(dill_stream s, int save_restore_flag, int type, int reg);
+typedef void (*lea_op)(dill_stream s, int data1, int data2, int dest, int src, long offset);
+typedef int (*init_disassembly_op)(dill_stream s, void *dis_info);
+typedef int (*print_insn_op)(dill_stream s, void *dis_info, void *insn);
+typedef void (*print_reg_op)(dill_stream s, int typ, int reg);
+typedef int (*count_insn_op)(dill_stream s, int start, int end);
 
 typedef struct jmp_data_s {
     short data1;
@@ -452,6 +416,9 @@ struct jmp_table_s {
     branch_op *jmp_b;
     branch_opi *jmp_bi;
     jmp_data *b_data;
+    compare_op *jmp_c;
+    compare_opi *jmp_ci;
+    jmp_data *c_data;
     cvt_op convert;
     ldst_op load;
     ldst_op bsload;
@@ -509,47 +476,50 @@ extern jmp_table sparc_jump_table;
 EXTERN dill_stream dill_create_raw_stream(void);
 EXTERN dill_stream dill_create_stream(void);
 EXTERN dill_exec_ctx dill_get_exec_context(dill_stream x);
-EXTERN void dill_free_context(dill_stream c);
+EXTERN void dill_free_context(dill_stream s);
 EXTERN void dill_free_exec_context(dill_exec_ctx c);
 EXTERN void dill_assoc_client_data(dill_exec_ctx ec, int key, long value);
 EXTERN long dill_get_client_data(dill_exec_ctx ec, int key);
-EXTERN void* dill_take_code(dill_stream c);
-EXTERN int dill_alloc_label(dill_stream c);
-EXTERN void dill_mark_label(dill_stream c, int label);
-EXTERN void dill_mark_data(dill_stream c, void *addr, int label);
-EXTERN int dill_raw_getreg(dill_stream c, dill_reg *reg_p, int type, int reg_class);
-EXTERN int dill_getreg(dill_stream c, int typ);
-EXTERN void dill_raw_putreg(dill_stream c, dill_reg reg_p, int type);
-EXTERN void dill_raw_unavailreg(dill_stream c, int type, dill_reg reg);
-EXTERN void dill_raw_availreg(dill_stream c, int type, dill_reg reg);
-EXTERN void dill_alloc_specific(dill_stream c, dill_reg reg_p, int type, int reg_class);
-EXTERN void dill_dealloc_specific(dill_stream c, dill_reg reg_p, int type, int reg_class);
-EXTERN void dill_start_simple_proc(dill_stream c, char *name, int ret_type);
-EXTERN void dill_param_alloc(dill_stream c, int argno, int type, 
+EXTERN void* dill_take_code(dill_stream s);
+EXTERN int dill_alloc_label(dill_stream s);
+EXTERN void dill_mark_label(dill_stream s, int label);
+EXTERN void dill_mark_data(dill_stream s, void *addr, int label);
+EXTERN int dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int reg_class);
+EXTERN int dill_getreg(dill_stream s, int typ);
+EXTERN void dill_raw_putreg(dill_stream s, dill_reg reg_p, int type);
+EXTERN void dill_raw_unavailreg(dill_stream s, int type, dill_reg reg);
+EXTERN void dill_raw_availreg(dill_stream s, int type, dill_reg reg);
+EXTERN void dill_alloc_specific(dill_stream s, dill_reg reg_p, int type, int reg_class);
+EXTERN void dill_dealloc_specific(dill_stream s, dill_reg reg_p, int type, int reg_class);
+EXTERN void dill_start_simple_proc(dill_stream s, char *name, int ret_type);
+EXTERN void dill_param_alloc(dill_stream s, int argno, int type, 
 			  dill_reg *regp);
-EXTERN void dill_param_struct_alloc(dill_stream c, int argno, int type, 
+EXTERN void dill_param_struct_alloc(dill_stream s, int argno, int type, 
 				 dill_parameter_type *paramp);
-EXTERN dill_reg dill_param_reg(dill_stream c, int argno);
-EXTERN dill_reg dill_vparam(dill_stream c, int argno);
-EXTERN void dill_start_proc(dill_stream c, char *name, int ret_type, char *arg_str);
-EXTERN void dill_dump(dill_stream c);
-EXTERN void *dill_end(dill_stream c);
-EXTERN void *dill_clone_code(dill_stream c, void *new_base, int size);
-EXTERN int dill_code_size(dill_stream c);
-EXTERN int dill_do_reverse_vararg_push(dill_stream c);
-EXTERN int dill_getvblock(dill_stream c, int size);
-EXTERN void dill_virtual_lea(dill_stream c, int dest, int src);
-EXTERN void dill_pbr(dill_stream c, int op_type, int data_type, dill_reg src1, 
+EXTERN dill_reg dill_param_reg(dill_stream s, int argno);
+EXTERN dill_reg dill_vparam(dill_stream s, int argno);
+EXTERN void dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str);
+EXTERN void dill_dump(dill_stream s);
+EXTERN void *dill_end(dill_stream s);
+EXTERN void *dill_clone_code(dill_stream s, void *new_base, int size);
+EXTERN int dill_code_size(dill_stream s);
+EXTERN int dill_do_reverse_vararg_push(dill_stream s);
+EXTERN int dill_getvblock(dill_stream s, int size);
+EXTERN void dill_virtual_lea(dill_stream s, int dest, int src);
+EXTERN void dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1, 
 		   dill_reg src2, int label);
+EXTERN void dill_pcompare(dill_stream s, int op_type, int data_type, 
+			  dill_reg dest, dill_reg src1, 
+			  dill_reg src2);
 
-#define dill_type_align(c, t) c->j->type_align[t]
-#define dill_type_size(c, t) c->j->type_size[t]
-#define dill_target_byte_order(c) c->j->target_byte_order
-#define dill_target_float_format(c) c->j->target_float_format
-#define dill_lp(c) c->dill_local_pointer
-#define dill_pp(c) c->dill_param_reg_pointer
-#define dill_local(c, type) c->j->local(c, 0, type)
-#define dill_localb(c, bytes) c->j->local(c, 1, bytes)
+#define dill_type_align(s, t) s->j->type_align[t]
+#define dill_type_size(s, t) s->j->type_size[t]
+#define dill_target_byte_order(s) s->j->target_byte_order
+#define dill_target_float_format(s) s->j->target_float_format
+#define dill_lp(s) s->dill_local_pointer
+#define dill_pp(s) s->dill_param_reg_pointer
+#define dill_local(s, type) s->j->local(s, 0, type)
+#define dill_localb(s, bytes) s->j->local(s, 1, bytes)
 
 
 /* atomic types */
