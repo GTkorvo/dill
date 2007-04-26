@@ -42,6 +42,31 @@ if (c->p->cur_ip >= c->p->code_limit) {\
 if (c->dill_debug) dump_cur_dill_insn(c);\
 c->p->cur_ip = ((char*)c->p->cur_ip)+4
 
+#define BYTE_OUT5(c, insn1, insn2, insn3, insn4, insn5) \
+if (c->p->cur_ip >= c->p->code_limit) {\
+   extend_dill_stream(c);\
+}\
+*(unsigned char*)c->p->cur_ip = (unsigned char)insn1;\
+*(((unsigned char*)c->p->cur_ip) + 1)= (unsigned char)insn2;\
+*(((unsigned char*)c->p->cur_ip) + 2)= (unsigned char)insn3;\
+*(((unsigned char*)c->p->cur_ip) + 3)= (unsigned char)insn4;\
+*(((unsigned char*)c->p->cur_ip) + 4)= (unsigned char)insn5;\
+if (c->dill_debug) dump_cur_dill_insn(c);\
+c->p->cur_ip = ((char*)c->p->cur_ip)+5
+
+#define BYTE_OUT6(c, insn1, insn2, insn3, insn4, insn5, insn6) \
+if (c->p->cur_ip >= c->p->code_limit) {\
+   extend_dill_stream(c);\
+}\
+*(unsigned char*)c->p->cur_ip = (unsigned char)insn1;\
+*(((unsigned char*)c->p->cur_ip) + 1)= (unsigned char)insn2;\
+*(((unsigned char*)c->p->cur_ip) + 2)= (unsigned char)insn3;\
+*(((unsigned char*)c->p->cur_ip) + 3)= (unsigned char)insn4;\
+*(((unsigned char*)c->p->cur_ip) + 4)= (unsigned char)insn5;\
+*(((unsigned char*)c->p->cur_ip) + 5)= (unsigned char)insn6;\
+if (c->dill_debug) dump_cur_dill_insn(c);\
+c->p->cur_ip = ((char*)c->p->cur_ip)+6
+
 #define BYTE_OUT3I(c, insn1, insn2, insn3, imm32) \
 if (c->p->cur_ip >= c->p->code_limit) {\
    extend_dill_stream(c);\
@@ -52,6 +77,31 @@ if (c->p->cur_ip >= c->p->code_limit) {\
 *(unsigned int *)(((unsigned char*)c->p->cur_ip) + 3)= (unsigned int)imm32;\
 if (c->dill_debug) dump_cur_dill_insn(c);\
 c->p->cur_ip = ((char*)c->p->cur_ip)+7
+
+#define BYTE_OUT4I(c, insn1, insn2, insn3, insn4, imm32) \
+if (c->p->cur_ip >= c->p->code_limit) {\
+   extend_dill_stream(c);\
+}\
+*(unsigned char*)c->p->cur_ip = (unsigned char)insn1;\
+*(((unsigned char*)c->p->cur_ip) + 1)= (unsigned char)insn2;\
+*(((unsigned char*)c->p->cur_ip) + 2)= (unsigned char)insn3;\
+*(((unsigned char*)c->p->cur_ip) + 3)= (unsigned char)insn4;\
+*(unsigned int *)(((unsigned char*)c->p->cur_ip) + 4)= (unsigned int)imm32;\
+if (c->dill_debug) dump_cur_dill_insn(c);\
+c->p->cur_ip = ((char*)c->p->cur_ip)+8
+
+#define BYTE_OUT5I(c, insn1, insn2, insn3, insn4, insn5, imm32) \
+if (c->p->cur_ip >= c->p->code_limit) {\
+   extend_dill_stream(c);\
+}\
+*(unsigned char*)c->p->cur_ip = (unsigned char)insn1;\
+*(((unsigned char*)c->p->cur_ip) + 1)= (unsigned char)insn2;\
+*(((unsigned char*)c->p->cur_ip) + 2)= (unsigned char)insn3;\
+*(((unsigned char*)c->p->cur_ip) + 3)= (unsigned char)insn4;\
+*(((unsigned char*)c->p->cur_ip) + 4)= (unsigned char)insn5;\
+*(unsigned int *)(((unsigned char*)c->p->cur_ip) + 5)= (unsigned int)imm32;\
+if (c->dill_debug) dump_cur_dill_insn(c);\
+c->p->cur_ip = ((char*)c->p->cur_ip)+9
 
 #define BYTE_OUT3S(c, insn1, insn2, insn3, imm16) \
 if (c->p->cur_ip >= c->p->code_limit) {\
@@ -138,6 +188,9 @@ extern void *gen_x86_mach_info();
 extern void x86_arith3(dill_stream s, int op, int commut, int dest, int src1, int src2);
 extern void x86_arith2(dill_stream s, int op, int subop, int dest, int src);
 extern void x86_mul(dill_stream s, int signed, int imm, int dest, int src1, int src2);
+
+extern void x86_farith(dill_stream s, int b1, int b2, int dest, int src1, int src2);
+extern void x86_farith2(dill_stream s, int b1, int b2, int dest, int src);
 
 extern void x86_div_mod(dill_stream s, int sign, int div, int dest, int src1, int src2);
 extern void x86_div_modi(dill_stream s, int sign, int div, int dest, int src1, long imm);

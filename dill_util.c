@@ -384,7 +384,7 @@ dill_get_fp(dill_stream s)
 }
 
 EXTERN void *
-dill_end(dill_stream s)
+dill_finalize(dill_stream s)
 {
     (s->j->end)(s);
     s->p->save_param_count = s->p->c_param_count;
@@ -1024,83 +1024,83 @@ do_vararg_push(dill_stream s, char *arg_str, va_list ap)
 }
 
 
-void dill_scallv(dill_stream s, void *ptr, char *arg_str, ...)
+void dill_scallv(dill_stream s, void *ptr, char *name, char *arg_str, ...)
 {
     va_list ap;
 
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    (void) s->j->calli(s, DILL_V, ptr);
+    (void) s->j->calli(s, DILL_V, ptr, name);
     va_end(ap);
 }
 
-int dill_scalli(dill_stream s, void* ptr, char *arg_str, ...)
+int dill_scalli(dill_stream s, void* ptr, char *name, char *arg_str, ...)
 {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_I, ptr);
+    ret_reg = s->j->calli(s, DILL_I, ptr, name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scallu(dill_stream s, void *ptr, char *arg_str, ...) {
+int dill_scallu(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_U, ptr);
+    ret_reg = s->j->calli(s, DILL_U, ptr, name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scallp(dill_stream s, void *ptr, char *arg_str, ...) {
+int dill_scallp(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_P, ptr);
+    ret_reg = s->j->calli(s, DILL_P, ptr, name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scallul(dill_stream s, void *ptr, char *arg_str, ...) {
+int dill_scallul(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_UL, ptr);
+    ret_reg = s->j->calli(s, DILL_UL, ptr, name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scalll(dill_stream s, void *ptr, char *arg_str, ...) {
+int dill_scalll(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_L, ptr);
+    ret_reg = s->j->calli(s, DILL_L, ptr, name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scallf(dill_stream s, void *ptr, char *arg_str, ...) {
+int dill_scallf(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_F, ptr);
+    ret_reg = s->j->calli(s, DILL_F, ptr, name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scalld(dill_stream s, void *ptr, char *arg_str, ...) {
+int dill_scalld(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_D, ptr);
+    ret_reg = s->j->calli(s, DILL_D, ptr, name);
     va_end(ap);
     return ret_reg;
 }

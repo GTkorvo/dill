@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 	int result;
 	dill_start_simple_proc(c, "foo", DILL_I);
 	dill_retii(c, 5);
-	func = (int (*)())dill_end(c);
+	func = (int (*)())dill_finalize(c);
 	if (verbose) dill_dump(c);
 	result = func();
 

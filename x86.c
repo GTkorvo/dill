@@ -578,11 +578,11 @@ extern void x86_mod(dill_stream s, int data1, int data2, int dest, int src1,
     int return_reg;
     if (data1 == 1) {
 	/* signed case */
-	return_reg = dill_scalll(s, (void*)dill_hidden_mod, "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)dill_hidden_mod, "dill_hidden_mod", "%l%l", src1, src2);
 	dill_movl(s, dest, return_reg);
     } else {
 	/* unsigned case */
-	return_reg = dill_scalll(s, (void*)dill_hidden_umod, "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)dill_hidden_umod, "dill_hidden_umod", "%l%l", src1, src2);
 	dill_movul(s, dest, return_reg);
     }
 }
@@ -615,6 +615,30 @@ x86_mov(dill_stream s, int type, int junk, int dest, int src)
     default:
 	BYTE_OUT2(s, MOV32, ModRM(0x3, src, dest));
     }
+}
+
+static int b1[] = {0xde, 0xde, 0xde, 0xde};
+static int b2[] = {0xc1, 0xe9, 0xc9, 0xf9};
+
+extern void x86_farith(s, op, typ, dest, src1, src2)
+dill_stream s;
+int op;
+int typ;
+int dest;
+int src1;
+int src2;
+{
+    BYTE_OUT2(s, b1[op], b2[op]);
+}
+
+extern void x86_farith2(s, b1, b2, dest, src)
+dill_stream s;
+int b1;
+int b2;
+int dest;
+int src;
+{
+    BYTE_OUT2(s, b1, b2);
 }
 
 extern void x86_arith3(s, op, commut, dest, src1, src2)

@@ -103,7 +103,7 @@ print<<"EOF";
 	dill_start_proc(c, \"param${cur_arg_count}_$type\", DILL_$uptype, \"$arg_str\");
 	param$max_arg_num = dill_param_reg(c, $max_arg_num);
 	dill_ret$rtype{$type}(c, param$max_arg_num);
-	proc = ($type{$type} (*)($cast_str)) dill_end(c);
+	proc = ($type{$type} (*)($cast_str)) dill_finalize(c);
 	result = proc($param_str);
 	if (result != s2$type) {
 	    printf(\"test for $cur_arg_count arguments of type \\\"$type\\\" failed, expected $c_print_formats{$type}, got $c_print_formats{$type}\\n\",
@@ -114,9 +114,9 @@ print<<"EOF";
 	}
 
 	dill_start_proc(c2, \"call${cur_arg_count}_$type\", DILL_$uptype, \"$arg_str\");
-	reg = dill_scall$type(c2, (void*)proc, \"$arg_str\", $arg_param_str);
+	reg = dill_scall$type(c2, (void*)proc, \"proc_${cur_arg_count}_${type}\", \"$arg_str\", $arg_param_str);
 	dill_ret$rtype{$type}(c2, reg);
-	proc2 = ($type{$type} (*) ($cast_str)) dill_end(c2);
+	proc2 = ($type{$type} (*) ($cast_str)) dill_finalize(c2);
 	result = proc2($param_str);
 	if (result != s2$type) {
 	    printf(\"test for calling procedure with %d arguments of type %s failed\\n\", $cur_arg_count,

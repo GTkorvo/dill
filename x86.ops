@@ -24,11 +24,11 @@ sub upperc {
 &arith_insn("lsh", "i u ul l", "x86_shift", "0x4", "2");
 &arith_insn("rsh", "i l", "x86_shift", "0x7", "2");
 &arith_insn("rsh", "u ul", "x86_shift", "0x5", "2");
-&arith_insn("add", "f d", "x86_FORM3_farith", "0xde", "0xc1");
-&arith_insn("sub", "f d", "x86_FORM3_farith", "0xde", "0xe9");
-&arith_insn("mul", "f d", "x86_FORM3_farith", "0xde", "0xc9");
-&arith_insn("div", "f d", "x86_FORM3_farith", "0xde", "0xf9");
-&arith2_insn("neg", "f d", "x86_FORM2_farith", "0xd9", "0xe0");
+&arith_insn("add", "f d", "x86_farith", "0", "DILL_t");
+&arith_insn("sub", "f d", "x86_farith", "1", "DILL_t");
+&arith_insn("mul", "f d", "x86_farith", "2", "DILL_t");
+&arith_insn("div", "f d", "x86_farith", "3", "DILL_t");
+&arith2_insn("neg", "f d", "x86_farith2", "0xd9", "0xe0");
 &arith2_insn("bswap", "s us i u ul l f d", "x86_bswap", "DILL_t", "DILL_t");
 
 &arithi_insn("add", "i u ul l p", "x86_arith3i", "0x0", "1"); #(2,0x0,dest,src1,imm)", "i u ul l");
@@ -50,30 +50,6 @@ sub upperc {
 &compare_insn( "eq ge gt le lt ne", "i u ul l p d f", "x86_compare");
 &comparei_insn( "eq ge gt le lt ne", "i u ul l p", "x86_comparei");
 
-print COUT <<EOF;
-#define INSN_OUT(c, i) 
-extern void x86_FORM3_farith(s, b1, b2, dest, src1, src2)
-dill_stream s;
-int b1;
-int b2;
-int dest;
-int src1;
-int src2;
-{
-    BYTE_OUT2(s, b1, b2);
-}
-
-extern void x86_FORM2_farith(s, b1, b2, dest, src)
-dill_stream s;
-int b1;
-int b2;
-int dest;
-int src;
-{
-    BYTE_OUT2(s, b1, b2);
-}
-
-EOF
 print COUT "jmp_table ${mach}_jump_table;\n";
 print COUT "extern void dill_x86_init(dill_stream s)\n{\n";
 print COUT "\tif(x86_jump_table == 0) {\n";
@@ -134,10 +110,17 @@ print COUT "}\n";
 
 sub arith_insn {
     local ($op, $type_list, $subr, $code1, $code2) = @_;
+    $val1 = $code1; $val2 = $code2;
     foreach(split(' ', $type_list)) {
+	if ($code1 eq "DILL_t") {
+	    $val1 = "DILL_" . &upperc(${_});
+	}
+	if ($code2 eq "DILL_t") {
+	    $val2 = "DILL_" . &upperc(${_});
+	}
 	$jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->jmp_a3[dill_jmp_${op}${_}] = $subr;\n";
-	$jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data1 = $code1;\n";
-	$jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data2 = $code2;\n";
+	$jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data1 = $val1;\n";
+	$jmp_a3_assigns = $jmp_a3_assigns . "\t  ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data2 = $val2;\n";
     }
 }
 

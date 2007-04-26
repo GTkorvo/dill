@@ -48,7 +48,7 @@ void * mk_test(dill_stream c) {
 	}
 
 	/* call a procedure, then verify that everything is in place. */
-	dill_scallv(c, (void*)printf, "%P", "hello world!\n");
+	dill_scallv(c, (void*)printf, "printf", "%P", "hello world!\n");
 
 
 	for(i = 0; i < regs; i++) {
@@ -76,7 +76,7 @@ void * mk_test(dill_stream c) {
 	dill_mark_label(c, abortl3);
 	dill_retii(c, 3);		/* failure. */
 
-	return dill_end(c);
+	return dill_finalize(c);
 }
 
 int main() { 

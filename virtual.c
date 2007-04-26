@@ -2273,7 +2273,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		    }
 		    rr = dill_pcallr(c, typ, src1_preg);
 		} else {
-		    rr = dill_pcall(c, typ, ip->opnds.bri.imm_a);
+		    rr = dill_pcall(c, typ, ip->opnds.bri.imm_a, "");
 		}
 		if (typ != DILL_V) {
 		    if (preg_of(c, next_bb, dest_vreg) == -1) {
@@ -3087,7 +3087,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		if (reg != 0) {
 		    rr = dill_pcallr(c, typ, pused[0]);
 		} else {
-		    rr = dill_pcall(c, typ, ip->opnds.bri.imm_a);
+		    rr = dill_pcall(c, typ, ip->opnds.bri.imm_a, "");
 		}
 		state.ret_reg = rr;
 		state.ret_vreg = vdest;
@@ -4089,7 +4089,7 @@ virtual_end(dill_stream c)
 	}
 	free_bbs(vmi);
 	free(ltable);
-	dill_end(c);
+	dill_finalize(c);
 	c->j = c->p->native.mach_jump;
 	c->p->native.mach_reset = c->p->mach_reset;
 	c->p->native.mach_info = c->p->mach_info;

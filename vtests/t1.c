@@ -46,7 +46,7 @@ void a () {
 
      dill_addi(c, f, f, e);
      dill_reti(c, f);
-     ip = (int(*)())dill_end(c);
+     ip = (int(*)())dill_finalize(c);
 
 #ifdef USE_MMAP_CODE_SEG
      {

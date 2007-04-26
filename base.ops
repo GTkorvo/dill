@@ -8,6 +8,15 @@ sub upperc {
 
 &init_output;
 
+print HOUT<<EOF;
+/** @defgroup insns DILL instruction issue functions
+ *
+ * This group of functions is used to manage CM-returned memory.
+ * They are provided to handle the eventuality when CM uses its own memory
+ * manager.  That hasn't happened yet, so these are identical to realloc,
+ * malloc and free.
+ */
+EOF
     $arith3 = 0;
 &arith3( "add sub mul div mod xor and or lsh rsh", "i u ul l");
 &arith3( "add sub", "p");
@@ -33,11 +42,13 @@ sub upperc {
 &call("i u l ul p f d v");
 &save_restore("i u l ul p d f");
 
+print HOUT "#ifndef DOXYGEN_SHOULD_SKIP_THIS\n";
 print HOUT "#define dill_jmp_a3_size $arith3\n";
 print HOUT "#define dill_jmp_a2_size $arith2\n";
 print HOUT "#define dill_jmp_branch_size $branch\n";
 print HOUT "#define dill_jmp_compare_size $compare\n";
 print HOUT "#define dill_jmp_convert_size $convert\n";
+print HOUT "#endif\n";
 
 print HOUT "#define dill_jv(s, label) (s->j->jv)(s, (unsigned long) label)\n";
 print HOUT "#define dill_jp(s, dest_reg) (s->j->jp)(s, (unsigned long) dest_reg)\n";
@@ -116,6 +127,7 @@ sub loadstore {
 
 sub arith3 {
     local($ops, $types) = @_;
+    print HOUT "#ifndef DOXYGEN_SHOULD_SKIP_THIS\n";
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
@@ -125,6 +137,7 @@ sub arith3 {
 	    $arith3 = $arith3 + 1;
 	}
     }
+    print HOUT "#endif\n";
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
@@ -140,6 +153,7 @@ sub arith3 {
 
 sub arith2 {
     local($ops, $types) = @_;
+    print HOUT "#ifndef DOXYGEN_SHOULD_SKIP_THIS\n";
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
@@ -148,13 +162,17 @@ sub arith2 {
 	    $arith2 = $arith2 + 1;
 	}
     }
+    print HOUT "#endif\n";
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
+	    print HOUT "/*! DILL $op ${_} operator */\n";
 	    print HOUT "#define dill_$op${_}(s, dest, src) (s->j->jmp_a2)[dill_jmp_${op}${_}](s, s->j->a2_data[dill_jmp_${op}${_}].data1, s->j->a2_data[dill_jmp_${op}${_}].data2, dest, src)\n";
 	    if (($_ eq 'f') || ($_ eq 'd')) {
+		print HOUT "/*! DILL $op ${_} immediate operator */\n";
 		print HOUT "#define dill_$op${_}i(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_${op}${_}](s, s->j->a2f_data[dill_jmp_${op}${_}].data1, s->j->a2f_data[dill_jmp_${op}${_}].data2, dest, imm)\n";
 	    } else {
+		print HOUT "/*! DILL $op ${_} immediate operator */\n";
 		print HOUT "#define dill_$op${_}i(s, dest, imm) (s->j->jmp_a2i)[dill_jmp_${op}${_}](s, s->j->a2_data[dill_jmp_${op}${_}].data1, s->j->a2_data[dill_jmp_${op}${_}].data2, dest, imm)\n";
 	    }
 	}
@@ -168,6 +186,7 @@ sub branch {
 	print HOUT "#define dill_${_}_code " . $brcode++ . "\n";
     }
     print COUT "char *branch_op_names[] = {";
+    print HOUT "#ifndef DOXYGEN_SHOULD_SKIP_THIS\n";
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
@@ -176,6 +195,7 @@ sub branch {
 	    $branch = $branch + 1;
 	}
     }
+    print HOUT "#endif\n";
     print COUT "0};\n";
     foreach (split(' ', $ops)) {
 	$op = $_;
@@ -193,6 +213,7 @@ sub branch {
 sub compare {
     local($ops, $types) = @_;
     print COUT "char *compare_op_names[] = {";
+    print HOUT "#ifndef DOXYGEN_SHOULD_SKIP_THIS\n";
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
@@ -201,6 +222,7 @@ sub compare {
 	    $compare = $compare + 1;
 	}
     }
+    print HOUT "#endif\n";
     print COUT "0};\n";
     foreach (split(' ', $ops)) {
 	$op = $_;
@@ -292,14 +314,14 @@ sub call {
     foreach (split(' ', $types)) {
 	$type = $_;
 	if ($type eq 'v') {
-	    print HOUT "extern void dill_scall${type}(dill_stream s, void *ptr, char *arg_str, ...);\n";
+	    print HOUT "extern void dill_scall${type}(dill_stream s, void *ptr, char *name, char *arg_str, ...);\n";
 	} else {
-	    print HOUT "extern int dill_scall${type}(dill_stream s, void *ptr, char *arg_str, ...);\n";
+	    print HOUT "extern int dill_scall${type}(dill_stream s, void *ptr, char *name, char *arg_str, ...);\n";
 	}
-	print HOUT "#define dill_call${type}(s, ptr) s->j->calli(s, DILL_" . &upperc($type) . " , ptr)\n";
+	print HOUT "#define dill_call${type}(s, ptr, name) s->j->calli(s, DILL_" . &upperc($type) . " , ptr, name)\n";
 	print HOUT "#define dill_callr${type}(s, src) s->j->callr(s, DILL_" . &upperc($type) . " , src)\n";
     }
-    print HOUT "#define dill_pcall(s, type, ptr) s->j->calli(s, type, ptr)\n";
+    print HOUT "#define dill_pcall(s, type, ptr, name) s->j->calli(s, type, ptr, name)\n";
     print HOUT "#define dill_pcallr(s, type, src) s->j->callr(s, type, src)\n";
 }
 
@@ -320,6 +342,7 @@ sub init_output {
 print HOUT<<EOF;
 #ifndef __DILL_H__
 #define __DILL_H__
+/*! \\file */
 
 /* This file is generated from base.ops.  Do not edit directly. */
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -335,19 +358,29 @@ struct jmp_table_s;
 
 typedef struct jmp_table_s *jmp_table;
 
-typedef struct dill_stream_s {
+/*!
+ * dill_stream is the basic handle for a dynamic instruction stream.
+ * It is used in nearly all calls to setup parameter profiles generate
+ * instructions.  Using a separate handle rather than static variables to
+ * store this information over the multiple calls needed for code generation
+ * ensures thread safety. 
+ */
+typedef struct dill_stream_s *dill_stream;
+
+typedef struct dec *dill_exec_ctx;
+
+typedef int dill_reg;
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+struct dill_stream_s {
     jmp_table j;
     private_ctx p;
     int dill_local_pointer;
     int dill_param_reg_pointer;
     int dill_debug;
-}*dill_stream;
+};
 
 struct dec;
-
-typedef struct dec *dill_exec_ctx;
-
-typedef int dill_reg;
 
 typedef enum {DILL_NOP = 0, DILL_SEGMENTED_FOLLOWS} special_operations;
 typedef enum {DILL_X86_CS_PREFIX = 0, DILL_X86_SS_PREFIX,
@@ -378,7 +411,7 @@ typedef void (*jmp_op)(dill_stream s, unsigned long arg);
 typedef void (*jmp_opa)(dill_stream s, void *arg);
 typedef void (*jal_op)(dill_stream s, int dest, int target);
 typedef void (*special_op)(dill_stream s, special_operations type, long param);
-typedef int (*call_opi)(dill_stream s, int type, void *xfer_address);
+typedef int (*call_opi)(dill_stream s, int type, void *xfer_address, char *name);
 typedef int (*call_opr)(dill_stream s, int type, int src);
 typedef void (*setf_opi)(dill_stream s, int data1, int data2, int dest, double imm);
 typedef void (*push_op)(dill_stream s, int type, int reg);
@@ -462,6 +495,7 @@ typedef struct {
     unsigned reg;		/* register it's in */
     int offset;			/* otherwise at this offset from stack */
 } dill_parameter_type;
+
 #if defined(_MSC_VER)
 #ifdef DILL_EXPORTS
 #define EXTERN extern __declspec(dllexport)
@@ -472,9 +506,37 @@ typedef struct {
 #define EXTERN extern
 #endif
 
-extern jmp_table sparc_jump_table;
+#endif
+
+/*! Start a DCG native instruction stream
+ *
+ * This, or dill_create_stream(), is usually the first call in dynamically
+ * generating a subroutine or function.  The dill_stream created here is
+ * used in all future calls, setting up the parameter profile and generating
+ * the instructions into the stream.  If dill_create_raw_stream() is used,
+ * DILL will start generating native instructions directly and all
+ * register parameters passed to subsequent calls are assumed to be the IDs
+ * of physical registers.
+ * \\return Will return a new initialized dill_stream unless there is
+ * no available memory.
+ */
 EXTERN dill_stream dill_create_raw_stream(void);
+
+/*! Start a DCG virtual instruction stream
+ *
+ * This, or dill_create_raw_stream(), is usually the first call in
+ * dynamically generating a subroutine or function.  The dill_stream created
+ * here is used in all future calls, setting up the parameter profile and
+ * generating the instructions into the stream.  If dill_create_stream()
+ * is used, DILL will operate in virtual mode.  Register parameters passed
+ * to subsequent calls are assumed to be the IDs out of a set of infinite
+ * virtual registers.  DILL will assign those virtual registers to physical
+ * registers and generate native instructions only at dr_end().
+ * \\return Will return a new initialized dill_stream unless there is
+ * no available memory.
+ */
 EXTERN dill_stream dill_create_stream(void);
+
 EXTERN dill_exec_ctx dill_get_exec_context(dill_stream x);
 EXTERN void dill_free_context(dill_stream s);
 EXTERN void dill_free_exec_context(dill_exec_ctx c);
@@ -500,7 +562,7 @@ EXTERN dill_reg dill_param_reg(dill_stream s, int argno);
 EXTERN dill_reg dill_vparam(dill_stream s, int argno);
 EXTERN void dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str);
 EXTERN void dill_dump(dill_stream s);
-EXTERN void *dill_end(dill_stream s);
+EXTERN void *dill_finalize(dill_stream s);
 EXTERN void *dill_clone_code(dill_stream s, void *new_base, int size);
 EXTERN int dill_code_size(dill_stream s);
 EXTERN int dill_do_reverse_vararg_push(dill_stream s);

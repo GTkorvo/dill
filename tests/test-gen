@@ -216,19 +216,19 @@ print<<EOF;
 
 	/* reg <- $op reg */
 	if (verbose) printf(" - $insn\\n");
-        dill_start_proc(c, "$insn", DILL_$upt, "%$t");
-		if(!dill_raw_getreg(c, &rd$t, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insn", DILL_$upt, "%$t");
+		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-        	dill_$insn(c, rd$t, dill_param_reg(c, 0));
-        	dill_ret$t(c, rd$t);
-        func = ($type{$t}(*)($type{$t})) dill_end(c);
+        	dill_$insn(s, rd$t, dill_param_reg(s, 0));
+        	dill_ret$t(s, rd$t);
+        func = ($type{$t}(*)($type{$t})) dill_finalize(s);
         expected_result = $op s1$t;
 	result = func(s1$t);
 	if (expected_result != result) {
 	    printf("Failed test for $insn $c_print_formats{$t} , expected $c_print_formats{$t}, got $c_print_formats{$t}\\n", $cast1 s1$t, $cast1 expected_result, $cast1 result);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 
@@ -257,19 +257,19 @@ print<<EOF;
 
 	/* reg <- ($type{$t}) reg */
 	if (verbose) printf(" - $insn\\n");
-        dill_start_proc(c, "$insn",  DILL_$upt, "%$from_type");
-		if(!dill_raw_getreg(c, &rd$t, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insn",  DILL_$upt, "%$from_type");
+		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-        	dill_$insn(c, rd$t, dill_param_reg(c, 0));
-        	dill_ret$t(c, rd$t);
-        func = ($type{$t}(*)($type{$from_type})) dill_end(c);
+        	dill_$insn(s, rd$t, dill_param_reg(s, 0));
+        	dill_ret$t(s, rd$t);
+        func = ($type{$t}(*)($type{$from_type})) dill_finalize(s);
         expected_result = ($type{$t}) s1$from_type;
 	result = func(s1$from_type);
 	if (expected_result != result) {
 	    printf("Failed test for $insn, got $c_print_formats{$t}, expected $c_print_formats{$t} for ($type{$t}) $c_print_formats{$from_type}\\n", $cast1 result, $cast1 expected_result, $cast2 s1$from_type);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 EOF
@@ -292,13 +292,13 @@ print<<EOF;
 
 	/* reg <- (BSWAP) reg */
 	if (verbose) printf(" - bswap\\n");
-        dill_start_proc(c, "bswap",  DILL_$upt, "%$t");
-		if(!dill_raw_getreg(c, &rd$t, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "bswap",  DILL_$upt, "%$t");
+		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-        	dill_bswap$t(c, rd$t, dill_param_reg(c, 0));
-        	dill_ret$t(c, rd$t);
-        func = ($type{$t}(*)($type{$t})) dill_end(c);
+        	dill_bswap$t(s, rd$t, dill_param_reg(s, 0));
+        	dill_ret$t(s, rd$t);
+        func = ($type{$t}(*)($type{$t})) dill_finalize(s);
 	u.val = s1$t;
 	switch(sizeof($type{$t})) {
 	case 2:
@@ -334,7 +334,7 @@ print<<EOF;
 	if (expected_result != result) {
 	    printf("Failed test for bswap$t, got $c_print_formats{$t}, expected $c_print_formats{$t} for ($type{$t}) $c_print_formats{$t}\\n", $cast1 result, $cast1 expected_result, $cast2 s1$t);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 EOF
@@ -357,15 +357,15 @@ print<<EOF;
 	$type{$t} result;
 	$type{$t} expected_result;
 	if (verbose) printf(" - $insn\\n");
-        dill_start_proc(c, "$insn",  DILL_$upt, "%$t");
-        	dill_$insn(c, dill_param_reg(c, 0));
-        func = ($type{$t}(*)($type{$t})) dill_end(c);
+        dill_start_proc(s, "$insn",  DILL_$upt, "%$t");
+        	dill_$insn(s, dill_param_reg(s, 0));
+        func = ($type{$t}(*)($type{$t})) dill_finalize(s);
 	result = func(s1$t);
 	expected_result = s1$t;
 	if (expected_result != result) {
 	    printf("Failed test for $insn, expected $c_print_formats{$t}, got $c_print_formats{$t}\\n", $cast1 expected_result, $cast1 result);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
     {
@@ -374,15 +374,15 @@ print<<EOF;
 	$type{$t} result;
 
 	if (verbose) printf(" - $insni\\n");
-        dill_start_simple_proc(c, "$insni", DILL_$upt);
-        	dill_$insni(c, s1$t);
-        func = ($type{$t}(*)()) dill_end(c);
+        dill_start_simple_proc(s, "$insni", DILL_$upt);
+        	dill_$insni(s, s1$t);
+        func = ($type{$t}(*)()) dill_finalize(s);
 	result = func();
 
 	if (s1$t != result) {
 	    printf("Failed test for $insni\\n");
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 
@@ -404,45 +404,45 @@ print<<EOF;
 	dill_reg rdp;
 	/* ret reg */
 	if (verbose) printf(" - $insn\\n");
-        dill_start_simple_proc(c, "$insn", DILL_I);
-		l = dill_alloc_label(c);
-		$insn(c, l);
-			dill_retii(c, 0);
-		dill_mark_label(c, l);
-        		dill_retii(c, 1);
-        func = (int(*)()) dill_end(c);
+        dill_start_simple_proc(s, "$insn", DILL_I);
+		l = dill_alloc_label(s);
+		$insn(s, l);
+			dill_retii(s, 0);
+		dill_mark_label(s, l);
+        		dill_retii(s, 1);
+        func = (int(*)()) dill_finalize(s);
 	if (func() != 1) {
 	    printf("Failed test for $insn\\n");
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
 
 	/* ret imm */
 	if (verbose) printf(" - $insni\\n");
-        dill_start_simple_proc(c, "$insni", DILL_I);
+        dill_start_simple_proc(s, "$insni", DILL_I);
 	{
 		static void * linked_addr;
 		dill_reg zero;
-		l = dill_alloc_label(c);
-		dill_mark_data(c, &linked_addr, l);
-		if(!dill_raw_getreg(c, &rdp, DILL_P, DILL_TEMP))
+		l = dill_alloc_label(s);
+		dill_mark_data(s, &linked_addr, l);
+		if(!dill_raw_getreg(s, &rdp, DILL_P, DILL_TEMP))
 			dill_fatal("out of registers!");
-		if(!dill_raw_getreg(c, &zero, DILL_P, DILL_TEMP))
+		if(!dill_raw_getreg(s, &zero, DILL_P, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-		dill_setp(c, zero, 0);
-		dill_ldpi(c, rdp, zero, (long) &linked_addr);
+		dill_setp(s, zero, 0);
+		dill_ldpi(s, rdp, zero, (long) &linked_addr);
 
-		$insni(c, rdp);
-			dill_retii(c, 0);
-		dill_mark_label(c, l);
-        		dill_retii(c, 1);
+		$insni(s, rdp);
+			dill_retii(s, 0);
+		dill_mark_label(s, l);
+        		dill_retii(s, 1);
 	}
-        func = (int(*)()) dill_end(c);
+        func = (int(*)()) dill_finalize(s);
 	if (func() != 1) {
 	    printf("Failed test for $insni\\n");
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 
@@ -478,19 +478,19 @@ print<<EOF;
 	dill_reg	rd$t;
 	/* reg <- (reg $op reg) */
 	if (verbose) printf(" - $insn\\n");
-        dill_start_proc(c, "$insn",  DILL_$upt, "%$t%$t");
-		if(!dill_raw_getreg(c, &rd$t, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insn",  DILL_$upt, "%$t%$t");
+		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-        	dill_$insn(c, rd$t, dill_param_reg(c, 0), dill_param_reg(c, 1));
-        	dill_ret$t(c, rd$t);
-        func = ($type{$t}(*)($type{$t},$type{$t})) dill_end(c);
+        	dill_$insn(s, rd$t, dill_param_reg(s, 0), dill_param_reg(s, 1));
+        	dill_ret$t(s, rd$t);
+        func = ($type{$t}(*)($type{$t},$type{$t})) dill_finalize(s);
 	result = func(s1$t, $s2);
         expected_result = (s1$t $op $s2);
 	if (expected_result != result) {
 	    printf("Failed test for $c_print_formats{$t} $insn $pf2, expected $pf, got $pf\\n", s1$t, $s2, expected_result, result);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
 
     }
@@ -506,19 +506,19 @@ print<<EOF;
 	dill_reg	rd$t;
 	/* reg <- (reg $op imm) */
 	if (verbose) printf(" - $insni\\n");
-        dill_start_proc(c, "$insni", DILL_$upt, "%$t");
-		if(!dill_raw_getreg(c, &rd$t, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insni", DILL_$upt, "%$t");
+		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-        	dill_$insni(c, rd$t, dill_param_reg(c, 0), $s2);
-        	dill_ret$t(c, rd$t);
-        func = ($type{$t}(*)($type{$t},$type{$t})) dill_end(c);
+        	dill_$insni(s, rd$t, dill_param_reg(s, 0), $s2);
+        	dill_ret$t(s, rd$t);
+        func = ($type{$t}(*)($type{$t},$type{$t})) dill_finalize(s);
         expected_result = (s1$t $op $s2);
 	result = func(s1$t, $s2);
 	if (expected_result != result) {
 	    printf("Failed test for $c_print_formats{$t} $insni (imm $pf2), expected $c_print_formats{$t}, got $c_print_formats{$t}\\n", s1$t, $s2, expected_result, result);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 
@@ -551,19 +551,19 @@ print<<EOF;
 	dill_reg	rdi;
 	/* reg <- (reg $op reg) */
 	if (verbose) printf(" - $insn\\n");
-        dill_start_proc(c, "$insn",  DILL_$upt, "%$t%$t");
-		if(!dill_raw_getreg(c, &rdi, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insn",  DILL_$upt, "%$t%$t");
+		if(!dill_raw_getreg(s, &rdi, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-        	dill_$insn(c, rdi, dill_param_reg(c, 0), dill_param_reg(c, 1));
-        	dill_ret$t(c, rdi);
-        func = (int(*)($type{$t},$type{$t})) dill_end(c);
+        	dill_$insn(s, rdi, dill_param_reg(s, 0), dill_param_reg(s, 1));
+        	dill_ret$t(s, rdi);
+        func = (int(*)($type{$t},$type{$t})) dill_finalize(s);
 	result = func(s1$t, $s2);
         expected_result = (s1$t $op $s2);
 	if (expected_result != result) {
 	    printf("Failed test for $c_print_formats{$t} $insn $pf2, expected %d, got %d\\n", s1$t, $s2, expected_result, result);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
 
     }
@@ -579,19 +579,19 @@ print<<EOF;
 	dill_reg	rdi;
 	/* reg <- (reg $op imm) */
 	if (verbose) printf(" - $insni\\n");
-        dill_start_proc(c, "$insni", DILL_$upt, "%$t");
-		if(!dill_raw_getreg(c, &rdi, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insni", DILL_$upt, "%$t");
+		if(!dill_raw_getreg(s, &rdi, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-        	dill_$insni(c, rdi, dill_param_reg(c, 0), $s2);
-        	dill_ret$t(c, rdi);
-        func = (int(*)($type{$t},$type{$t})) dill_end(c);
+        	dill_$insni(s, rdi, dill_param_reg(s, 0), $s2);
+        	dill_ret$t(s, rdi);
+        func = (int(*)($type{$t},$type{$t})) dill_finalize(s);
         expected_result = (s1$t $op $s2);
 	result = func(s1$t, $s2);
 	if (expected_result != result) {
 	    printf("Failed test for $c_print_formats{$t} $insni (imm $pf2), expected %d, got %d\\n", s1$t, $s2, expected_result, result);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 
@@ -620,19 +620,19 @@ print<<EOF;
 	int result;
 	if (verbose) printf(" - $insn\\n");
 	/* reg <- (reg $op reg) */
-        dill_start_proc(c, "$insn", DILL_$upt, "%$t%$t");
-		l = dill_alloc_label(c);
-        	dill_$insn(c, dill_param_reg(c, 0), $cast dill_param_reg(c, 1), l);
-        		dill_retii(c, 0);
-		dill_mark_label(c, l);
-			dill_retii(c, 1);
-        func = (int (*)($type{$t},$type{$t})) dill_end(c);
+        dill_start_proc(s, "$insn", DILL_$upt, "%$t%$t");
+		l = dill_alloc_label(s);
+        	dill_$insn(s, dill_param_reg(s, 0), $cast dill_param_reg(s, 1), l);
+        		dill_retii(s, 0);
+		dill_mark_label(s, l);
+			dill_retii(s, 1);
+        func = (int (*)($type{$t},$type{$t})) dill_finalize(s);
         di = (s1$t $op s2$t);
 	result = func(s1$t, s2$t);
 	if (di != result) {
 	    printf("Failed test for $insn\\n");
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 EOF
@@ -645,18 +645,18 @@ print<<EOF;
 	int result;
 	/* reg <- (reg $op imm) */
 	if (verbose) printf(" - $insni\\n");
-        dill_start_proc(c, "$insni", DILL_$upt, "%$t");
-		l = dill_alloc_label(c);
-        	dill_$insni(c, dill_param_reg(c, 0), $cast s2$t, l);
-        		dill_retii(c, 0);
-		dill_mark_label(c, l);
-			dill_retii(c, 1);
-        func = (int (*)($type{$t})) dill_end(c);
+        dill_start_proc(s, "$insni", DILL_$upt, "%$t");
+		l = dill_alloc_label(s);
+        	dill_$insni(s, dill_param_reg(s, 0), $cast s2$t, l);
+        		dill_retii(s, 0);
+		dill_mark_label(s, l);
+			dill_retii(s, 1);
+        func = (int (*)($type{$t})) dill_finalize(s);
 	result = func(s1$t);
 	if (di  != result) {
 	    printf("Failed test for $insni\\n");
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
 
     }
@@ -688,18 +688,18 @@ print<<EOF;
 	dill_reg	rd$t;
 	/* reg <- mem[reg + reg]  */
 	if (verbose) printf(" - $insn\\n");
-        dill_start_proc(c, "$insn", DILL_$upt, "%ul%ul");
-		if(!dill_raw_getreg(c, &rd$t, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insn", DILL_$upt, "%ul%ul");
+		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-        	dill_$insn(c, rd$t, dill_param_reg(c, 0), dill_param_reg(c, 1));
-        	dill_ret$rt(c, rd$t);
-        func = ($type{$t}(*)(unsigned long, unsigned long)) dill_end(c);
+        	dill_$insn(s, rd$t, dill_param_reg(s, 0), dill_param_reg(s, 1));
+        	dill_ret$rt(s, rd$t);
+        func = ($type{$t}(*)(unsigned long, unsigned long)) dill_finalize(s);
 	result = func((unsigned long)&d$t - $offset, $offset);
 	if (d$t != result) {
 	    printf("Failed test for $insn , expected $c_print_formats{$t}, got $c_print_formats{$t}\\n", $cast1 d$t, $cast1 result);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }	
     {
@@ -708,18 +708,18 @@ print<<EOF;
 	dill_reg	rd$t;
 	/* reg <- mem[reg + imm] */
 	if (verbose) printf(" - $insni\\n");
-        dill_start_proc(c, "$insni", DILL_$upt, "%ul");
-		if(!dill_raw_getreg(c, &rd$t, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insni", DILL_$upt, "%ul");
+		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-        	dill_$insni(c, rd$t, dill_param_reg(c, 0), $offset);
-        	dill_ret$rt(c, rd$t);
-        func = ($type{$t}(*)(unsigned long))dill_end(c);
+        	dill_$insni(s, rd$t, dill_param_reg(s, 0), $offset);
+        	dill_ret$rt(s, rd$t);
+        func = ($type{$t}(*)(unsigned long))dill_finalize(s);
 	result = func((unsigned long)&d$t - $offset);
 	if (d$t != result) {
 	    printf("Failed test for $insn , expected $c_print_formats{$t}, got $c_print_formats{$t}\\n", $cast1 d$t, $cast1 result);
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 
@@ -741,18 +741,18 @@ print<<EOF;
 	s2ul = (unsigned long)&d$t - $offset;
 
 	/* mem [ reg + reg ] <- reg */
-        dill_start_proc(c, "$insn", DILL_V, "%ul%ul");
-		if(!dill_raw_getreg(c, &rd$t, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insn", DILL_V, "%ul%ul");
+		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-		dill_set$t(c, rd$t, s2ul);
-        	dill_$insn(c, rd$t, dill_param_reg(c, 0), dill_param_reg(c, 1));
-        func = (void(*)(unsigned long, unsigned long)) dill_end(c);
+		dill_set$t(s, rd$t, s2ul);
+        	dill_$insn(s, rd$t, dill_param_reg(s, 0), dill_param_reg(s, 1));
+        func = (void(*)(unsigned long, unsigned long)) dill_finalize(s);
         ((void(*)(unsigned long, unsigned long))func)(s2ul, $offset);
 	if (d$t != ($type{$t})s2ul) {
 	    printf("Failed test for $insn\\n");
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
     {
@@ -761,19 +761,19 @@ print<<EOF;
 	dill_reg	rd$t;
 	d$t = 0;
 	if (verbose) printf(" - $insni\\n");
-        dill_start_proc(c, "$insni", DILL_V, "%ul");
-		if(!dill_raw_getreg(c, &rd$t, $type_enum{$t}, DILL_TEMP))
+        dill_start_proc(s, "$insni", DILL_V, "%ul");
+		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-		dill_set$t(c, rd$t, s2ul);
-        	dill_$insni(c, rd$t, dill_param_reg(c, 0), $offset);
-        func = (void(*)(unsigned long))dill_end(c);
+		dill_set$t(s, rd$t, s2ul);
+        	dill_$insni(s, rd$t, dill_param_reg(s, 0), $offset);
+        func = (void(*)(unsigned long))dill_finalize(s);
         ((void(*)(unsigned long))func)(s2ul);
 
 	if (d$t != ($type{$t})s2ul) {
 	    printf("Failed test for $insni\\n");
 	    dill_errors++;
-	    dill_dump(c);
+	    dill_dump(s);
 	}
     }
 EOF
@@ -801,7 +801,7 @@ double c_sqrt(double x) { extern double sqrt(double); 	return sqrt(x);}
 
 int main(int argc, char *argv[])
 {
-    dill_stream c = dill_create_raw_stream();
+    dill_stream s = dill_create_raw_stream();
     char		dc;
     unsigned char	duc;
     short		ds, s1s;

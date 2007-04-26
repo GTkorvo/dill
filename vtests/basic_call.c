@@ -75,7 +75,7 @@ void a () {
 	 dill_push_argi(c, b);
 	 dill_push_argi(c, a);
      }	 
-     w = dill_calli(c, (void*)ff);
+     w = dill_calli(c, (void*)ff, "ff");
      dill_addi(c, z,z,w);
      dill_addii(c, cnt,cnt,1);
      dill_bltii(c, cnt,2,L1);
@@ -90,7 +90,7 @@ void a () {
      dill_addi(c, z, z, i);
      dill_addi(c, z, z, j);
      dill_reti(c, z);			/* (9*10/2)*3 = 135 */
-     ip = (int(*)())dill_end(c);
+     ip = (int(*)())dill_finalize(c);
 
      if (verbose) dill_dump(c);
 
@@ -108,7 +108,7 @@ void b () {
      f = dill_getreg(c, DILL_P);
      dill_setp(c, f, (long)gg);
      dill_retp(c, f);
-     pp = (void *(*)())dill_end(c);
+     pp = (void *(*)())dill_finalize(c);
 
      if (verbose) dill_dump(c);
 
@@ -140,7 +140,7 @@ void c () {
      }
      a = dill_callri(c, f);
      dill_reti(c, a);
-     ip = (int(*)())dill_end(c);
+     ip = (int(*)())dill_finalize(c);
 
      if (verbose) dill_dump(c);
 
@@ -168,9 +168,9 @@ void d () {
 	 dill_push_argi(c, b);
 	 dill_push_argi(c, a);
      }
-     a = dill_calli(c, (void*)gg);
+     a = dill_calli(c, (void*)gg, "gg");
      dill_reti(c, a);
-     ip = (int(*)())dill_end(c);
+     ip = (int(*)())dill_finalize(c);
 
      if (verbose) dill_dump(c);
 
@@ -240,7 +240,7 @@ void e () {
      dill_addi(c, k,k,j);
      dill_addii(c, l,k,3);
      dill_reti(c, l);
-     ip = (int(*)())dill_end(c);
+     ip = (int(*)())dill_finalize(c);
 
      if (verbose) dill_dump(c);
 
@@ -276,9 +276,9 @@ void f () {
 	 dill_push_argi(c, b);
 	 dill_push_argpi(c, (void*)"values are %d, %g, %s\n");
      }
-     a = dill_calli(c, (void*)printf);
+     a = dill_calli(c, (void*)printf, "printf");
      dill_reti(c, a);
-     proc = (void *(*)())dill_end(c);
+     proc = (void *(*)())dill_finalize(c);
 
      if (verbose) dill_dump(c);
 
@@ -331,9 +331,9 @@ void g () {
 	 dill_push_argd(c, h);
 	 dill_push_argd(c, i);
      }
-     a = dill_calli(c, (void*)printf);
+     a = dill_calli(c, (void*)printf, "printf");
      dill_reti(c, a);
-     proc = (void *(*)())dill_end(c);
+     proc = (void *(*)())dill_finalize(c);
 
      if (verbose) dill_dump(c);
 

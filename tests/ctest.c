@@ -44,8 +44,8 @@ int main(int argc, char **argv)
 	dill_push_argi(c, r);
 	dill_push_argpi(c, "Hello: %d %d %d %d\n");
     }
-    dill_callv(c, (void*)printf);
-    func = (void (*)())dill_end(c);
+    dill_callv(c, (void*)printf, "printf");
+    func = (void (*)())dill_finalize(c);
     if (verbose) dill_dump(c);
     func();
 
@@ -64,8 +64,8 @@ int main(int argc, char **argv)
 	dill_push_argii(c, 10);
 	dill_push_argpi(c, "Hello: %d %d %d %d\n");
     }
-    dill_callv(c, (void*)printf);
-    func = (void (*)()) dill_end(c);
+    dill_callv(c, (void*)printf, "printf");
+    func = (void (*)()) dill_finalize(c);
     if (verbose) dill_dump(c);
     func();
 
@@ -96,8 +96,8 @@ int main(int argc, char **argv)
 	dill_push_argii(c, 10);
 	dill_push_argpi(c, "Hello: %d %d %d %d %d %d %d %d %d %d\n");
     }
-    dill_callv(c, (void*)printf);
-    func = (void (*)())dill_end(c);
+    dill_callv(c, (void*)printf, "printf");
+    func = (void (*)())dill_finalize(c);
     if (verbose) dill_dump(c);
     func();
 
@@ -129,8 +129,8 @@ int main(int argc, char **argv)
 	    dill_push_argdi(c, 10.0);
 	    dill_push_argpi(c, "Hello: %e %e %e %e %e %e %e %e %e %e\n");
 	}
-	dill_callv(c, (void*)printf);
-	func = (void (*)())dill_end(c);
+	dill_callv(c, (void*)printf, "printf");
+	func = (void (*)())dill_finalize(c);
 	if (verbose) dill_dump(c);
 	func();
     } else {

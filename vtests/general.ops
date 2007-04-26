@@ -130,7 +130,7 @@ print COUT<<EOF;
 	    dill_$dill_op${_}(c, dest, opnd1, opnd2);
 	    dill_ret${_}(c, dest);
 	    
-	    proc = ($c_type(*)(dill_exec_ctx ec, $c_type a, $c_type b)) dill_end(c);
+	    proc = ($c_type(*)(dill_exec_ctx ec, $c_type a, $c_type b)) dill_finalize(c);
 	    expected_result = source1_$_ $c_op source2_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -200,7 +200,7 @@ print COUT<<EOF;
 	    dill_$dill_op${_}(c, dest, opnd1, opnd2);
 	    dill_ret${_}(c, dest);
 	    
-	    proc = ($c_type(*)(dill_exec_ctx, $c_type, long)) dill_end(c);
+	    proc = ($c_type(*)(dill_exec_ctx, $c_type, long)) dill_finalize(c);
 	    expected_result = source1_$_ $c_op source2_l;
 
 	    ec = dill_get_exec_context(c);
@@ -259,7 +259,7 @@ print COUT<<EOF;
 	    dill_$dill_op${_}(c, dest, opnd1);
 	    dill_ret${_}(c, dest);
 	    
-	    proc = ($c_type(*)(dill_exec_ctx, $c_type)) dill_end(c);
+	    proc = ($c_type(*)(dill_exec_ctx, $c_type)) dill_finalize(c);
 	    expected_result = $c_op source1_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -348,7 +348,7 @@ print COUT<<EOF;
 	    dill_$dill_op${_}i(c, dest, opnd1, source2_$_);
 	    dill_ret${_}(c, dest);
 	    
-	    proc = ($c_type(*)(dill_exec_ctx, $c_type)) dill_end(c);
+	    proc = ($c_type(*)(dill_exec_ctx, $c_type)) dill_finalize(c);
 	    expected_result = source1_$_ $c_op source2_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -416,7 +416,7 @@ print COUT<<EOF;
 	    dill_$dill_op${_}i(c, dest, opnd1, source2_l);
 	    dill_ret${_}(c, dest);
 	    
-	    proc = ($c_type(*)()) dill_end(c);
+	    proc = ($c_type(*)()) dill_finalize(c);
 	    expected_result = source1_$_ $c_op source2_l;
 
 	    ec = dill_get_exec_context(c);
@@ -496,7 +496,7 @@ print COUT<<EOF;
 	    dill_retii(c, 0);
 	    dill_mark_label(c, label);	    
 	    dill_retii(c, 1);
-	    proc = (int(*)(dill_exec_ctx, $c_type, $c_type)) dill_end(c);
+	    proc = (int(*)(dill_exec_ctx, $c_type, $c_type)) dill_finalize(c);
 	    expected_result = source1_$_ $c_op source2_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -577,7 +577,7 @@ print COUT<<EOF;
 	    dill_retii(c, 0);
 	    dill_mark_label(c, label);	    
 	    dill_retii(c, 1);
-	    proc = (int(*)(dill_exec_ctx, $c_type)) dill_end(c);
+	    proc = (int(*)(dill_exec_ctx, $c_type)) dill_finalize(c);
 	    expected_result = source1_$_ $c_op source2_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -646,7 +646,7 @@ print COUT<<EOF;
 	    dill_$full_op(c, dest, opnd1);
 	    dill_ret${to}(c, dest);
 	    
-	    proc = ($c_to_type(*)(dill_exec_ctx, $c_from_type)) dill_end(c);
+	    proc = ($c_to_type(*)(dill_exec_ctx, $c_from_type)) dill_finalize(c);
 	    expected_result = ($c_to_type) source1_${from};
 
 	    ec = dill_get_exec_context(c);
@@ -709,7 +709,7 @@ sub load {
 	    dill_${full_op}(c, dest, opnd1, offset);
 	    dill_ret${_}(c, dest);
 	    
-	    proc = ($c_type(*)(dill_exec_ctx, void*)) dill_end(c);
+	    proc = ($c_type(*)(dill_exec_ctx, void*)) dill_finalize(c);
 	    expected_result = source1_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -743,7 +743,7 @@ EOF
 	    dill_${full_op}(c, dest, opnd1, opnd2);
 	    dill_ret${_}(c, dest);
 	    
-	    proc = ($c_type(*)(dill_exec_ctx, void*)) dill_end(c);
+	    proc = ($c_type(*)(dill_exec_ctx, void*)) dill_finalize(c);
 	    expected_result = source1_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -805,7 +805,7 @@ sub store {
 	    dill_${full_op}(c, opnd2, opnd1, offset);
 	    dill_retii(c, 0);
 	    
-	    proc = (void (*)(dill_exec_ctx, void *, $c_type)) dill_end(c);
+	    proc = (void (*)(dill_exec_ctx, void *, $c_type)) dill_finalize(c);
 	    expected_result = source1_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -839,7 +839,7 @@ EOF
 	    dill_${full_op}(c, source, opnd1, opnd2);
 	    dill_retii(c, 0);
 	    
-	    proc = (void (*)(dill_exec_ctx, void *, $c_type)) dill_end(c);
+	    proc = (void (*)(dill_exec_ctx, void *, $c_type)) dill_finalize(c);
 	    expected_result = source1_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -889,7 +889,7 @@ print COUT<<EOF;
 	    dill_mov${_}(c, dest, opnd1);
 	    dill_ret${_}(c, dest);
 	    
-	    proc = ($c_type(*)(dill_exec_ctx)) dill_end(c);
+	    proc = ($c_type(*)(dill_exec_ctx)) dill_finalize(c);
 	    expected_result = source1_$_;
 
 	    ec = dill_get_exec_context(c);

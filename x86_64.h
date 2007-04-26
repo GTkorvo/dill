@@ -214,6 +214,10 @@ extern void
 x86_64_branch(dill_stream c, int op, int type, int src1, int src2, int label);
 extern void
 x86_64_branchi(dill_stream c, int op, int type, int src, long imm, int label);
+extern void
+x86_64_compare(dill_stream s, int op, int type, int dest, int src1, int src2);
+extern void
+x86_64_comparei(dill_stream s, int op, int type, int dest, int src, long imm);
 extern void 
 x86_64_lea(dill_stream c, int junk, int junk1, int dest, int src, long imm);
 extern void 
