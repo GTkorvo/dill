@@ -470,11 +470,22 @@ sub emit_arith {
 		"$c_print_formats{$t}";
 		
         $upt = "\U$t\E";
+	$result_if = "if (expected_result != result)";
+	$range_decl = "";
+	if (($t eq "f") || ($t eq "d")) {
+	    $result_if = "if ((result > (expected_result + range)) || (result < (expected_result - range)))";
+	    if ((${op} eq "+") || (${op} eq "-")) {
+		$range_decl ="double range = 0.000001 * (fabs((double)s1${t}) + fabs((double)s2${t}));";
+	    } elsif  ((${op} eq "*") || (${op} eq "/")) {
+		$range_decl ="double range = 0.000001 * (fabs((double)s1${t} $op (double)s2${t}));";
+	    }
+	}
 print<<EOF;
     {
 	$type{$t} expected_result;
 	$type{$t} result;
 	$type{$t}(*func)($type{$t},$type{$t});
+	$range_decl
 	dill_reg	rd$t;
 	/* reg <- (reg $op reg) */
 	if (verbose) printf(" - $insn\\n");
@@ -487,7 +498,7 @@ print<<EOF;
         func = ($type{$t}(*)($type{$t},$type{$t})) dill_finalize(s);
 	result = func(s1$t, $s2);
         expected_result = (s1$t $op $s2);
-	if (expected_result != result) {
+	$result_if {
 	    printf("Failed test for $c_print_formats{$t} $insn $pf2, expected $pf, got $pf\\n", s1$t, $s2, expected_result, result);
 	    dill_errors++;
 	    dill_dump(s);
@@ -556,7 +567,7 @@ print<<EOF;
 			dill_fatal("out of registers!");
 
         	dill_$insn(s, rdi, dill_param_reg(s, 0), dill_param_reg(s, 1));
-        	dill_ret$t(s, rdi);
+        	dill_reti(s, rdi);
         func = (int(*)($type{$t},$type{$t})) dill_finalize(s);
 	result = func(s1$t, $s2);
         expected_result = (s1$t $op $s2);
@@ -745,11 +756,11 @@ print<<EOF;
 		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-		dill_set$t(s, rd$t, s2ul);
+		dill_set$t(s, rd$t, s1$t);
         	dill_$insn(s, rd$t, dill_param_reg(s, 0), dill_param_reg(s, 1));
         func = (void(*)(unsigned long, unsigned long)) dill_finalize(s);
         ((void(*)(unsigned long, unsigned long))func)(s2ul, $offset);
-	if (d$t != ($type{$t})s2ul) {
+	if (d$t != ($type{$t})s1$t) {
 	    printf("Failed test for $insn\\n");
 	    dill_errors++;
 	    dill_dump(s);
@@ -765,12 +776,12 @@ print<<EOF;
 		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-		dill_set$t(s, rd$t, s2ul);
+		dill_set$t(s, rd$t, s1$t);
         	dill_$insni(s, rd$t, dill_param_reg(s, 0), $offset);
         func = (void(*)(unsigned long))dill_finalize(s);
         ((void(*)(unsigned long))func)(s2ul);
 
-	if (d$t != ($type{$t})s2ul) {
+	if (d$t != ($type{$t})s1$t) {
 	    printf("Failed test for $insni\\n");
 	    dill_errors++;
 	    dill_dump(s);
@@ -802,8 +813,8 @@ double c_sqrt(double x) { extern double sqrt(double); 	return sqrt(x);}
 int main(int argc, char *argv[])
 {
     dill_stream s = dill_create_raw_stream();
-    char		dc;
-    unsigned char	duc;
+    char		dc, s1c;
+    unsigned char	duc, s1uc;
     short		ds, s1s;
     unsigned short	dus, s2us, s1us;
     int 	     	di, s1i, s2i;
@@ -829,6 +840,10 @@ int main(int argc, char *argv[])
 loop:
     s1p = (void *)(long)rand();
     s2p = (void *)(long)rand();
+
+    s1c = rand() - rand();
+    if(!(s1uc = rand() - rand()))
+	s1uc = rand() + 1;
 
     s1s = rand() - rand();
     if(!(s1us = rand() - rand()))

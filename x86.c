@@ -65,6 +65,9 @@
 #define _frame_reg EBP
 #define roundup(a,b) ((a + (b-1)) & (-b))
 
+extern void
+x86_sse_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset);
+
 static 
 struct basic_type_info 
 {   char size;
@@ -120,6 +123,29 @@ int x86_type_size[] = {
         0, /* B */
         sizeof(char*), /* EC */
 };
+
+static void x86_pmov(dill_stream s, int typ, int dest, int src);
+#define x86_movd(s, dest, src)  x86_pmov(s, DILL_D, dest, src)
+#define x86_movf(s, dest, src)  x86_pmov(s, DILL_F, dest, src)
+
+static void
+x86_pmov(dill_stream s, int typ, int dest, int src)
+{
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+
+    if (src != dest) {
+	switch (typ) {
+	case DILL_D: case DILL_F:
+	    if (smi->generate_SSE) {
+		BYTE_OUT3(s, 0x0f, 0x29, ModRM(0x3, src, dest));
+	    }
+	    break;
+	default:
+	    BYTE_OUT2(s, MOV32, ModRM(0x3, src, dest));
+	    break;
+	}
+    }
+}
 
 extern int
 x86_local(dill_stream s, int type)
@@ -178,7 +204,7 @@ extern void
 x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args,
 	     dill_reg *arglist)
 {
-    int i;
+    int i, fp_arg_count, int_arg_count;
     int cur_arg_offset = 0;
 
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
@@ -201,10 +227,22 @@ x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args
     smi->save_base = x86_localb(s, 8 * 4);
 
     cur_arg_offset = 8;
+    fp_arg_count = 0;
+    int_arg_count = 0;
     for (i = 0; i < arg_count; i++) {
 	/* at most 2 args moved into registers */
-	if ((args[i].type != DILL_F) && (args[i].type != DILL_D) && (i < 2)) {
+	if (((args[i].type == DILL_F) || (args[i].type == DILL_D)) &&
+	    smi->generate_SSE && (fp_arg_count < 2)) {
+	    /* put up to two float params in XMM reg set */
 	    int reg;
+	    fp_arg_count++;
+	    args[i].is_register = dill_raw_getreg(s, &reg, args[i].type, DILL_VAR);
+	    args[i].in_reg = reg;
+	    args[i].out_reg = -1;
+	} else if ((args[i].type != DILL_F) && (args[i].type != DILL_D) && 
+		   (int_arg_count < 2)) {
+	    int reg;
+	    int_arg_count++;
 	    args[i].is_register = dill_raw_getreg(s, &reg, DILL_L, DILL_VAR);
 	    args[i].in_reg = reg;
 	    args[i].out_reg = -1;
@@ -221,7 +259,10 @@ x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args
 	    if (arglist != NULL) arglist[i] = args[i].in_reg;
 	    x86_ploadi(s, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
 	} else {
-	    /* well, just leave it on the stack */
+	    if (smi->generate_SSE) {
+		x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
+		dill_dealloc_specific(s, args[i].in_reg, args[i].type, DILL_TEMP);
+	    }
 	}
     }
 }
@@ -251,11 +292,30 @@ int dest;
 }
 
 extern void
-x86_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset)
+x86_ploadi(dill_stream s, int type, int force_8087, int dest, int src, long offset)
 {
     unsigned char opcode = ld_opcodes[type];
     int tmp_dest = dest;
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    if ((smi->generate_SSE && !force_8087) &&
+	((type == DILL_F) || (type == DILL_D))) {
+	switch (type) {
+	case DILL_F:
+	    opcode = 0xf3;
+	    tmp_dest = dest;
+	    break;
+	case DILL_D:
+	    opcode = 0xf2;
+	    tmp_dest = dest;
+	    break;
+	}
+	if (((long)offset <= 127) && ((long)offset > -128)) {
+	    BYTE_OUT5(s, opcode, 0x0f, 0x10, ModRM(0x1, tmp_dest, src), offset & 0xff);
+	} else {
+	    BYTE_OUT4I(s, opcode, 0x0f, 0x10, ModRM(0x2, tmp_dest, src), offset);
+	}
+	return;
+    }
     switch (type) {
     case DILL_F:
 	opcode = 0xd9;
@@ -322,11 +382,107 @@ x86_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 }
 
 extern void
-x86_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
+x86_sse_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     unsigned char opcode = ld_opcodes[type];
     int tmp_dest = dest;
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    if ((type == DILL_F) || (type == DILL_D)) {
+	switch (type) {
+	case DILL_F:
+	    opcode = 0xf3;
+	    tmp_dest = dest;
+	    break;
+	case DILL_D:
+	    opcode = 0xf2;
+	    tmp_dest = dest;
+	    break;
+	}
+	if (((long)offset <= 127) && ((long)offset > -128)) {
+	    BYTE_OUT5(s, opcode, 0x0f, 0x10, ModRM(0x1, tmp_dest, src), offset & 0xff);
+	} else {
+	    BYTE_OUT4I(s, opcode, 0x0f, 0x10, ModRM(0x2, tmp_dest, src), offset);
+	}
+	return;
+    }
+    switch (type) {
+    case DILL_C:
+    case DILL_UC:
+	if (dest >= ESP) {
+	    /* movb doesn't work for big regs, load to eax */
+	    tmp_dest = EAX;
+	}
+	if (type == DILL_UC) {
+	    /* clear high bytes */
+	    if (src == tmp_dest) {
+		/* don't destroy source */
+		tmp_dest = EAX;
+	    }
+	    x86_clear(s, tmp_dest);
+	}
+	break;
+    case DILL_S: case DILL_US:
+	if (type == DILL_US) {
+	    /* clear high bytes */
+	    if (src == tmp_dest) {
+		/* don't destroy source */
+		tmp_dest = EAX;
+	    }
+	    x86_clear(s, tmp_dest);
+	}
+	BYTE_OUT1(s, 0x66);
+	break;
+    case DILL_L: case DILL_UL: case DILL_P:
+    /* fall through */
+    default:
+	break;
+    }
+    if (smi->pending_prefix != 0) {
+        BYTE_OUT1(s, smi->pending_prefix);
+	smi->pending_prefix = 0;
+    }
+    if (((long)offset <= 127) && ((long)offset > -128)) {
+	BYTE_OUT3(s, opcode, ModRM(0x1, tmp_dest, src), offset & 0xff);
+    } else {
+	BYTE_OUT2I(s, opcode, ModRM(0x2, tmp_dest, src), offset);
+    }
+    switch(type){
+    case DILL_C:
+	x86_lshi(s, dest, tmp_dest, 24);
+	x86_rshi(s, dest, dest, 24);
+	break;
+    case DILL_S:
+	x86_lshi(s, dest, tmp_dest, 16);
+	x86_rshi(s, dest, dest, 16);
+	break;
+    case DILL_UC: case DILL_US:
+	if (dest != tmp_dest)
+	    x86_movi(s, dest, tmp_dest);
+	break;
+    }
+}
+
+extern void
+x86_pload(dill_stream s, int type, int force_8087, int dest, int src1, int src2)
+{
+    unsigned char opcode = ld_opcodes[type];
+    int tmp_dest = dest;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    if ((smi->generate_SSE && !force_8087) &&
+	((type == DILL_F) || (type == DILL_D))) {
+	switch (type) {
+	case DILL_F:
+	    opcode = 0xf3;
+	    tmp_dest = dest;
+	    break;
+	case DILL_D:
+	    opcode = 0xf2;
+	    tmp_dest = dest;
+	    break;
+	}
+	BYTE_OUT5(s, opcode, 0x0f, 0x10, ModRM(0x0, 0x0, 0x4), SIB(0, src1, src2));
+	return;
+    }
     switch(type){
     case DILL_C:
     case DILL_UC:
@@ -500,9 +656,27 @@ static unsigned char st_opcodes[] = {
     0x89, /* DILL_EC */
 };
 extern void
-x86_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset)
+x86_pstorei(dill_stream s, int type, int force_8087, int dest, int src, long offset)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    if ((smi->generate_SSE && !force_8087) &&
+	((type == DILL_F) || (type == DILL_D))) {
+	int opcode = 0;
+	switch (type) {
+	case DILL_F:
+	    opcode = 0xf3;
+	    break;
+	case DILL_D:
+	    opcode = 0xf2;
+	    break;
+	}
+	if (((long)offset <= 127) && ((long)offset > -128)) {
+	    BYTE_OUT5(s, opcode, 0x0f, 0x11, ModRM(0x1, dest, src), offset & 0xff);
+	} else {
+	    BYTE_OUT4I(s, opcode, 0x0f, 0x11, ModRM(0x2, dest, src), offset);
+	}
+	return;
+    }
     switch(type) {
     case DILL_C:
     case DILL_UC:
@@ -536,9 +710,76 @@ x86_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset)
 }
 
 extern void
-x86_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
+x86_sse_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset)
+{
+    unsigned char opcode = st_opcodes[type];
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    if ((type == DILL_F) || (type == DILL_D)) {
+	switch (type) {
+	case DILL_F:
+	    opcode = 0xf3;
+	    break;
+	case DILL_D:
+	    opcode = 0xf2;
+	    break;
+	}
+	if (((long)offset <= 127) && ((long)offset > -128)) {
+	    BYTE_OUT5(s, opcode, 0x0f, 0x11, ModRM(0x1, dest, src), offset & 0xff);
+	} else {
+	    BYTE_OUT4I(s, opcode, 0x0f, 0x11, ModRM(0x2, dest, src), offset);
+	}
+	return;
+    }
+    switch(type) {
+    case DILL_C:
+    case DILL_UC:
+	if (dest >= ESP) {
+	    /* movb doesn't work for big regs, move to eax */
+	    x86_movi(s, EAX, dest);
+	    dest = EAX;
+	}
+	break;
+    }
+    switch (type) {
+    case DILL_F:
+    case DILL_D:
+	dest = 3;
+	break;
+    case DILL_S: case DILL_US:
+	BYTE_OUT1(s, 0x66);
+	break;
+    default:
+	break;
+    }
+    if (smi->pending_prefix != 0) {
+        BYTE_OUT1(s, smi->pending_prefix);
+	smi->pending_prefix = 0;
+    }
+    if (((long)offset <= 127) && ((long)offset > -128)) {
+	BYTE_OUT3(s, st_opcodes[type], ModRM(0x1, dest, src), offset & 0xff);
+    } else {
+	BYTE_OUT2I(s, st_opcodes[type], ModRM(0x2, dest, src), offset);
+    }
+}
+
+extern void
+x86_pstore(dill_stream s, int type, int force_8087, int dest, int src1, int src2)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    if ((smi->generate_SSE && !force_8087) &&
+	((type == DILL_F) || (type == DILL_D))) {
+	int opcode = 0;
+	switch (type) {
+	case DILL_F:
+	    opcode = 0xf3;
+	    break;
+	case DILL_D:
+	    opcode = 0xf2;
+	    break;
+	}
+	BYTE_OUT5(s, opcode, 0x0f, 0x11, ModRM(0x0, 0x0, 0x4), SIB(0, src1, src2));
+	return;
+    }
     switch(type) {
     case DILL_C:
     case DILL_UC:
@@ -607,16 +848,10 @@ extern void x86_divi(dill_stream s, int op3, int op, int dest, int src,
 extern void
 x86_mov(dill_stream s, int type, int junk, int dest, int src)
 {
-    if (src == dest) return;
-    switch(type) {
-    case DILL_D:
-    case DILL_F:
-	break;
-    default:
-	BYTE_OUT2(s, MOV32, ModRM(0x3, src, dest));
-    }
+    x86_pmov(s, type, dest, src);
 }
 
+static int b1_sse[] = {0x58, 0x5c, 0x59, 0x5e};
 static int b1[] = {0xde, 0xde, 0xde, 0xde};
 static int b2[] = {0xc1, 0xe9, 0xc9, 0xf9};
 
@@ -628,17 +863,46 @@ int dest;
 int src1;
 int src2;
 {
-    BYTE_OUT2(s, b1[op], b2[op]);
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    
+    if (smi->generate_SSE) {
+	int pre = 0xf3;
+	if (src2 == dest) {
+	    /* protect src2 from overwrite (below) */
+	    x86_movd(s, XMM0, src2);
+	    src2 = XMM0;
+	}
+	if (src1 != dest) x86_movd(s, dest, src1);
+	if (typ == DILL_D) pre = 0xf2;
+	BYTE_OUT4(s, pre, 0x0f, b1_sse[op], ModRM(0x3, dest, src2));
+    } else {
+	/* 8087 operations */
+	BYTE_OUT2(s, b1[op], b2[op]);
+    }
 }
 
-extern void x86_farith2(s, b1, b2, dest, src)
+extern void x86_farith2(s, b1, typ, dest, src)
 dill_stream s;
 int b1;
-int b2;
+int typ;
 int dest;
 int src;
 {
-    BYTE_OUT2(s, b1, b2);
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+
+    if (smi->generate_SSE) {
+	/* this is fneg */
+	int op = 0xf3;
+    
+	/* clear dest */
+	{
+	    BYTE_OUT3(s, 0x0f, 0x57, ModRM(0x3, dest, dest));
+	}
+	if (typ == DILL_D) op = 0xf2;
+	BYTE_OUT4(s, op, 0x0f, 0x5c, ModRM(0x3, dest, src));
+    } else {
+	BYTE_OUT2(s, 0xd9, 0xe0);
+    }
 }
 
 extern void x86_arith3(s, op, commut, dest, src1, src2)
@@ -697,20 +961,22 @@ int typ;
 int dest;
 int src;
 {
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     switch(typ) {
     case DILL_F: 
-/*	BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x7e, ModRM(0x3, src, EAX));*/
-	BYTE_OUT3(s, 0x0f, 0x7e, ModRM(0x3, src, EAX));
+	BYTE_OUT4(s, 0x66, 0x0f, 0x7e, ModRM(0x3, src, EAX));
 	x86_bswap(s, 0, DILL_I, EAX, EAX);
-/*	BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x6e, ModRM(0x3, dest, EAX));*/
-	BYTE_OUT3(s, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
+	BYTE_OUT4(s, 0x66, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
 	break;
     case DILL_D:
-/*	BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x7e, ModRM(0x3, src, EAX));*/
-	BYTE_OUT3(s, 0x0f, 0x7e, ModRM(0x3, src, EAX));
-	x86_bswap(s, 0, DILL_L, EAX, EAX);
-/*	BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x6e, ModRM(0x3, dest, EAX));*/
-	BYTE_OUT3(s, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
+	if (src != dest) x86_movd(s, dest, src);
+	BYTE_OUT4(s, 0x0f, 0xc6, ModRM(0x3, dest, dest), 0xb1); /* SHUFPS */
+	x86_pstorei(s, DILL_D, 0, dest, _frame_reg, smi->conversion_word);
+	x86_pbsloadi(s, DILL_I, 0, EAX,  _frame_reg, smi->conversion_word);
+	x86_pstorei(s, DILL_I, 0, EAX,  _frame_reg, smi->conversion_word);
+	x86_pbsloadi(s, DILL_I, 0, EAX,  _frame_reg, smi->conversion_word + 4);
+	x86_pstorei(s, DILL_I, 0, EAX,  _frame_reg, smi->conversion_word + 4);
+	x86_ploadi(s, DILL_D, 0, dest, _frame_reg, smi->conversion_word);
 	break;
     case DILL_L: case DILL_UL: case DILL_P: 
     case DILL_I: case DILL_U:
@@ -944,15 +1210,23 @@ x86_convert(dill_stream s, int from_type, int to_type,
 	break;
     case CONV(DILL_D,DILL_F):
     case CONV(DILL_F,DILL_D):
+	if (smi->generate_SSE) {
+	    BYTE_OUT4(s, (from_type == DILL_D) ? 0xf2 : 0xf3, 0xf, 0x5a, ModRM(0x3, dest, src));
+	}
 	break;
-    case CONV(DILL_F,DILL_U):
-    case CONV(DILL_F,DILL_UL):
-    case CONV(DILL_D,DILL_U):
-    case CONV(DILL_D,DILL_UL):
     case CONV(DILL_F,DILL_I):
     case CONV(DILL_F,DILL_L):
     case CONV(DILL_D,DILL_I):
     case CONV(DILL_D,DILL_L):
+	if (smi->generate_SSE) {
+	    BYTE_OUT4(s, (from_type == DILL_D) ? 0xf2 : 0xf3, 0xf, 0x2c, ModRM(0x3, dest, src));
+	    break;
+	}
+	/* fall through */
+    case CONV(DILL_F,DILL_U):
+    case CONV(DILL_F,DILL_UL):
+    case CONV(DILL_D,DILL_U):
+    case CONV(DILL_D,DILL_UL):
 	/* use dest for float control word */
 	/* fstcw (store control word) */
 	BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x7, _frame_reg), smi->fcu_word);
@@ -985,16 +1259,29 @@ x86_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_I,DILL_F):
     case CONV(DILL_L,DILL_F):
 	x86_pstorei(s, DILL_I, 0, src, _frame_reg, smi->conversion_word);
-	BYTE_OUT3(s, 0xdb, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
+	if (smi->generate_SSE) {
+	    	BYTE_OUT4(s, (to_type == DILL_D) ? 0xf2 : 0xf3, 0xf, 0x2a, ModRM(0x3, dest, src));
+	} else {
+	    BYTE_OUT3(s, 0xdb, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
+	}
 	break;
     case CONV(DILL_U,DILL_D):
     case CONV(DILL_UL,DILL_D):
     case CONV(DILL_U,DILL_F):
     case CONV(DILL_UL,DILL_F):
-	x86_pstorei(s, DILL_I, 0, src, _frame_reg, smi->conversion_word);
-	BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
-		   smi->conversion_word + 4, 0);
-	BYTE_OUT3(s, 0xdf, ModRM(0x1, 0x5, _frame_reg), smi->conversion_word);
+	if (smi->generate_SSE) {
+	    x86_pstorei(s, DILL_I, 0, src, _frame_reg, smi->conversion_word);
+	    BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+		       smi->conversion_word + 4, 0);
+	    BYTE_OUT3(s, 0xdf, ModRM(0x1, 0x5, _frame_reg), smi->conversion_word);
+	    x86_pstorei(s, to_type, 1 /* force 8087 */, 0,  _frame_reg, smi->conversion_word);
+	    x86_ploadi(s, to_type, 0, dest, _frame_reg, smi->conversion_word);
+	} else {
+	    x86_pstorei(s, DILL_I, 0, src, _frame_reg, smi->conversion_word);
+	    BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+		       smi->conversion_word + 4, 0);
+	    BYTE_OUT3(s, 0xdf, ModRM(0x1, 0x5, _frame_reg), smi->conversion_word);
+	}
 	break;
     case CONV(DILL_C,DILL_I):
     case CONV(DILL_C,DILL_L):
@@ -1055,9 +1342,19 @@ static unsigned char set_op_conds[] = {
     0x95, /* dill_bne_code */
 };
 
+static unsigned char fop_conds[] = {
+    0x94, /* dill_beq_code */   /* z = 1*/
+    0x96, /* dill_bge_code */   /* jna */
+    0x92, /* dill_bgt_code */
+    0x93, /* dill_ble_code */   /* c = 0 */
+    0x97, /* dill_blt_code */   
+    0x95, /* dill_bne_code */
+};
+
 extern void
 x86_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 {
+    int op_cond;
     switch(type) {
     case DILL_UC:
     case DILL_US:
@@ -1066,8 +1363,18 @@ x86_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 	op += 6; /* second set of codes */
 	/* fall through */
     }
-    BYTE_OUT2(s, 0x39, ModRM(0x3, src2, src1));   /* compare */
-    BYTE_OUT3(s, 0x0f, set_op_conds[op],ModRM(0x3, EAX,EAX));	  /* sete */
+
+    if (type == DILL_D) {
+	BYTE_OUT4(s, 0x66, 0x0f, 0x2e, ModRM(0x3, src2, src1));
+	op_cond = fop_conds[op];
+    } else if (type == DILL_F) {
+	BYTE_OUT3(s, 0x0f, 0x2e, ModRM(0x3, src2, src1));
+	op_cond = fop_conds[op];
+    } else {
+	BYTE_OUT2(s, 0x39, ModRM(0x3, src2, src1));
+	op_cond = set_op_conds[op];
+    }
+    BYTE_OUT3(s, 0x0f, op_cond, ModRM(0x3, EAX,EAX));	  /* sete */
     BYTE_OUT3(s, 0x0f, 0xb6, ModRM(0x3, dest, EAX));	/* movzbl */
 }
 
@@ -1115,12 +1422,22 @@ static unsigned char br_fop_conds[] = {
 extern void
 x86_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 {
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+
     switch(type) {
     case DILL_F:
     case DILL_D:
-	BYTE_OUT2(s, 0xde, 0xd9);   /* fcompp */
-	BYTE_OUT2(s, 0xdf, 0xe0);   /* fnstsw ax */
-	BYTE_OUT1(s, 0x9e);	    /* sahf */
+	if (smi->generate_SSE) {
+	    if (type == DILL_D) {
+		BYTE_OUT4(s, 0x66, 0x0f, 0x2e, ModRM(0x3, src2, src1));
+	    } else if (type == DILL_F) {
+		BYTE_OUT3(s, 0x0f, 0x2e, ModRM(0x3, src2, src1));
+	    }
+	} else {
+	    BYTE_OUT2(s, 0xde, 0xd9);   /* fcompp */
+	    BYTE_OUT2(s, 0xdf, 0xe0);   /* fnstsw ax */
+	    BYTE_OUT1(s, 0x9e);	    /* sahf */
+	}
 	dill_mark_branch_location(s, label);
 	BYTE_OUT2I(s, 0x0f, br_fop_conds[op], 0);
 	break;
@@ -1316,6 +1633,7 @@ x86_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 
 extern void x86_ret(dill_stream s, int data1, int data2, int src)
 {
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     switch (data1) {
     case DILL_C:
     case DILL_UC:
@@ -1328,11 +1646,48 @@ extern void x86_ret(dill_stream s, int data1, int data2, int src)
     case DILL_P:
 	if (src != EAX) x86_movi(s, EAX, src);
 	break;
-/*    case DILL_F:
-	if (src != _f0) x86_movf(s, _f0, src);
+    case DILL_F:
+	if (smi->generate_SSE) {
+	    /* store XMM reg to conversion word, reload to ST(0) */
+	    x86_pstorei(s, DILL_F, 0, src, _frame_reg, smi->conversion_word);
+	    x86_ploadi(s, DILL_F, 1 /* force 8087*/, src, 
+		       _frame_reg, smi->conversion_word);
+	}
+	break;
     case DILL_D:
-	if (src != _f0) x86_movd(s, _f0, src);
-*/
+	if (smi->generate_SSE) {
+	    /* store XMM reg to conversion word, reload to ST(0) */
+	    x86_pstorei(s, DILL_D, 0, src, _frame_reg, smi->conversion_word);
+	    x86_ploadi(s, DILL_D, 1 /* force 8087*/, src, 
+		       _frame_reg, smi->conversion_word);
+	}
+	break;
+    }
+    x86_simple_ret(c);
+}
+
+extern void x86_retf(dill_stream s, int data1, int data2, double imm)
+{
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    if (smi->generate_SSE) {
+	switch(data1) {
+	case DILL_F:
+	    if (smi->generate_SSE) {
+		x86_setf(s, DILL_F, 0, XMM0, imm);
+		x86_pstorei(s, DILL_F, 0, XMM0, _frame_reg, smi->conversion_word);
+		x86_ploadi(s, DILL_F, 1 /* force 8087*/, 0, 
+			   _frame_reg, smi->conversion_word);
+	    }
+	    break;
+	case DILL_D:
+	    if (smi->generate_SSE) {
+		x86_setf(s, DILL_D, 0, XMM0, imm);
+		x86_pstorei(s, DILL_D, 0, XMM0, _frame_reg, smi->conversion_word);
+		x86_ploadi(s, DILL_D, 1 /* force 8087*/, 0, 
+			   _frame_reg, smi->conversion_word);
+	    }
+	    break;
+	}
     }
     x86_simple_ret(c);
 }
@@ -1482,50 +1837,93 @@ x86_setf(dill_stream s, int type, int junk, int dest, double imm)
 	double d;
 	int i[2];
     } b;
-    if (type == DILL_F) {
-	a.f = (float) imm;
-	BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
-		   smi->conversion_word, a.i);
-	/* flds */
-	BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
-    } else {
-	b.d = imm;
-	BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
-		   smi->conversion_word, b.i[0]);
-	BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
-		   smi->conversion_word + 4, b.i[1]);
-	/* fldd */
-	BYTE_OUT3(s, 0xdd, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
-    }
-}	
 
+    if (smi->generate_SSE) {
+	if (type == DILL_F) {
+	    a.f = imm;
+	    x86_seti(s, EAX, a.i);
+	    BYTE_OUT4(s, 0x66, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
+	} else {
+	    b.d = imm;
+	    BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+		       smi->conversion_word, b.i[0]);
+	    BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+		       smi->conversion_word + 4, b.i[1]);
+
+	    x86_ploadi(s, DILL_D, 0, dest, 
+		       _frame_reg, smi->conversion_word);
+	}
+    } else {
+	if (type == DILL_F) {
+	    a.f = (float) imm;
+	    BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+		       smi->conversion_word, a.i);
+	    /* flds */
+	    BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
+	} else {
+	    b.d = imm;
+	    BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+		       smi->conversion_word, b.i[0]);
+	    BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
+		       smi->conversion_word + 4, b.i[1]);
+	    /* fldd */
+	    BYTE_OUT3(s, 0xdd, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
+	}
+    }
+
+}	
 
 #define bit_R(x) (1<<x)
 
 extern void
-x86_reg_init(dill_stream s)
+x86_reg_init(dill_stream s, x86_mach_info smi)
 {
     s->p->var_i.init_avail[0] = (bit_R(EBX)|bit_R(ESI)|bit_R(EDI));
     s->p->var_i.members[0] = s->p->var_i.init_avail[0];
     s->p->tmp_i.init_avail[0] = (bit_R(EDX)|bit_R(ECX));
     s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0] | bit_R(EAX);
-    s->p->var_f.init_avail[0] = 0;
+    if (smi->generate_SSE) {
+	s->p->tmp_f.init_avail[0] = (bit_R(XMM0)|bit_R(XMM1)|bit_R(XMM2)|bit_R(XMM3)|bit_R(XMM4)|bit_R(XMM5)|bit_R(XMM6)|bit_R(XMM7));
+	s->p->var_f.init_avail[0] = (bit_R(XMM0)|bit_R(XMM1)|bit_R(XMM2)|bit_R(XMM3)|bit_R(XMM4)|bit_R(XMM5)|bit_R(XMM6)|bit_R(XMM7));
+    } else {
+	s->p->tmp_f.init_avail[0] = 0;
+	s->p->var_f.init_avail[0] = 0;
+    }
     s->p->var_f.members[0] = s->p->var_f.init_avail[0];
-    s->p->tmp_f.init_avail[0] = 0;
     s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
+
+#define bit_sse (1<<25)
 
 extern void*
 gen_x86_mach_info(s)
 dill_stream s;
 {
+    static int host_supports_SSE = -1;
     x86_mach_info smi = malloc(sizeof(*smi));
     if (s->p->mach_info != NULL) {
 	free(s->p->mach_info);
 	s->p->mach_info = NULL;
 	s->p->native.mach_info = NULL;
     }
-    x86_reg_init(s);
+    if (host_supports_SSE == -1) {
+	int fl1, fl2;
+	/* Invoke CPUID(1), return %edx; caller can examine bits to
+	   determine what's supported.  */
+	__asm__ ("pushl %%ecx; pushl %%ebx; cpuid; popl %%ebx; popl %%ecx"
+		 : "=d" (fl2), "=a" (fl1) : "1" (1) : "cc");
+	host_supports_SSE = ((fl2 & bit_sse) == bit_sse);
+	if (getenv("DILL_NO_SSE")) host_supports_SSE = 0;
+	if (s->dill_debug) {
+	    if (host_supports_SSE) {
+		printf("x86 SSE code generated\n");
+	    } else {
+		printf("x86 8087 code generated\n");
+	    }
+	}
+    }
+    smi->generate_SSE = host_supports_SSE;
+    x86_reg_init(s, smi);
     smi->act_rec_size = 0;
     smi->stack_align = 4; /* 8 for x86v9 */
     smi->stack_constant_offset = 0; /* 2047 for x86v9 */
@@ -1650,6 +2048,7 @@ static char *int_regs[] = {"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI
 extern void
 x86_print_reg(dill_stream s, int typ, int reg)
 {
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     switch(typ) {
     case DILL_C: case DILL_UC:
 	if ((reg > 0) && (reg < sizeof(char_regs)/sizeof(char_regs[0]))) {
@@ -1671,7 +2070,11 @@ x86_print_reg(dill_stream s, int typ, int reg)
 	}
 	break;
     case DILL_F: case DILL_D:
-	printf("Fstack");
+	if (smi->generate_SSE) {
+	    printf("xmm%d", reg);
+	} else {
+	    printf("Fstack");
+	}
 	return;
     }
     printf("NoReg(%d)", reg);

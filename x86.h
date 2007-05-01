@@ -167,7 +167,9 @@ c->p->cur_ip = ((char*)c->p->cur_ip)+10
 enum {
     AL = 0, CL, DL, BL, AH, CH, DH, BH,   /* r8 */
     AX = 0, CX, DX, BX, SP, BP, SI, DI,   /* r16 */
-    EAX = 0, ECX, EDX, EBX, ESP, EBP, ESI, EDI   /* r32 */
+    EAX = 0, ECX, EDX, EBX, ESP, EBP, ESI, EDI,   /* r32 */
+/* used for sse instructions */
+    XMM0 = 0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15
 };
 
 typedef struct x86_mach_info {
@@ -180,6 +182,7 @@ typedef struct x86_mach_info {
     int cur_arg_offset;
     int backpatch_offset;
     char pending_prefix;
+    int generate_SSE;
 } *x86_mach_info;
 
 extern int x86_type_align[];
@@ -205,6 +208,7 @@ extern void x86_end(dill_stream s);
 extern void *x86_clone_code(dill_stream s, void *base, int size);
 extern void x86_ret(dill_stream s, int data1, int data2, int src);
 extern void x86_reti(dill_stream s, int data1, int data2, long imm);
+extern void x86_retf(dill_stream s, int data1, int data2, double imm);
 extern int x86_getreg(dill_stream s, dill_reg *reg_p, int type, int class);
 extern int x86_putreg(dill_stream s, dill_reg reg, int type);
 extern void

@@ -28,7 +28,7 @@ sub upperc {
 &arith_insn("sub", "f d", "x86_farith", "1", "DILL_t");
 &arith_insn("mul", "f d", "x86_farith", "2", "DILL_t");
 &arith_insn("div", "f d", "x86_farith", "3", "DILL_t");
-&arith2_insn("neg", "f d", "x86_farith2", "0xd9", "0xe0");
+&arith2_insn("neg", "f d", "x86_farith2", "0xd9", "DILL_t");
 &arith2_insn("bswap", "s us i u ul l f d", "x86_bswap", "DILL_t", "DILL_t");
 
 &arithi_insn("add", "i u ul l p", "x86_arith3i", "0x0", "1"); #(2,0x0,dest,src1,imm)", "i u ul l");
@@ -66,7 +66,7 @@ print COUT "\t  ${mach}_jump_table->type_align = x86_type_align;\n";
 print COUT "\t  ${mach}_jump_table->type_size = x86_type_size;\n";
 print COUT "\t  ${mach}_jump_table->ret = x86_ret;\n";
 print COUT "\t  ${mach}_jump_table->reti = x86_reti;\n";
-print COUT "\t  ${mach}_jump_table->retf = (ret_opf)x86_reti;\n";
+print COUT "\t  ${mach}_jump_table->retf = x86_retf;\n";
 print COUT "\t  ${mach}_jump_table->load = x86_pload;\n";
 print COUT "\t  ${mach}_jump_table->bsload = x86_pbsload;\n";
 print COUT "\t  ${mach}_jump_table->loadi = x86_ploadi;\n";
