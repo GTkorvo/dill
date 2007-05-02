@@ -175,28 +175,24 @@ extern int x86_local_op(dill_stream s, int flag, int val)
     return x86_localb(s, size);
 }	
 
+#define BEGIN_FLOAT_SAVE 32
 extern void
 x86_save_restore_op(dill_stream s, int save_restore, int type, int reg)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    int offset;
+    switch (type) {
+    case DILL_D: case DILL_F:
+	offset = reg * 8 + BEGIN_FLOAT_SAVE;
+	break;
+    default:
+	offset = reg * smi->stack_align;
+	break;
+    }
     if (save_restore == 0) { /* save */
-	switch (type) {
-	case DILL_D: case DILL_F:
-	    /* should never happen on x86 */
-	    break;
-	default:
-	    x86_pstorei(s, type, 0, reg, _frame_reg, smi->save_base + (reg) * smi->stack_align + smi->stack_constant_offset);
-	    break;
-	}
+	x86_pstorei(s, type, 0, reg, _frame_reg, smi->save_base + offset + smi->stack_constant_offset);
     } else {  /* restore */
-	switch (type) {
-	case DILL_D: case DILL_F:
-	    /* should never happen on x86 */
-	    break;
-	default:
-	    x86_ploadi(s, type, 0, reg, _frame_reg, smi->save_base + reg * smi->stack_align + smi->stack_constant_offset);
-	    break;
-	}
+	x86_ploadi(s, type, 0, reg, _frame_reg, smi->save_base + offset + smi->stack_constant_offset);
     }
 }	
 
@@ -224,7 +220,7 @@ x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args
     /* leave some space */ x86_local(s, DILL_D);
     smi->conversion_word = x86_local(s, DILL_D);
     smi->fcu_word = x86_local(s, DILL_I);
-    smi->save_base = x86_localb(s, 8 * 4);
+    smi->save_base = x86_localb(s, 8 * 4 + /* floats */ 8 * 8);
 
     cur_arg_offset = 8;
     fp_arg_count = 0;
@@ -254,14 +250,15 @@ x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args
     }
 
     for (i = 0; i < arg_count; i++) {
-	if (args[i].is_register && ((args[i].type != DILL_F) && 
-				    (args[i].type != DILL_D))) {
+	if (args[i].is_register) {
 	    if (arglist != NULL) arglist[i] = args[i].in_reg;
-	    x86_ploadi(s, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
-	} else {
-	    if (smi->generate_SSE) {
-		x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
-		dill_dealloc_specific(s, args[i].in_reg, args[i].type, DILL_TEMP);
+	    if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
+		x86_ploadi(s, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
+	    } else {
+		if (smi->generate_SSE) {
+		    x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
+		    dill_dealloc_specific(s, args[i].in_reg, args[i].type, DILL_TEMP);
+		}
 	    }
 	}
     }
@@ -1884,7 +1881,7 @@ x86_reg_init(dill_stream s, x86_mach_info smi)
     s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0] | bit_R(EAX);
     if (smi->generate_SSE) {
 	s->p->tmp_f.init_avail[0] = (bit_R(XMM0)|bit_R(XMM1)|bit_R(XMM2)|bit_R(XMM3)|bit_R(XMM4)|bit_R(XMM5)|bit_R(XMM6)|bit_R(XMM7));
-	s->p->var_f.init_avail[0] = (bit_R(XMM0)|bit_R(XMM1)|bit_R(XMM2)|bit_R(XMM3)|bit_R(XMM4)|bit_R(XMM5)|bit_R(XMM6)|bit_R(XMM7));
+	s->p->var_f.init_avail[0] = 0;
     } else {
 	s->p->tmp_f.init_avail[0] = 0;
 	s->p->var_f.init_avail[0] = 0;
