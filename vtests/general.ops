@@ -739,7 +739,7 @@ EOF
 	    opnd1 = dill_param_reg(c, 1);
 	    dest = dill_getreg(c, $dill_type);
 	    opnd2 = dill_getreg(c, DILL_P);
-	    dill_setp(c, opnd2, offset);
+	    dill_setl(c, opnd2, offset);
 	    dill_${full_op}(c, dest, opnd1, opnd2);
 	    dill_ret${_}(c, dest);
 	    
@@ -835,7 +835,7 @@ EOF
 	    opnd1 = dill_param_reg(c, 1);
 	    source = dill_param_reg(c, 2);
 	    opnd2 = dill_getreg(c, DILL_P);
-	    dill_setp(c, opnd2, offset);
+	    dill_setl(c, opnd2, offset);
 	    dill_${full_op}(c, source, opnd1, opnd2);
 	    dill_retii(c, 0);
 	    

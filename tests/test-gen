@@ -205,7 +205,7 @@ sub emit_unary {
 	$insn = "$name$t";
 	$insni = "$insn" . "i";
 
-	$cast1 = ($t eq "p") ? "(unsigned long)" : "";
+	$cast1 = ($t eq "p") ? "" : "";
 	$upt = "\U$t\E";
 print<<EOF;
     {
@@ -245,8 +245,8 @@ sub emit_cvt {
 	$insn = "$name$t";
 	$insni = "$insn" . "i";
 
-	$cast1 = ($t eq "p") ? "(unsigned long)" : "";
-	$cast2 = ($from_type eq "p") ? "(unsigned long)" : "";
+	$cast1 = ($t eq "p") ? "" : "";
+	$cast2 = ($from_type eq "p") ? "" : "";
 	$upt = "\U$t\E";
 print<<EOF;
     {
@@ -348,7 +348,7 @@ sub emit_ret {
 	$insn = "$name$t";
 	$insni = "$insn" . "i";
 
-	$cast1 = ($t eq "p") ? "(unsigned long)" : "";
+	$cast1 = ($t eq "p") ? "" : "";
 	$upt = "\U$t\E";
 print<<EOF;
     {
@@ -579,7 +579,7 @@ print<<EOF;
 
     }
 EOF
-	return if($t eq "f" || $t eq "d"); 
+	return if($t eq "f" || $t eq "d" || $t eq "p"); 
 
 print<<EOF;
 
@@ -689,7 +689,7 @@ sub emit_load {
 		($t eq "c" || $t eq "uc" || $t eq "s" || $t eq "us") ?
 			"i" :
 			$t;
-	$cast1 = ($t eq "p") ? "(unsigned long)" : "";
+	$cast1 = ($t eq "p") ? "" : "";
 		
         $upt = "\U$t\E";
 print<<EOF;
@@ -940,7 +940,7 @@ sub initialize {
 		'u', '%u',
 		'l', '%ld', 
 		'ul', '%lu', 
-		'p', '%lx', 
+		'p', '%p', 
 		'f', '%g', 
 		'd', '%g'
 	);
@@ -954,7 +954,7 @@ sub initialize {
 		'u', '%x',
 		'l', '%lx', 
 		'ul', '%lx', 
-		'p', '%lx', 
+		'p', '%p', 
 		'f', '%g', 
 		'd', '%g'
 	);

@@ -106,7 +106,7 @@ void b () {
 
      dill_start_proc(c, "b_gen", DILL_I, "%i%i");
      f = dill_getreg(c, DILL_P);
-     dill_setp(c, f, (long)gg);
+     dill_setp(c, f, gg);
      dill_retp(c, f);
      pp = (void *(*)())dill_finalize(c);
 
@@ -127,7 +127,7 @@ void c () {
      b = dill_getreg(c, DILL_I);
      f = dill_getreg(c, DILL_I);
 
-     dill_setp(c, f, (long)gg);
+     dill_setp(c, f, gg);
      dill_seti(c, a, 1);
      dill_seti(c, b, 2);  
      dill_push_init(c);
@@ -263,7 +263,7 @@ void f () {
      d = dill_getreg(c, DILL_P);
      dill_setd(c, a, dp);
      dill_seti(c, b, ip);
-     dill_setp(c, d, (long)pp);
+     dill_setp(c, d, pp);
      dill_push_init(c);
      if (!dill_do_reverse_vararg_push(c)) {
 	 dill_push_argpi(c, (void*)"values are %d, %g, %s\n");
