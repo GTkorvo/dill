@@ -565,6 +565,19 @@ x86_64_setl(dill_stream s, int r, long val)
     BYTE_OUT1LR(s, rex, 0xb8 + ((0x7) & r), val);
 }
 
+extern void 
+x86_64_setp(dill_stream s, int type, int junk, int r, void *val)
+{
+    int rex = REX_W;
+    union {
+	long l;
+	void *a;
+    } a;
+    a.a = val;
+    if (r > RDI) rex |= REX_B;
+    BYTE_OUT1LR(s, rex, 0xb8 + ((0x7) & r), a.l);
+}
+
 extern int
 x86_64_local(dill_stream s, int type)
 {
@@ -2097,8 +2110,12 @@ static void internal_push(dill_stream s, int type, int immediate,
 	if (arg.is_immediate) {
 	    int arg_type = arg.type;
 	    if (type == DILL_F) {
-		float f = (float) *(double*)value_ptr;
-		x86_64_setl(s, EAX, *(int*)&f);
+		union {
+		    float f;
+		    int i;
+		} a;
+		a.f = (float) *(double*)value_ptr;
+		x86_64_setl(s, EAX, a.i);
 		arg_type = DILL_I;
 	    } else {
 		x86_64_setl(s, EAX, *(long*)value_ptr);
@@ -2168,7 +2185,7 @@ extern void x86_64_pushfi(dill_stream s, int type, double value)
     internal_push(s, type, 1, &value);
 }
 
-extern int x86_64_calli(dill_stream s, int type, void *xfer_address)
+extern int x86_64_calli(dill_stream s, int type, void *xfer_address, char *name)
 {
     int rex = REX_W;
     int tmp_call_reg = R11;

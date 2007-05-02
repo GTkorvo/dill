@@ -1913,12 +1913,16 @@ dill_stream s;
 	s->p->native.mach_info = NULL;
     }
     if (host_supports_SSE == -1) {
+#if defined(HOST_X86)
 	int fl1, fl2;
 	/* Invoke CPUID(1), return %edx; caller can examine bits to
 	   determine what's supported.  */
 	__asm__ ("pushl %%ecx; pushl %%ebx; cpuid; popl %%ebx; popl %%ecx"
 		 : "=d" (fl2), "=a" (fl1) : "1" (1) : "cc");
 	host_supports_SSE = ((fl2 & bit_sse) == bit_sse);
+#else
+	host_supports_SSE = 1;
+#endif
 	if (getenv("DILL_NO_SSE")) host_supports_SSE = 0;
 	if (s->dill_debug) {
 	    if (host_supports_SSE) {

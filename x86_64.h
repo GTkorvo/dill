@@ -211,6 +211,8 @@ x86_64_pset(dill_stream c, int type, int junk, int dest, long imm);
 extern void
 x86_64_setf(dill_stream c, int type, int junk, int dest, double imm);
 extern void
+x86_64_setp(dill_stream c, int type, int junk, int dest, void *imm);
+extern void
 x86_64_branch(dill_stream c, int op, int type, int src1, int src2, int label);
 extern void
 x86_64_branchi(dill_stream c, int op, int type, int src, long imm, int label);
