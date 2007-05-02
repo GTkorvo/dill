@@ -75,6 +75,7 @@ print COUT "\t  ${mach}_jump_table->convert = virtual_convert;\n";
 print COUT "\t  ${mach}_jump_table->mov = virtual_mov;\n";
 print COUT "\t  ${mach}_jump_table->set = virtual_pset;\n";
 print COUT "\t  ${mach}_jump_table->setf = virtual_setf;\n";
+print COUT "\t  ${mach}_jump_table->setp = virtual_setp;\n";
 print COUT "\t  ${mach}_jump_table->jv = virtual_jump_to_label;\n";
 print COUT "\t  ${mach}_jump_table->jp = virtual_jump_to_reg;\n";
 print COUT "\t  ${mach}_jump_table->jpi = virtual_jump_to_imm;\n";
@@ -425,6 +426,17 @@ virtual_pset(dill_stream s, int type, int junk, int dest, long imm)
 }
 
 extern void
+virtual_setp(dill_stream s, int type, int junk, int dest, void *imm)
+{
+    virtual_insn i;
+    i.class_code = iclass_set;
+    i.insn_code = type;
+    i.opnds.a3i.dest = dest;
+    i.opnds.a3i.u.imm_a = imm;
+    INSN_OUT(s, i);
+}
+
+extern void
 virtual_setf(dill_stream s, int type, int junk, int dest, double imm)
 {
     virtual_insn i;
@@ -497,7 +509,7 @@ extern void virtual_jump_to_imm(dill_stream s, void *imm)
     INSN_OUT(s, i);
 }
 
-extern int virtual_calli(dill_stream s, int type, void *xfer_address)
+extern int virtual_calli(dill_stream s, int type, void *xfer_address, char *name)
 {
     virtual_insn i;
     i.class_code = iclass_call;

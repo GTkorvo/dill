@@ -116,9 +116,14 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     case iclass_setf:
     {
 	int typ = insn->insn_code & 0xf;
-        printf("set%s %c%d, %g 0x(%lx)", 
+	union {
+	  double imm;
+	  int imm_i[2];
+	} u;
+	u.imm = insn->opnds.sf.imm;
+        printf("set%s %c%d, %g 0x(%x)0x(%x)", 
 	       dill_type_names[typ], OPND(insn->opnds.sf.dest),
-	       insn->opnds.sf.imm, *((long*)&insn->opnds.sf.imm));
+	       insn->opnds.sf.imm, u.imm_i[0], u.imm_i[1]);
         break;
     }
     case iclass_mov:

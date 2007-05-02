@@ -242,6 +242,8 @@ x86_pset(dill_stream s, int type, int junk, int dest, long imm);
 extern void
 x86_setf(dill_stream s, int type, int junk, int dest, double imm);
 extern void
+x86_setp(dill_stream s, int type, int junk, int dest, void *imm);
+extern void
 x86_branch(dill_stream s, int op, int type, int src1, int src2, int label);
 extern void
 x86_branchi(dill_stream s, int op, int type, int src, long imm, int label);
@@ -256,7 +258,7 @@ extern void x86_jump_to_label(dill_stream s, unsigned long label);
 extern void x86_jump_to_reg(dill_stream s, unsigned long reg);
 extern void x86_jump_to_imm(dill_stream s, void *imm);
 extern void x86_jal(dill_stream s, int return_addr_reg, int target);
-extern int x86_calli(dill_stream s, int type, void *xfer_address);
+extern int x86_calli(dill_stream s, int type, void *xfer_address, char *name);
 extern int x86_callr(dill_stream s, int type, int src);
 extern void x86_push(dill_stream s, int type, int reg);
 extern void x86_pushi(dill_stream s, int type, long value);

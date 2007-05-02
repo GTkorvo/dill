@@ -285,6 +285,8 @@ sub set {
 	$type = $_;
 	if (($_ eq 'f') || ($_ eq 'd')) {
 	    print HOUT "#define dill_set${type}(s, dest, imm) (s->j->setf)(s, DILL_" . &upperc($type) . ", 0, dest, imm)\n";
+	} elsif ($_ eq 'p') {
+	    print HOUT "#define dill_set${type}(s, dest, imm) (s->j->setp)(s, DILL_" . &upperc($type) . ", 0, dest, imm)\n";
 	} else {
 	    print HOUT "#define dill_set${type}(s, dest, imm) (s->j->set)(s, DILL_" . &upperc($type) . ", 0, dest, imm)\n";
 	}
@@ -414,6 +416,7 @@ typedef void (*special_op)(dill_stream s, special_operations type, long param);
 typedef int (*call_opi)(dill_stream s, int type, void *xfer_address, char *name);
 typedef int (*call_opr)(dill_stream s, int type, int src);
 typedef void (*setf_opi)(dill_stream s, int data1, int data2, int dest, double imm);
+typedef void (*setp_opi)(dill_stream s, int data1, int data2, int dest, void *imm);
 typedef void (*push_op)(dill_stream s, int type, int reg);
 typedef void (*push_opi)(dill_stream s, int type, long value);
 typedef void (*push_oppi)(dill_stream s, int type, void *value);
@@ -465,6 +468,7 @@ struct jmp_table_s {
     arith_op2 mov;
     arith_op2i set;
     setf_opi setf;
+    setp_opi setp;
     jmp_op jv;
     jmp_op jp;
     jmp_opa jpi;

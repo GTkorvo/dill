@@ -78,6 +78,7 @@ print COUT "\t  ${mach}_jump_table->convert = x86_convert;\n";
 print COUT "\t  ${mach}_jump_table->mov = x86_mov;\n";
 print COUT "\t  ${mach}_jump_table->set = x86_pset;\n";
 print COUT "\t  ${mach}_jump_table->setf = x86_setf;\n";
+print COUT "\t  ${mach}_jump_table->setp = x86_setp;\n";
 print COUT "\t  ${mach}_jump_table->jv = x86_jump_to_label;\n";
 print COUT "\t  ${mach}_jump_table->jp = x86_jump_to_reg;\n";
 print COUT "\t  ${mach}_jump_table->jpi = x86_jump_to_imm;\n";

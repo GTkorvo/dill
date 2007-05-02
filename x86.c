@@ -46,7 +46,6 @@
 #define INSN_OUT(s, i) printf("Bad opout, line %d\n", __LINE__)
 #define x86_savei(s, imm) 
 #define x86_seti(s, r, val) BYTE_OUT1I(s, 0xb8 + r, val);
-#define x86_setp(s, r, val) BYTE_OUT1PI(s, 0xb8 + r, val);
 #define x86_rshai(s, dest, src, imm) if (dest !=src) x86_movi(s, dest, src); BYTE_OUT3(s, 0xc1, ModRM(0x3, 0x7, dest), imm & 0xff);
 #define x86_rshi(s, dest, src, imm) if (dest !=src) x86_movi(s, dest, src); BYTE_OUT3(s, 0xc1, ModRM(0x3, 0x5, dest), imm & 0xff);
 #define x86_lshi(s, d, src, imm) if (d !=src) x86_movi(s, d, src); BYTE_OUT3(s, 0xc1, ModRM(0x3, 0x4, d), imm & 0xff);
@@ -477,7 +476,7 @@ x86_pload(dill_stream s, int type, int force_8087, int dest, int src1, int src2)
 	    tmp_dest = dest;
 	    break;
 	}
-	BYTE_OUT5(s, opcode, 0x0f, 0x10, ModRM(0x0, 0x0, 0x4), SIB(0, src1, src2));
+	BYTE_OUT5(s, opcode, 0x0f, 0x10, ModRM(0x0, dest, 0x4), SIB(0, src1, src2));
 	return;
     }
     switch(type){
@@ -774,7 +773,7 @@ x86_pstore(dill_stream s, int type, int force_8087, int dest, int src1, int src2
 	    opcode = 0xf2;
 	    break;
 	}
-	BYTE_OUT5(s, opcode, 0x0f, 0x11, ModRM(0x0, 0x0, 0x4), SIB(0, src1, src2));
+	BYTE_OUT5(s, opcode, 0x0f, 0x11, ModRM(0x0, dest, 0x4), SIB(0, src1, src2));
 	return;
     }
     switch(type) {
@@ -1464,7 +1463,7 @@ extern void x86_jump_to_reg(dill_stream s, unsigned long reg)
 
 extern void x86_jump_to_imm(dill_stream s, void *imm)
 {
-    x86_setp(s, EAX, imm);
+    x86_setp(s, DILL_P, 0, EAX, imm);
     BYTE_OUT2(s, 0xff, ModRM(0x3, 0x4, EAX));
 }
 
@@ -1562,7 +1561,7 @@ extern void x86_pushpi(dill_stream s, int type, void *value)
     smi->cur_arg_offset += 4;
 }
 
-extern int x86_calli(dill_stream s, int type, void *xfer_address)
+extern int x86_calli(dill_stream s, int type, void *xfer_address, char *name)
 {
     int caller_side_ret_reg = EAX;
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
@@ -1572,7 +1571,11 @@ extern int x86_calli(dill_stream s, int type, void *xfer_address)
     BYTE_OUT1I(s, 0xe8, 0);
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
-/*	caller_side_ret_reg = _f0;*/
+        if (smi->generate_SSE) {
+	    x86_pstorei(s, type, 1 /* force 8087 */, 0,  _frame_reg, smi->conversion_word);
+	    x86_ploadi(s, type, 0, XMM0, _frame_reg, smi->conversion_word);
+	    caller_side_ret_reg = XMM0;
+	}
     }
     dill_addii(s, ESP, ESP, smi->cur_arg_offset);
     return caller_side_ret_reg;
@@ -1823,6 +1826,12 @@ x86_pset(dill_stream s, int type, int junk, int dest, long imm)
 }	
 
 extern void
+x86_setp(dill_stream s, int type, int junk, int r, void *val) 
+{
+    BYTE_OUT1PI(s, 0xb8 + r, val);
+}
+
+extern void
 x86_setf(dill_stream s, int type, int junk, int dest, double imm)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
@@ -1880,13 +1889,13 @@ x86_reg_init(dill_stream s, x86_mach_info smi)
     s->p->tmp_i.init_avail[0] = (bit_R(EDX)|bit_R(ECX));
     s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0] | bit_R(EAX);
     if (smi->generate_SSE) {
-	s->p->tmp_f.init_avail[0] = (bit_R(XMM0)|bit_R(XMM1)|bit_R(XMM2)|bit_R(XMM3)|bit_R(XMM4)|bit_R(XMM5)|bit_R(XMM6)|bit_R(XMM7));
+	s->p->tmp_f.init_avail[0] = (bit_R(XMM1)|bit_R(XMM2)|bit_R(XMM3)|bit_R(XMM4)|bit_R(XMM5)|bit_R(XMM6)|bit_R(XMM7));
 	s->p->var_f.init_avail[0] = 0;
     } else {
 	s->p->tmp_f.init_avail[0] = 0;
 	s->p->var_f.init_avail[0] = 0;
     }
-    s->p->var_f.members[0] = s->p->var_f.init_avail[0];
+    s->p->var_f.members[0] = (bit_R(XMM0)|s->p->var_f.init_avail[0]);
     s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
 
