@@ -9,7 +9,7 @@ sub upperc {
 &init_output;
 
 print HOUT<<EOF;
-/** @defgroup insns DILL instruction issue functions
+/** \@defgroup insns DILL instruction issue functions
  *
  * This group of functions is used to manage CM-returned memory.
  * They are provided to handle the eventuality when CM uses its own memory

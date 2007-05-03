@@ -64,6 +64,8 @@ sub upperc {
 &arithi_insn("rsh", "ul", "sparc_FORM3imm_arith", "0x26", "1");
 &branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "sparc_branch");
 &branchi_insn( "eq ge gt le lt ne", "i u ul l p", "sparc_branchi");
+&compare_insn( "eq ge gt le lt ne", "i u ul l p d f", "sparc_compare");
+&comparei_insn( "eq ge gt le lt ne", "i u ul l p", "sparc_comparei");
 
 print COUT <<EOF;
 extern void sparc_FORM3_farith(s, op3, fop, dest, src1, src2)
@@ -116,6 +118,9 @@ static jmp_data  ${mach}_arith_op2_data[dill_jmp_a2_size + 1];
 static branch_op ${mach}_branch_table[dill_jmp_branch_size + 1];
 static branch_opi ${mach}_branchi_table[dill_jmp_branch_size + 1];
 static jmp_data  ${mach}_branch_data[dill_jmp_branch_size + 1];
+static compare_op ${mach}_compare_table[dill_jmp_compare_size + 1];
+static compare_opi ${mach}_comparei_table[dill_jmp_compare_size + 1];
+static jmp_data ${mach}_compare_data[dill_jmp_compare_size + 1];
 
 jmp_table ${mach}_jump_table;
 static void gen_${mach}_jump_table()
@@ -145,11 +150,20 @@ static void gen_${mach}_jump_table()
     memset(${mach}_jump_table->jmp_bi, 0, sizeof(${mach}_branch_table));
     ${mach}_jump_table->b_data = ${mach}_branch_data;
     memset(${mach}_jump_table->b_data, 0, sizeof(${mach}_branch_data));
+    /* compare */
+    ${mach}_jump_table->jmp_c = ${mach}_compare_table;
+    memset(${mach}_jump_table->jmp_c, 0, sizeof(${mach}_compare_table));
+    /* comparei */
+    ${mach}_jump_table->jmp_ci = ${mach}_comparei_table;
+    memset(${mach}_jump_table->jmp_ci, 0, sizeof(${mach}_compare_table));
+    ${mach}_jump_table->c_data = ${mach}_compare_data;
+    memset(${mach}_jump_table->c_data, 0, sizeof(${mach}_compare_data));
 EOF
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
 print COUT $jmp_a2_assigns;
 print COUT $jmp_b_assigns;
+print COUT $jmp_c_assigns;
 print COUT "    ${mach}_jump_table->proc_start = (dill_mach_proc_start) sparc_proc_start;\n";
 print COUT "    ${mach}_jump_table->end = sparc_end;\n";
 print COUT "    ${mach}_jump_table->clone_code = sparc_clone_code;\n";
@@ -169,6 +183,7 @@ print COUT "    ${mach}_jump_table->convert = sparc_convert;\n";
 print COUT "    ${mach}_jump_table->mov = sparc_mov;\n";
 print COUT "    ${mach}_jump_table->set = sparc_pset;\n";
 print COUT "    ${mach}_jump_table->setf = sparc_setf;\n";
+print COUT "    ${mach}_jump_table->setp = sparc_setp;\n";
 print COUT "    ${mach}_jump_table->jv = sparc_jump_to_label;\n";
 print COUT "    ${mach}_jump_table->jp = sparc_jump_to_reg;\n";
 print COUT "    ${mach}_jump_table->jpi = sparc_jump_to_imm;\n";
@@ -256,12 +271,34 @@ sub branch_insn {
     }
 }
 
+sub compare_insn {
+    local($ops, $types, $subr) = @_;
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    $jmp_c_assigns = $jmp_c_assigns . "  ${mach}_jump_table->jmp_c[dill_jmp_c${op}${_}] = $subr;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data1 = dill_${op}_code;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
+	}
+    }
+}
+
 sub branchi_insn {
     local($ops, $types, $subr) = @_;
     foreach (split(' ', $ops)) {
 	$op = $_;
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "    ${mach}_jump_table->jmp_bi[dill_jmp_b${op}${_}] = $subr;\n";
+	}
+    }
+}
+
+sub comparei_insn {
+    local($ops, $types, $subr) = @_;
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    $jmp_c_assigns = $jmp_c_assigns . "  ${mach}_jump_table->jmp_ci[dill_jmp_c${op}${_}] = $subr;\n";
 	}
     }
 }

@@ -99,9 +99,15 @@ sparc_pset(dill_stream c, int type, int junk, int dest, long imm);
 extern void
 sparc_setf(dill_stream c, int type, int junk, int dest, double imm);
 extern void
+sparc_setp(dill_stream c, int type, int junk, int dest, void *imm);
+extern void
 sparc_branch(dill_stream c, int op, int type, int src1, int src2, int label);
 extern void
 sparc_branchi(dill_stream c, int op, int type, int src, long imm, int label);
+extern void
+sparc_compare(dill_stream c, int op, int type, int dest, int src1, int src2);
+extern void
+sparc_comparei(dill_stream c, int op, int type, int dest, int src, long imm);
 extern void 
 sparc_lea(dill_stream c, int junk, int junk1, int dest, int src, long imm);
 extern void sparc_bswap(dill_stream c, int junk, int typ, int dest, int src);
@@ -109,7 +115,7 @@ extern void sparc_jump_to_label(dill_stream c, unsigned long label);
 extern void sparc_jump_to_reg(dill_stream c, unsigned long reg);
 extern void sparc_jump_to_imm(dill_stream c, unsigned long imm);
 extern void sparc_jal(dill_stream c, int return_addr_reg, int target);
-extern int sparc_calli(dill_stream c, int type, void *xfer_address);
+extern int sparc_calli(dill_stream c, int type, void *xfer_address, char*name);
 extern int sparc_callr(dill_stream c, int type, int src);
 extern void sparc_push(dill_stream c, int type, int reg);
 extern void sparc_pushi(dill_stream c, int type, long value);
