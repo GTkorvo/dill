@@ -10,28 +10,28 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define sparc_save(c, r) sparc_FORM3_arith(c, 0x3c, 0x2, _sp, _sp, r)
-#define sparc_savei(c, imm) sparc_FORM3imm_arith(c, 0x3c, 0x2, _sp, _sp, imm)
-#define sparc_sethi(c, r, imm) INSN_OUT(c, HDR(0)|RD(r)|OP2(0x4)|imm)
-#define sparc_ori(c, dest, src, imm) INSN_OUT(c, HDR(0x2)|OP3(0x2)|IM|RD(dest)|RS1(src)|imm)
-#define sparc_xori(c, dest, src, imm) INSN_OUT(c, HDR(0x2)|OP3(0x3)|IM|RD(dest)|RS1(src)|imm)
-#define sparc_andi(c, dest, src, imm) INSN_OUT(c, HDR(0x2)|OP3(0x1)|IM|RD(dest)|RS1(src)|imm)
-#define sparc_or(c, dest, src1, src2) INSN_OUT(c, HDR(0x2)|OP3(0x2)|RD(dest)|RS1(src1)|RS2(src2))
-#define sparc_movi(c, dest, src) sparc_or(c, dest, src, _g0)
-#define sparc_int_mov(c, dest, src) sparc_or(c, dest, _g0, src)
-#define sparc_movf(c, dest, src) INSN_OUT(c, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(1)|RS2(src))
-#define sparc_movd(c, dest, src) INSN_OUT(c, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(2)|RS2(src))
-#define sparc_simple_ret(c) INSN_OUT(c, HDR(0x2)|OP3(0x38)|RD(_g0)|RS1(_i7)|IM|SIMM13(0x8))
-#define sparc_restore(c) INSN_OUT(c, HDR(0x2)|OP3(0x3d)|RD(_g0)|RS1(_g0)|RS2(_g0));
-#define sparc_lshi(c, dest, src1,imm) INSN_OUT(c, HDR(0x2)|OP3(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
-#define sparc_xlshi(c, dest, src1,imm) INSN_OUT(c, HDR(0x2)|OP3(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
-#define sparc_rshi(c, dest, src1,imm) INSN_OUT(c, HDR(0x2)|OP3(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
-#define sparc_xrshi(c, dest, src1,imm) INSN_OUT(c, HDR(0x2)|OP3(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
-#define sparc_rshai(c, dest, src1,imm) INSN_OUT(c, HDR(0x2)|OP3(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
-#define sparc_xrshai(c, dest, src1,imm) INSN_OUT(c, HDR(0x2)|OP3(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
-#define sparc_rsh(c, dest, src1, src2) 	INSN_OUT(c, HDR(0x2)|OP3(0x27)|RD(dest)|RS1(src1)|RS2(src2));
+#define sparc_save(s, r) sparc_FORM3_arith(s, 0x3c, 0x2, _sp, _sp, r)
+#define sparc_savei(s, imm) sparc_FORM3imm_arith(s, 0x3c, 0x2, _sp, _sp, imm)
+#define sparc_sethi(s, r, imm) INSN_OUT(s, HDR(0)|RD(r)|OP2(0x4)|imm)
+#define sparc_ori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP3(0x2)|IM|RD(dest)|RS1(src)|imm)
+#define sparc_xori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP3(0x3)|IM|RD(dest)|RS1(src)|imm)
+#define sparc_andi(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP3(0x1)|IM|RD(dest)|RS1(src)|imm)
+#define sparc_or(s, dest, src1, src2) INSN_OUT(s, HDR(0x2)|OP3(0x2)|RD(dest)|RS1(src1)|RS2(src2))
+#define sparc_movi(s, dest, src) sparc_or(s, dest, src, _g0)
+#define sparc_int_mov(s, dest, src) sparc_or(s, dest, _g0, src)
+#define sparc_movf(s, dest, src) INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(1)|RS2(src))
+#define sparc_movd(s, dest, src) INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(2)|RS2(src))
+#define sparc_simple_ret(c) INSN_OUT(s, HDR(0x2)|OP3(0x38)|RD(_g0)|RS1(_i7)|IM|SIMM13(0x8))
+#define sparc_restore(c) INSN_OUT(s, HDR(0x2)|OP3(0x3d)|RD(_g0)|RS1(_g0)|RS2(_g0));
+#define sparc_lshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
+#define sparc_xlshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
+#define sparc_rshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
+#define sparc_xrshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
+#define sparc_rshai(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
+#define sparc_xrshai(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
+#define sparc_rsh(s, dest, src1, src2) 	INSN_OUT(s, HDR(0x2)|OP3(0x27)|RD(dest)|RS1(src1)|RS2(src2));
 
-#define sparc_nop(c) INSN_OUT(c, OP2(0x4));
+#define sparc_nop(c) INSN_OUT(s, OP2(0x4));
 
 #define IREG 0
 #define FREG 1
@@ -95,18 +95,18 @@ int sparc_type_size[] = {
 };
 
 extern int
-sparc_local(dill_stream c, int type)
+sparc_local(dill_stream s, int type)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
 
     smi->act_rec_size += roundup(type_info[type].size, smi->stack_align);
     return (-smi->act_rec_size) + smi->stack_constant_offset;
 }
 
 extern int
-sparc_localb(dill_stream c, int size)
+sparc_localb(dill_stream s, int size)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     if (size < 0) size = 0;
     smi->act_rec_size = roundup(smi->act_rec_size, size);
 
@@ -114,14 +114,14 @@ sparc_localb(dill_stream c, int size)
     return (-smi->act_rec_size) - 8 + smi->stack_constant_offset;
 }
 
-extern int sparc_local_op(dill_stream c, int flag, int val)
+extern int sparc_local_op(dill_stream s, int flag, int val)
 {
     int size = val;
     if (flag == 0) {
 	size = type_info[val].size;
     }
     if (size < 0) size = 0;
-    return sparc_localb(c, size);
+    return sparc_localb(s, size);
 }	
 
 static int 
@@ -131,28 +131,28 @@ is_temp(int ireg)
 }
 
 extern void
-sparc_save_restore_op(dill_stream c, int save_restore, int type, int reg)
+sparc_save_restore_op(dill_stream s, int save_restore, int type, int reg)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     if (save_restore == 0) { /* save */
 	switch (type) {
 	case DILL_D: case DILL_F:
-	    sparc_pstorei(c, type, 0, reg, _sp, smi->fp_save_offset + reg * smi->stack_align + smi->stack_constant_offset);
+	    sparc_pstorei(s, type, 0, reg, _sp, smi->fp_save_offset + reg * smi->stack_align + smi->stack_constant_offset);
 	    break;
 	default:
 	    if (is_temp(reg)) {
-		sparc_pstorei(c, type, 0, reg, _sp, smi->gp_save_offset + (reg - _g0) * smi->stack_align + smi->stack_constant_offset);
+		sparc_pstorei(s, type, 0, reg, _sp, smi->gp_save_offset + (reg - _g0) * smi->stack_align + smi->stack_constant_offset);
 	    }
 	    break;
 	}
     } else {  /* restore */
 	switch (type) {
 	case DILL_D: case DILL_F:
-	    sparc_ploadi(c, type, 0, reg, _sp, smi->fp_save_offset + reg * smi->stack_align + smi->stack_constant_offset);
+	    sparc_ploadi(s, type, 0, reg, _sp, smi->fp_save_offset + reg * smi->stack_align + smi->stack_constant_offset);
 	    break;
 	default:
 	    if (is_temp(reg)) {
-		sparc_ploadi(c, type, 0, reg, _sp, smi->gp_save_offset + (reg - _g0) * smi->stack_align + smi->stack_constant_offset);
+		sparc_ploadi(s, type, 0, reg, _sp, smi->gp_save_offset + (reg - _g0) * smi->stack_align + smi->stack_constant_offset);
 	    }
 	    break;
 	}
@@ -160,45 +160,45 @@ sparc_save_restore_op(dill_stream c, int save_restore, int type, int reg)
 }	
 
 static void
-sparc_movi2f(dill_stream c, int dest, int src)
+sparc_movi2f(dill_stream s, int dest, int src)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
-    sparc_pstorei(c, DILL_I, 0, src, _fp, smi->conversion_word);
-    sparc_ploadi(c, DILL_F, 0, dest, _fp, smi->conversion_word);
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
+    sparc_pstorei(s, DILL_I, 0, src, _fp, smi->conversion_word);
+    sparc_ploadi(s, DILL_F, 0, dest, _fp, smi->conversion_word);
 }
     
 static void
-sparc_movf2i(dill_stream c, int dest, int src)
+sparc_movf2i(dill_stream s, int dest, int src)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
-    sparc_pstorei(c, DILL_F, 0, src, _fp, smi->conversion_word);
-    sparc_ploadi(c, DILL_I, 0, dest, _fp, smi->conversion_word);
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
+    sparc_pstorei(s, DILL_F, 0, src, _fp, smi->conversion_word);
+    sparc_ploadi(s, DILL_I, 0, dest, _fp, smi->conversion_word);
 }
     
 static void
-sparc_movd2i(dill_stream c, int dest, int src)
+sparc_movd2i(dill_stream s, int dest, int src)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
-    sparc_pstorei(c, DILL_D, 0, src, _fp, smi->conversion_word);
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
+    sparc_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
     if (smi->stack_align == 8) {
-	sparc_ploadi(c, DILL_L, 0, dest, _fp, smi->conversion_word);
+	sparc_ploadi(s, DILL_L, 0, dest, _fp, smi->conversion_word);
     } else {
-	sparc_ploadi(c, DILL_I, 0, dest, _fp, smi->conversion_word);
-	sparc_ploadi(c, DILL_I, 0, dest+1, _fp, smi->conversion_word+4);
+	sparc_ploadi(s, DILL_I, 0, dest, _fp, smi->conversion_word);
+	sparc_ploadi(s, DILL_I, 0, dest+1, _fp, smi->conversion_word+4);
     }
 }
     
 static void
-sparc_movi2d(dill_stream c, int dest, int src)
+sparc_movi2d(dill_stream s, int dest, int src)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     if (smi->stack_align == 8) {
-	sparc_pstorei(c, DILL_L, 0, src, _fp, smi->conversion_word);
+	sparc_pstorei(s, DILL_L, 0, src, _fp, smi->conversion_word);
     } else {
-	sparc_pstorei(c, DILL_I, 0, src, _fp, smi->conversion_word);
-	sparc_pstorei(c, DILL_I, 0, src+1, _fp, smi->conversion_word+4);
+	sparc_pstorei(s, DILL_I, 0, src, _fp, smi->conversion_word);
+	sparc_pstorei(s, DILL_I, 0, src+1, _fp, smi->conversion_word+4);
     }
-    sparc_ploadi(c, DILL_D, 0, dest, _fp, smi->conversion_word);
+    sparc_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);
 }
     
 /*
@@ -227,32 +227,32 @@ sparc_movi2d(dill_stream c, int dest, int src)
  */
 
 
-extern void sparc_FORM3_arith(c, sparc_op3, use_ext_form, dest, src1, src2)
-dill_stream c;
+extern void sparc_FORM3_arith(s, sparc_op3, use_ext_form, dest, src1, src2)
+dill_stream s;
 int sparc_op3;
 int use_ext_form;
 int dest;
 int src1;
 int src2;
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     /* format 3 */
     if ((smi->stack_align == 8) && use_ext_form) {
-	INSN_OUT(c, HDR(0x2)|OP3(sparc_op3)|1<<12|RD(dest)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x2)|OP3(sparc_op3)|1<<12|RD(dest)|RS1(src1)|RS2(src2));
     } else {	
-	INSN_OUT(c, HDR(0x2)|OP3(sparc_op3)|RD(dest)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x2)|OP3(sparc_op3)|RD(dest)|RS1(src1)|RS2(src2));
     }
 }
 
-extern void sparc_FORM3imm_arith(c, op3, use_ext_form, dest, src1, imm)
-dill_stream c;
+extern void sparc_FORM3imm_arith(s, op3, use_ext_form, dest, src1, imm)
+dill_stream s;
 int op3;
 int use_ext_form;
 int dest;
 int src1;
 long imm;
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     int sparcv9 = 0;
     if ((smi->stack_align == 8) && use_ext_form) {
 	sparcv9 = 0x1;
@@ -262,32 +262,32 @@ long imm;
     }
     if (((long)imm) < 4096 && ((long)imm) >= -4096) {
 	/* format 3 */
-	INSN_OUT(c, HDR(0x2)|OP3(op3)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|sparcv9<<12);
+	INSN_OUT(s, HDR(0x2)|OP3(op3)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|sparcv9<<12);
     } else {
-	sparc_set(c, _g1, imm);
+	sparc_set(s, _g1, imm);
 	/* format 3 */
-	INSN_OUT(c, HDR(0x2)|OP3(op3)|RD(dest)|RS1(src1)|RS2(_g1)|sparcv9<<12);
+	INSN_OUT(s, HDR(0x2)|OP3(op3)|RD(dest)|RS1(src1)|RS2(_g1)|sparcv9<<12);
     }
 }
 
 extern void
-sparc_proc_start(dill_stream c, char *subr_name, int arg_count, arg_info_list args,
+sparc_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args,
 	     dill_reg *arglist)
 {
     int i;
     int max_in_reg = _i0;
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     int cur_arg_offset = 0;
     /* emit start insns */
-    INSN_OUT(c, 0x10000);
-    INSN_OUT(c, 0x10000);
-    INSN_OUT(c, 0x10000);
-    INSN_OUT(c, 0x10000);
-    smi->save_insn_offset = (long)c->p->cur_ip - (long)c->p->code_base;
-    sparc_savei(c, 0);
+    INSN_OUT(s, 0x10000);
+    INSN_OUT(s, 0x10000);
+    INSN_OUT(s, 0x10000);
+    INSN_OUT(s, 0x10000);
+    smi->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
+    sparc_savei(s, 0);
 
-    smi->conversion_word = sparc_local(c, DILL_D);
-    smi->conversion_word = sparc_local(c, DILL_D);
+    smi->conversion_word = sparc_local(s, DILL_D);
+    smi->conversion_word = sparc_local(s, DILL_D);
 
     /* load params from regs */
     for (i = 0; i < arg_count; i++) {
@@ -302,7 +302,7 @@ sparc_proc_start(dill_stream c, char *subr_name, int arg_count, arg_info_list ar
 		} else {
 		    reg = _f0 + cur_arg_offset / 4;
 		}
-		dill_dealloc_specific(c, _f0 +cur_arg_offset / 4, args[i].type, DILL_TEMP);
+		dill_dealloc_specific(s, _f0 +cur_arg_offset / 4, args[i].type, DILL_TEMP);
 		args[i].in_reg = args[i].out_reg = reg;
 		break;
 	    }
@@ -324,9 +324,9 @@ sparc_proc_start(dill_stream c, char *subr_name, int arg_count, arg_info_list ar
     
     for (i=_i0 ; i < _i6; i++) {
 	if (i <= max_in_reg) {
-	    dill_dealloc_specific(c, i, DILL_I, DILL_VAR);
+	    dill_dealloc_specific(s, i, DILL_I, DILL_VAR);
 	} else {
-	    dill_alloc_specific(c, i, DILL_I, DILL_VAR);
+	    dill_alloc_specific(s, i, DILL_I, DILL_VAR);
 	}
     }
     for (i = 0; i < arg_count; i++) {
@@ -346,7 +346,7 @@ sparc_proc_start(dill_stream c, char *subr_name, int arg_count, arg_info_list ar
 		continue;
 	    }
 	}	    
-	if (!dill_raw_getreg(c, &tmp_reg, args[i].type, DILL_VAR)) {
+	if (!dill_raw_getreg(s, &tmp_reg, args[i].type, DILL_VAR)) {
 	    fprintf(stderr, "not enough registers for parameter %d\n", i);
 	    exit(1);
 	}
@@ -354,21 +354,21 @@ sparc_proc_start(dill_stream c, char *subr_name, int arg_count, arg_info_list ar
 	if (args[i].is_register) {
 	    /* must be float */
 	    if (args[i].type == DILL_F) {
-		sparc_movi2f(c, tmp_reg, args[i].in_reg);
-		dill_alloc_specific(c, args[i].in_reg, DILL_I, DILL_VAR);
+		sparc_movi2f(s, tmp_reg, args[i].in_reg);
+		dill_alloc_specific(s, args[i].in_reg, DILL_I, DILL_VAR);
 	    } else {
 		/* sparcv8 boundary condition, half in register */
 		if (args[i].offset == 5*4) {
 		    int real_offset = args[i].offset + 68; 
-		    sparc_pstorei(c, DILL_I, 0, args[i].in_reg, _fp, 
+		    sparc_pstorei(s, DILL_I, 0, args[i].in_reg, _fp, 
 				  real_offset);
-		    sparc_ploadi(c, DILL_F, 0, tmp_reg, _fp, real_offset);
-		    sparc_ploadi(c, DILL_F, 0, tmp_reg+1, _fp, real_offset+4);
+		    sparc_ploadi(s, DILL_F, 0, tmp_reg, _fp, real_offset);
+		    sparc_ploadi(s, DILL_F, 0, tmp_reg+1, _fp, real_offset+4);
 		} else {
-		    sparc_movi2d(c, tmp_reg, args[i].in_reg);
-		    dill_alloc_specific(c, args[i].in_reg, DILL_I, DILL_VAR);
+		    sparc_movi2d(s, tmp_reg, args[i].in_reg);
+		    dill_alloc_specific(s, args[i].in_reg, DILL_I, DILL_VAR);
 		    if (smi->stack_align == 4) {
-			dill_alloc_specific(c, args[i].in_reg, DILL_I, DILL_VAR);
+			dill_alloc_specific(s, args[i].in_reg, DILL_I, DILL_VAR);
 
 		    }
 		}
@@ -381,14 +381,14 @@ sparc_proc_start(dill_stream c, char *subr_name, int arg_count, arg_info_list ar
 	    }
 	    real_offset += smi->stack_constant_offset;
 	    if (args[i].type != DILL_D) {
-		sparc_ploadi(c, args[i].type, 0, tmp_reg, _fp, 
+		sparc_ploadi(s, args[i].type, 0, tmp_reg, _fp, 
 			     real_offset);
 	    } else {
-		sparc_ploadi(c, DILL_I, 0, _g1, _fp, real_offset);
-		sparc_pstorei(c, DILL_I, 0, _g1, _fp, smi->conversion_word);
-		sparc_ploadi(c, DILL_I, 0, _g1, _fp, real_offset+4);
-		sparc_pstorei(c, DILL_I, 0, _g1, _fp, smi->conversion_word+4);
-		sparc_ploadi(c, DILL_D, 0, tmp_reg, _fp, smi->conversion_word);
+		sparc_ploadi(s, DILL_I, 0, _g1, _fp, real_offset);
+		sparc_pstorei(s, DILL_I, 0, _g1, _fp, smi->conversion_word);
+		sparc_ploadi(s, DILL_I, 0, _g1, _fp, real_offset+4);
+		sparc_pstorei(s, DILL_I, 0, _g1, _fp, smi->conversion_word+4);
+		sparc_ploadi(s, DILL_D, 0, tmp_reg, _fp, smi->conversion_word);
 	    }
 	}
 	args[i].in_reg = tmp_reg;
@@ -413,54 +413,54 @@ static char ld_opcodes[] = {
     0x0b, /* DILL_EC */
 };
 extern void
-sparc_ploadi(dill_stream c, int type, int junk, int dest, int src, long offset)
+sparc_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     if  (((long)offset) >= 4096 || ((long)offset) < -4096) {
-	sparc_set(c, _g1, offset);
-	sparc_pload(c, type, junk, dest, src, _g1);
+	sparc_set(s, _g1, offset);
+	sparc_pload(s, type, junk, dest, src, _g1);
 	return;
     }
 
     switch (type) {
     case DILL_F:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(0x20)|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x20)|RS1(src)|IM|SIMM13(offset));
 	break;
     case DILL_D:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(0x23)|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x23)|RS1(src)|IM|SIMM13(offset));
 	break;
     case DILL_L: case DILL_UL: case DILL_P:{
-	sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+	sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
 	if (smi->stack_align == 4) {
 	    type = DILL_I;
 	}
     }
     /* fall through */
     default:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(ld_opcodes[type])|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(ld_opcodes[type])|RS1(src)|IM|SIMM13(offset));
 	break;
     }
 }
 
 extern void
-sparc_pload(dill_stream c, int type, int junk, int dest, int src1, int src2)
+sparc_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
     switch (type) {
     case DILL_F:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(0x20)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x20)|RS1(src1)|RS2(src2));
 	break;
     case DILL_D:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(0x23)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x23)|RS1(src1)|RS2(src2));
 	break;
     case DILL_L: case DILL_UL: case DILL_P:
     {
-	sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+	sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
 	if (smi->stack_align == 4) {
 	    type = DILL_I;
 	}
 	/* fall through */
     }
     default:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(ld_opcodes[type])|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(ld_opcodes[type])|RS1(src1)|RS2(src2));
 	break;
     }
 }
@@ -479,31 +479,31 @@ static char ld_bs_opcodes[] = {  /* load from alternate space */
     0x33, /* DILL_D */
 };
 extern void
-sparc_pbsloadi(dill_stream c, int type, int junk, int dest, int src, long offset)
+sparc_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     if (offset == 0) {
-	sparc_pbsload(c, type, junk, dest, src, _g0);
+	sparc_pbsload(s, type, junk, dest, src, _g0);
     } else {
-	sparc_set(c, _g1, offset);
-	sparc_pbsload(c, type, junk, dest, src, _g1);
+	sparc_set(s, _g1, offset);
+	sparc_pbsload(s, type, junk, dest, src, _g1);
     }
 }
 
 
 extern void
-sparc_pbsload(dill_stream c, int type, int junk, int dest, int src1, int src2)
+sparc_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
     switch (type) {
     case DILL_L: case DILL_UL: case DILL_P:
     {
-	sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+	sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
 	if (smi->stack_align == 4) {
 	    type = DILL_I;
 	}
 	/* fall through */
     }
     default:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(ld_bs_opcodes[type])|RS1(src1)|RS2(src2)|ASI(0x88));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(ld_bs_opcodes[type])|RS1(src1)|RS2(src2)|ASI(0x88));
 	break;
     }
 }
@@ -525,54 +525,54 @@ static char st_opcodes[] = {
     0x0e, /* DILL_EC */
 };
 extern void
-sparc_pstorei(dill_stream c, int type, int junk, int dest, int src, long offset)
+sparc_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     if  (((long)offset) >= 4096 || ((long)offset) < -4096) {
-	sparc_set(c, _g1, offset);
-	sparc_pstore(c, type, junk, dest, src, _g1);
+	sparc_set(s, _g1, offset);
+	sparc_pstore(s, type, junk, dest, src, _g1);
 	return;
     }
 
     switch (type) {
     case DILL_F:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(0x24)|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x24)|RS1(src)|IM|SIMM13(offset));
 	break;
     case DILL_D:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(0x27)|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x27)|RS1(src)|IM|SIMM13(offset));
 	break;
     case DILL_L: case DILL_UL: case DILL_P:{
-	sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+	sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
 	if (smi->stack_align == 4) {
 	    type = DILL_I;
 	}
     }
     /* fall through */
     default:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(st_opcodes[type])|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(st_opcodes[type])|RS1(src)|IM|SIMM13(offset));
 	break;
     }
 }
 
 extern void
-sparc_pstore(dill_stream c, int type, int junk, int dest, int src1, int src2)
+sparc_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
     switch (type) {
     case DILL_F:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(0x24)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x24)|RS1(src1)|RS2(src2));
 	break;
     case DILL_D:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(0x27)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x27)|RS1(src1)|RS2(src2));
 	break;
     case DILL_L: case DILL_UL: case DILL_P:
     {
-	sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+	sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
 	if (smi->stack_align == 4) {
 	    type = DILL_I;
 	}
 	/* fall through */
     }
     default:
-	INSN_OUT(c, HDR(0x3)|RD(dest)|OP3(st_opcodes[type])|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(st_opcodes[type])|RS1(src1)|RS2(src2));
 	break;
     }
 }
@@ -598,57 +598,57 @@ static unsigned long sparc_hidden_ftoul(float a)
 static unsigned int sparc_hidden_ftou(float a)
 { return (unsigned int) a; }
 
-extern void sparc_mod(dill_stream c, int data1, int type_long, int dest, 
+extern void sparc_mod(dill_stream s, int data1, int type_long, int dest, 
 		      int src1, int src2)
 {
     int return_reg;
     if (data1 == 1) {
 	/* signed case */
 	if (type_long) {
-	    return_reg = dill_scalll(c, (void*)sparc_hidden_mod, "sparc_hidden_mod", "%l%l", src1, src2);
-	    dill_movl(c, dest, return_reg);
+	    return_reg = dill_scalll(s, (void*)sparc_hidden_mod, "sparc_hidden_mod", "%l%l", src1, src2);
+	    dill_movl(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scalli(c, (void*)sparc_hidden_modi, "sparc_hidden_modi", "%i%i", src1, src2);
-	    dill_movi(c, dest, return_reg);
+	    return_reg = dill_scalli(s, (void*)sparc_hidden_modi, "sparc_hidden_modi", "%i%i", src1, src2);
+	    dill_movi(s, dest, return_reg);
 	}
     } else {
 	/* unsigned case */
 	if (type_long) {
-	    return_reg = dill_scalll(c, (void*)sparc_hidden_umod, "sparc_hidden_umod", "%l%l", src1, src2);
-	    dill_movul(c, dest, return_reg);
+	    return_reg = dill_scalll(s, (void*)sparc_hidden_umod, "sparc_hidden_umod", "%l%l", src1, src2);
+	    dill_movul(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scallu(c, (void*)sparc_hidden_umodi, "sparc_hidden_umodi", "%u%u", src1, src2);
-	    dill_movu(c, dest, return_reg);
+	    return_reg = dill_scallu(s, (void*)sparc_hidden_umodi, "sparc_hidden_umodi", "%u%u", src1, src2);
+	    dill_movu(s, dest, return_reg);
 	}
     }
 }
 
-extern void sparc_modi(dill_stream c, int data1, int data2, int dest, int src1, 
+extern void sparc_modi(dill_stream s, int data1, int data2, int dest, int src1, 
 		      long imm)
 {
-    sparc_set(c, _g1, imm);
-    sparc_mod(c, data1, data2, dest, src1, _g1);
+    sparc_set(s, _g1, imm);
+    sparc_mod(s, data1, data2, dest, src1, _g1);
 }
 
 extern long sparc_hidden_udiv(unsigned long a, unsigned long b)
 { return a / b; }
 
-extern void sparc_div(dill_stream c, int op3, int type_long, int dest, int src1,
+extern void sparc_div(dill_stream s, int op3, int type_long, int dest, int src1,
 		      int src2)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     if ((op3 == 0x0d /* udiv */) && (type_long == 1)) {
 	int return_reg;
-	return_reg = dill_scalll(c, (void*)&sparc_hidden_udiv, "sparc_hidden_udiv", "%l%l", src1, src2);
-	dill_movl(c, dest, return_reg);
+	return_reg = dill_scalll(s, (void*)&sparc_hidden_udiv, "sparc_hidden_udiv", "%l%l", src1, src2);
+	dill_movl(s, dest, return_reg);
 	return;
 
     }
     if (op3 == 0x0d) {
-	INSN_OUT(c, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g0));/*wry(_g0, _g0);*/
+	INSN_OUT(s, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g0));/*wry(_g0, _g0);*/
     } else {
-	sparc_rshai(c, _g1, src1, 31);
-	INSN_OUT(c, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g1));/*wry(_g0, _g1);*/
+	sparc_rshai(s, _g1, src1, 31);
+	INSN_OUT(s, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g1));/*wry(_g0, _g1);*/
     }
     if ((type_long == 0) || (smi->stack_align != 8)) {
 	if (op3 == 0x0d) {
@@ -660,27 +660,27 @@ extern void sparc_div(dill_stream c, int op3, int type_long, int dest, int src1,
     sparc_nop(c);
     sparc_nop(c);
     sparc_nop(c);
-    INSN_OUT(c, HDR(2)|OP3(op3)|RD(dest)|RS1(src1)|RS2(src2));
+    INSN_OUT(s, HDR(2)|OP3(op3)|RD(dest)|RS1(src1)|RS2(src2));
     if (op3 == 0x1f) {
-	INSN_OUT(c, HDR(0)|1<<29|COND(0x7)|2<<22|2);
-	sparc_sethi(c, dest, 1<<21);
+	INSN_OUT(s, HDR(0)|1<<29|COND(0x7)|2<<22|2);
+	sparc_sethi(s, dest, 1<<21);
     }
 }
 
-extern void sparc_divi(dill_stream c, int sparc_op3, int type_long, 
+extern void sparc_divi(dill_stream s, int sparc_op3, int type_long, 
 		       int dest, int src, long imm)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     if ((sparc_op3 == 0x0d /* udiv */) && (type_long == 1)) {
-	sparc_set(c, _g1, imm);
-	sparc_div(c, sparc_op3, type_long, dest, src, _g1);
+	sparc_set(s, _g1, imm);
+	sparc_div(s, sparc_op3, type_long, dest, src, _g1);
 	return;
     }
     if (sparc_op3 == 0x0d) {
-	INSN_OUT(c, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g0));/*wry(_g0, _g0);*/
+	INSN_OUT(s, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g0));/*wry(_g0, _g0);*/
     } else {
-	sparc_rshai(c, _g1, src, 31);
-	INSN_OUT(c, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g1));/*wry(_g0, _g1);*/
+	sparc_rshai(s, _g1, src, 31);
+	INSN_OUT(s, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g1));/*wry(_g0, _g1);*/
     }
     if ((type_long == 0) || (smi->stack_align != 8)) {
 	if (sparc_op3 == 0x0d) {
@@ -689,62 +689,62 @@ extern void sparc_divi(dill_stream c, int sparc_op3, int type_long,
 	    sparc_op3 = 0x1f;
 	}
     }
-    sparc_set(c, _g1, imm);
+    sparc_set(s, _g1, imm);
     sparc_nop(c);
     sparc_nop(c);
-    INSN_OUT(c, HDR(2)|OP3(sparc_op3)|RD(dest)|RS1(src)|RS2(_g1));
+    INSN_OUT(s, HDR(2)|OP3(sparc_op3)|RD(dest)|RS1(src)|RS2(_g1));
     if (sparc_op3 == 0x1f) {
-	INSN_OUT(c, HDR(0)|1<<29|COND(0x7)|2<<22|2);
-	sparc_sethi(c, dest, 1<<21);
+	INSN_OUT(s, HDR(0)|1<<29|COND(0x7)|2<<22|2);
+	sparc_sethi(s, dest, 1<<21);
     }
 }
 
 extern void
-sparc_mov(dill_stream c, int type, int junk, int dest, int src)
+sparc_mov(dill_stream s, int type, int junk, int dest, int src)
 {
     if (src == dest) return;
     switch(type) {
     case DILL_D:
-	sparc_movd(c, dest, src);
+	sparc_movd(s, dest, src);
 	break;
     case DILL_F:
-	sparc_movf(c, dest, src);
+	sparc_movf(s, dest, src);
 	break;
     default:
-	sparc_ori(c, dest, src, 0x0);
+	sparc_ori(s, dest, src, 0x0);
     }
 }
 
 extern void
-sparc_lea(dill_stream c, int j1, int j2, int dest, int src, long imm)
+sparc_lea(dill_stream s, int j1, int j2, int dest, int src, long imm)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     if (src != _fp) {
 	/* sparc_add */
-	sparc_FORM3imm_arith(c, 0, 0, dest, src, imm);
+	sparc_FORM3imm_arith(s, 0, 0, dest, src, imm);
     } else {
-	sparc_FORM3imm_arith(c, 0, 0, dest, src, 
+	sparc_FORM3imm_arith(s, 0, 0, dest, src, 
 			     imm  + smi->stack_constant_offset);
     }
 }
 	
 static void
-sparc_saverestore_floats(dill_stream c, int saverestore)
+sparc_saverestore_floats(dill_stream s, int saverestore)
 {
     int i;
     for (i=2; i <32 ; i+=2) {
-	if (dill_mustsave(&c->p->tmp_f, i)) {
-	    sparc_save_restore_op(c, saverestore, DILL_D, i);
+	if (dill_mustsave(&s->p->tmp_f, i)) {
+	    sparc_save_restore_op(s, saverestore, DILL_D, i);
 	}
     }
 }
 
 #define CONV(x,y) ((x*100)+y)
 extern void
-sparc_convert(dill_stream c, int from_type, int to_type, 
+sparc_convert(dill_stream s, int from_type, int to_type, 
 	      int dest, int src)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     int word_size = smi->stack_align << 3;
 
     from_type &= 0xf;
@@ -753,8 +753,8 @@ sparc_convert(dill_stream c, int from_type, int to_type,
     case CONV(DILL_I, DILL_L):
 	if (word_size == 64) {
 	    /* sign extend */
-	    sparc_xlshi(c, dest, src, 32);
-	    sparc_xrshai(c, dest, dest, 32);
+	    sparc_xlshi(s, dest, src, 32);
+	    sparc_xrshai(s, dest, dest, 32);
 	    return;
 	}
 	/* fall through to mov */
@@ -772,146 +772,146 @@ sparc_convert(dill_stream c, int from_type, int to_type,
     case CONV(DILL_UL,DILL_P):
     case CONV(DILL_U,DILL_I):
 	if(src == dest) return;
-	sparc_movi(c, dest,src);
+	sparc_movi(s, dest,src);
 	break;
     case CONV(DILL_F,DILL_D):
-	INSN_OUT(c, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc9)|RS2(src)); /*fstod*/
+	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc9)|RS2(src)); /*fstod*/
 	break;
     case CONV(DILL_F,DILL_L):
 	if (smi->stack_align == 8) {
-	    INSN_OUT(c, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0x81)|RS2(src));/*fstox*/
-	    sparc_pstorei(c, DILL_D, 0, src, _fp, smi->conversion_word);
-	    sparc_ploadi(c, DILL_L, 0, dest, _fp, smi->conversion_word);
+	    INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0x81)|RS2(src));/*fstox*/
+	    sparc_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
+	    sparc_ploadi(s, DILL_L, 0, dest, _fp, smi->conversion_word);
 	    break;
 	}
 	/* falling through */
     case CONV(DILL_F,DILL_I):
-	INSN_OUT(c, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
-	sparc_movf2i(c, dest, src);
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	sparc_movf2i(s, dest, src);
 	break;
     case CONV(DILL_F,DILL_U):
         {
 	    int ret;
-	    sparc_saverestore_floats(c, 0);
-	    ret = dill_scallu(c, (void*)sparc_hidden_ftou, "sparc_hidden_ftou", "%f", src);
-	    sparc_saverestore_floats(c, 1);
-	    sparc_mov(c, DILL_UL, 0, dest, ret);
+	    sparc_saverestore_floats(s, 0);
+	    ret = dill_scallu(s, (void*)sparc_hidden_ftou, "sparc_hidden_ftou", "%f", src);
+	    sparc_saverestore_floats(s, 1);
+	    sparc_mov(s, DILL_UL, 0, dest, ret);
 	}
 	break;
 	/* fallthrough */
     case CONV(DILL_F,DILL_UL):
         {
 	    int ret;
-	    sparc_saverestore_floats(c, 0);
-	    ret = dill_scallul(c, (void*)sparc_hidden_ftoul, "sparc_hidden_ftoul", "%f", src);
-	    sparc_saverestore_floats(c, 1);
-	    sparc_mov(c, DILL_UL, 0, dest, ret);
+	    sparc_saverestore_floats(s, 0);
+	    ret = dill_scallul(s, (void*)sparc_hidden_ftoul, "sparc_hidden_ftoul", "%f", src);
+	    sparc_saverestore_floats(s, 1);
+	    sparc_mov(s, DILL_UL, 0, dest, ret);
 	}
 	break;
     case CONV(DILL_D,DILL_F):
-	INSN_OUT(c, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc6)|RS2(src)); /*fdtos*/
+	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc6)|RS2(src)); /*fdtos*/
 	break;
     case CONV(DILL_D,DILL_L):
 	if (smi->stack_align == 8) {
-	    INSN_OUT(c, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0x82)|RS2(src));/*fdtox*/
-	    sparc_pstorei(c, DILL_D, 0, src, _fp, smi->conversion_word);
-	    sparc_ploadi(c, DILL_L, 0, dest, _fp, smi->conversion_word);
+	    INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0x82)|RS2(src));/*fdtox*/
+	    sparc_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
+	    sparc_ploadi(s, DILL_L, 0, dest, _fp, smi->conversion_word);
 	    break;
 	}
 	/* falling through */
     case CONV(DILL_D,DILL_I):
-	INSN_OUT(c, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
-	sparc_movf2i(c, dest, src);
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
+	sparc_movf2i(s, dest, src);
 	break;
     case CONV(DILL_D,DILL_U):
         {
 	    int ret;
-	    sparc_saverestore_floats(c, 0);
-	    ret = dill_scallu(c, (void*)sparc_hidden_dtou, "sparc_hidden_dtou", "%d", src);
-	    sparc_saverestore_floats(c, 1);
-	    sparc_mov(c, DILL_U, 0, dest, ret);
+	    sparc_saverestore_floats(s, 0);
+	    ret = dill_scallu(s, (void*)sparc_hidden_dtou, "sparc_hidden_dtou", "%d", src);
+	    sparc_saverestore_floats(s, 1);
+	    sparc_mov(s, DILL_U, 0, dest, ret);
 	}
 	break;
     case CONV(DILL_D,DILL_UL):
         {
 	    int ret;
-	    sparc_saverestore_floats(c, 0);
-	    ret = dill_scallul(c, (void*)sparc_hidden_dtoul, "sparc_hidden_dtoul", "%d", src);
-	    sparc_saverestore_floats(c, 1);
-	    sparc_mov(c, DILL_UL, 0, dest, ret);
+	    sparc_saverestore_floats(s, 0);
+	    ret = dill_scallul(s, (void*)sparc_hidden_dtoul, "sparc_hidden_dtoul", "%d", src);
+	    sparc_saverestore_floats(s, 1);
+	    sparc_mov(s, DILL_UL, 0, dest, ret);
 	}
 	break;
     case CONV(DILL_I,DILL_D):
-	sparc_rshi(c, _g1, src, 0);
+	sparc_rshi(s, _g1, src, 0);
 	src = _g1;
 	/* fall through */
     case CONV(DILL_L,DILL_D):
-	sparc_movi2f(c, dest, src);
-	INSN_OUT(c, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc8)|RS2(dest));/*fitod*/
+	sparc_movi2f(s, dest, src);
+	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc8)|RS2(dest));/*fitod*/
 	break;
     case CONV(DILL_U,DILL_D):
 	if (smi->stack_align == 8) { 
-	    sparc_rshi(c, _g1, src, 0);
+	    sparc_rshi(s, _g1, src, 0);
 	    src = _g1;
 	/* fall through */
-	    sparc_pstorei(c, DILL_UL, 0, src, _fp, smi->conversion_word);
-	    sparc_ploadi(c, DILL_D, 0, dest, _fp, smi->conversion_word);
-	    INSN_OUT(c, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0x88)|RS2(dest));/*fxtod*/
+	    sparc_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
+	    sparc_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);
+	    INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0x88)|RS2(dest));/*fxtod*/
 	    break;
 	}
 	/* fallthrough */
     case CONV(DILL_UL,DILL_D): 
         {
 	    int ret;
-	    sparc_saverestore_floats(c, 0);
-	    ret = dill_scalld(c, (void*)sparc_hidden_ultod, "sparc_hidden_ultod", "%l", src);
-	    sparc_saverestore_floats(c, 1);
-	    sparc_mov(c, DILL_D, 0, dest, ret);
+	    sparc_saverestore_floats(s, 0);
+	    ret = dill_scalld(s, (void*)sparc_hidden_ultod, "sparc_hidden_ultod", "%l", src);
+	    sparc_saverestore_floats(s, 1);
+	    sparc_mov(s, DILL_D, 0, dest, ret);
 	}
 	break;
     case CONV(DILL_I,DILL_F):
     case CONV(DILL_L,DILL_F):
-	sparc_movi2f(c, dest, src);
-	INSN_OUT(c, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc4)|RS2(dest));/*fitos*/
+	sparc_movi2f(s, dest, src);
+	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc4)|RS2(dest));/*fitos*/
 	break;
     case CONV(DILL_U,DILL_F):
 	if (smi->stack_align == 8) { 
-	    sparc_rshi(c, _g1, src, 0);
+	    sparc_rshi(s, _g1, src, 0);
 	    src = _g1;
-	    sparc_pstorei(c, DILL_UL, 0, src, _fp, smi->conversion_word);
-	    sparc_ploadi(c, DILL_D, 0, dest, _fp, smi->conversion_word);
-	    INSN_OUT(c, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0x84)|RS2(dest));/*fxtos*/
+	    sparc_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
+	    sparc_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);
+	    INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0x84)|RS2(dest));/*fxtos*/
 	    break;
 	}
 	/* fallthrough */
     case CONV(DILL_UL,DILL_F):
         {
 	    int ret;
-	    sparc_saverestore_floats(c, 0);
-	    ret = dill_scalld(c, (void*)sparc_hidden_ultof, "sparc_hidden_ultof", "%l", src);
-	    sparc_saverestore_floats(c, 1);
-	    sparc_mov(c, DILL_D, 0, dest, ret);
+	    sparc_saverestore_floats(s, 0);
+	    ret = dill_scalld(s, (void*)sparc_hidden_ultof, "sparc_hidden_ultof", "%l", src);
+	    sparc_saverestore_floats(s, 1);
+	    sparc_mov(s, DILL_D, 0, dest, ret);
 	}
 	break;
     case CONV(DILL_C,DILL_UL):
     case CONV(DILL_C,DILL_L):
     case CONV(DILL_C,DILL_I):
     case CONV(DILL_C,DILL_U):
-	sparc_lshi(c, dest, src, 24);
-	sparc_rshai(c, dest, dest, 24);
+	sparc_lshi(s, dest, src, 24);
+	sparc_rshai(s, dest, dest, 24);
 	break;
     case CONV(DILL_I, DILL_C):
     case CONV(DILL_U, DILL_C):
     case CONV(DILL_L, DILL_C):
     case CONV(DILL_UL, DILL_C):
-	sparc_andi(c, dest, src, 0xff);
+	sparc_andi(s, dest, src, 0xff);
 	break;
     case CONV(DILL_S,DILL_L):
     case CONV(DILL_S,DILL_UL):
     case CONV(DILL_S,DILL_I):
     case CONV(DILL_S,DILL_U):
-	sparc_lshi(c, dest, src, 16);
-	sparc_rshai(c, dest, dest, 16);
+	sparc_lshi(s, dest, src, 16);
+	sparc_rshai(s, dest, dest, 16);
 	break;
     case CONV(DILL_US,DILL_I):
     case CONV(DILL_US,DILL_L):
@@ -925,8 +925,8 @@ sparc_convert(dill_stream c, int from_type, int to_type,
     case CONV(DILL_U, DILL_US):
     case CONV(DILL_L, DILL_US):
     case CONV(DILL_UL, DILL_US):
-	sparc_lshi(c, dest, src, 16);
-	sparc_rshi(c, dest, dest, 16);
+	sparc_lshi(s, dest, src, 16);
+	sparc_rshi(s, dest, dest, 16);
 	break;
     default:
 	printf("Unknown case in sparc convert %d\n", CONV(from_type,to_type));
@@ -961,26 +961,36 @@ static char fop_conds[] = {
 extern void
 sparc_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 {
+    int label = dill_alloc_label(s);
+    sparc_set(s, dest, 1);
+    sparc_branch(s, op, type, src1, src2, label);
+    sparc_set(s, dest, 0);
+    dill_mark_label(s, label);
 }
 
 extern void
 sparc_comparei(dill_stream s, int op, int type, int dest, int src, long imm)
 {
+    int label = dill_alloc_label(s);
+    sparc_set(s, dest, 1);
+    sparc_branchi(s, op, type, src, imm, label);
+    sparc_set(s, dest, 0);
+    dill_mark_label(s, label);
 }
 
 extern void
-sparc_branch(dill_stream c, int op, int type, int src1, int src2, int label)
+sparc_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 {
     switch(type) {
     case DILL_F:
-	INSN_OUT(c, HDR(0x2)|OP3(0x35)|RS1(src1)|OPF(0x51)|RS2(src2));/*fcmps*/
-	dill_mark_branch_location(c, label);
-	INSN_OUT(c, HDR(0)|COND(fop_conds[op])|(0x5<<22)|CC(0x0)|P(1)|/*disp */0);/* fbp*/
+	INSN_OUT(s, HDR(0x2)|OP3(0x35)|RS1(src1)|OPF(0x51)|RS2(src2));/*fcmps*/
+	dill_mark_branch_location(s, label);
+	INSN_OUT(s, HDR(0)|COND(fop_conds[op])|(0x5<<22)|CC(0x0)|P(1)|/*disp */0);/* fbp*/
 	break;
     case DILL_D:
-	INSN_OUT(c, HDR(0x2)|OP3(0x35)|RS1(src1)|OPF(0x52)|RS2(src2));
-	dill_mark_branch_location(c, label);
-	INSN_OUT(c, HDR(0)|COND(fop_conds[op])|(0x5<<22)|CC(0x0)|P(1)|/*disp */0);/* fbp*/
+	INSN_OUT(s, HDR(0x2)|OP3(0x35)|RS1(src1)|OPF(0x52)|RS2(src2));
+	dill_mark_branch_location(s, label);
+	INSN_OUT(s, HDR(0)|COND(fop_conds[op])|(0x5<<22)|CC(0x0)|P(1)|/*disp */0);/* fbp*/
 	break;
     case DILL_U:
     case DILL_UL:
@@ -999,43 +1009,43 @@ sparc_branch(dill_stream c, int op, int type, int src1, int src2, int label)
 	op += 6; /* second set of codes */
 	/* fall through */
     default:
-	INSN_OUT(c, HDR(0x2)|RD(_g0)|OP3(0x14)|RS1(src1)|RS2(src2)); /* subcc */
-	dill_mark_branch_location(c, label);
-	INSN_OUT(c, HDR(0)|COND(op_conds[op])|(2<<22)|/*disp */0);/* bp*/
+	INSN_OUT(s, HDR(0x2)|RD(_g0)|OP3(0x14)|RS1(src1)|RS2(src2)); /* subcc */
+	dill_mark_branch_location(s, label);
+	INSN_OUT(s, HDR(0)|COND(op_conds[op])|(2<<22)|/*disp */0);/* bp*/
     }
     sparc_nop(c);
 }
 
 extern void 
-sparc_jump_to_label(dill_stream c, unsigned long label)
+sparc_jump_to_label(dill_stream s, unsigned long label)
 {
-    dill_mark_branch_location(c, label);
-    INSN_OUT(c, HDR(0)|COND(8)|(2<<22)|/*disp */0);/* bp always*/
+    dill_mark_branch_location(s, label);
+    INSN_OUT(s, HDR(0)|COND(8)|(2<<22)|/*disp */0);/* bp always*/
     sparc_nop(c);
 }
 
-extern void sparc_jump_to_reg(dill_stream c, unsigned long reg)
+extern void sparc_jump_to_reg(dill_stream s, unsigned long reg)
 {
-    INSN_OUT(c, HDR(0x2)|OP3(0x38)|RD(_g0)|RS1(reg)|IM|SIMM13(0x0));
+    INSN_OUT(s, HDR(0x2)|OP3(0x38)|RD(_g0)|RS1(reg)|IM|SIMM13(0x0));
     sparc_nop(c);
 }
 
-extern void sparc_jump_to_imm(dill_stream c, unsigned long imm)
+extern void sparc_jump_to_imm(dill_stream s, unsigned long imm)
 {
-    INSN_OUT(c, HDR(0x2)|OP3(0x38)|RD(_g0)|RS1(_i7)|IM|SIMM13(imm));
+    INSN_OUT(s, HDR(0x2)|OP3(0x38)|RD(_g0)|RS1(_i7)|IM|SIMM13(imm));
     sparc_nop(c);
 }
 
 extern void 
-sparc_jal(dill_stream c, int return_addr_reg, int target)
+sparc_jal(dill_stream s, int return_addr_reg, int target)
 {
-    INSN_OUT(c, HDR(0x2)|OP3(0x38)|RD(return_addr_reg)|RS1(target)|IM|SIMM13(0x0));
+    INSN_OUT(s, HDR(0x2)|OP3(0x38)|RD(return_addr_reg)|RS1(target)|IM|SIMM13(0x0));
 }
 
-static void internal_push(dill_stream c, int type, int immediate, 
+static void internal_push(dill_stream s, int type, int immediate, 
 			  void *value_ptr)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     struct arg_info arg;
     int real_offset;
 
@@ -1087,58 +1097,58 @@ static void internal_push(dill_stream c, int type, int immediate,
 		if (type != DILL_D) {
 		    if (type == DILL_F) {
 			float f = (float) *(double*)value_ptr;
-			sparc_set(c, _g1, *(int*)&f);
+			sparc_set(s, _g1, *(int*)&f);
 		    } else {
-			sparc_set(c, _g1, *(long*)value_ptr);
+			sparc_set(s, _g1, *(long*)value_ptr);
 		    }
-		    sparc_pstorei(c, arg.type, 0, _g1, _sp, real_offset);
+		    sparc_pstorei(s, arg.type, 0, _g1, _sp, real_offset);
 		} else {
-		    sparc_set(c, _g1, *(int*)value_ptr);
-		    sparc_pstorei(c, DILL_I, 0, _g1, _sp, real_offset);
-		    sparc_set(c, _g1, *(((int*)value_ptr)+1));
-		    sparc_pstorei(c, DILL_I, 0, _g1, _sp, real_offset+4);
+		    sparc_set(s, _g1, *(int*)value_ptr);
+		    sparc_pstorei(s, DILL_I, 0, _g1, _sp, real_offset);
+		    sparc_set(s, _g1, *(((int*)value_ptr)+1));
+		    sparc_pstorei(s, DILL_I, 0, _g1, _sp, real_offset+4);
 		}		
 	    } else {
 		if (type != DILL_D) {
-		    sparc_pstorei(c, arg.type, 0, *(int*)value_ptr, _sp, real_offset);
+		    sparc_pstorei(s, arg.type, 0, *(int*)value_ptr, _sp, real_offset);
 		} else {
-		    sparc_pstorei(c, DILL_F, 0, *(int*)value_ptr, _sp, real_offset);
-		    sparc_pstorei(c, DILL_F, 0, (*(int*)value_ptr)+1, _sp, 
+		    sparc_pstorei(s, DILL_F, 0, *(int*)value_ptr, _sp, real_offset);
+		    sparc_pstorei(s, DILL_F, 0, (*(int*)value_ptr)+1, _sp, 
 				  real_offset + 4);
 		}
 	    }
 	} else {
 	    if ((type != DILL_F) && (type != DILL_D)) {
 		if (arg.is_immediate) {
-		    sparc_set(c, arg.out_reg, *(long*)value_ptr);
+		    sparc_set(s, arg.out_reg, *(long*)value_ptr);
 		} else {
-		    sparc_mov(c, type, 0, arg.out_reg, *(int*) value_ptr);
+		    sparc_mov(s, type, 0, arg.out_reg, *(int*) value_ptr);
 		}
 	    } else {
 		if (arg.is_immediate) {
 		    if (type == DILL_F) {
 			float f = (float) *(double*)value_ptr;
-			sparc_set(c, arg.out_reg, *(int*)&f);
+			sparc_set(s, arg.out_reg, *(int*)&f);
 		    } else {
-			sparc_set(c, arg.out_reg, *(int*)value_ptr);
+			sparc_set(s, arg.out_reg, *(int*)value_ptr);
 			if (arg.out_reg != _o5) {
-			    sparc_set(c, arg.out_reg+1, *(((int*)value_ptr)+1));
+			    sparc_set(s, arg.out_reg+1, *(((int*)value_ptr)+1));
 			} else {
 			    /* sparcv8 boundary condition */
-			    sparc_set(c, _g1, *(((int*)value_ptr)+1));
-			    sparc_pstorei(c, DILL_I, 0, _g1, _sp, real_offset + 4);
+			    sparc_set(s, _g1, *(((int*)value_ptr)+1));
+			    sparc_pstorei(s, DILL_I, 0, _g1, _sp, real_offset + 4);
 			}
 		    }
 		} else {
 		    if (type == DILL_F) {
-			sparc_movf2i(c, arg.out_reg, *(int*)value_ptr);
+			sparc_movf2i(s, arg.out_reg, *(int*)value_ptr);
 		    } else {
 			if (arg.out_reg != _o5) {
-			    sparc_movd2i(c, arg.out_reg, *(int*)value_ptr);
+			    sparc_movd2i(s, arg.out_reg, *(int*)value_ptr);
 			} else {
 			    /* sparcv8 boundary condition */
-			    sparc_movf2i(c, arg.out_reg, *(int*)value_ptr);
-			    sparc_pstorei(c, DILL_F, 0, (*(int*)value_ptr)+1, _sp, 
+			    sparc_movf2i(s, arg.out_reg, *(int*)value_ptr);
+			    sparc_pstorei(s, DILL_F, 0, (*(int*)value_ptr)+1, _sp, 
 					  real_offset + 4);
 			}
 		    }
@@ -1153,45 +1163,45 @@ static void internal_push(dill_stream c, int type, int immediate,
 	    if (arg.is_immediate) {
 		if (type == DILL_F) {
 		    float f = (float) *(double*)value_ptr;
-		    sparc_set(c, _g1, *(int*)&f);
+		    sparc_set(s, _g1, *(int*)&f);
 		} else {
-		    sparc_set(c, _g1, *(long*)value_ptr);
+		    sparc_set(s, _g1, *(long*)value_ptr);
 		}
-		sparc_pstorei(c, arg.type, 0, _g1, _sp, real_offset);
+		sparc_pstorei(s, arg.type, 0, _g1, _sp, real_offset);
 	    } else {
-		sparc_pstorei(c, arg.type, 0, *(int*)value_ptr, _sp, 
+		sparc_pstorei(s, arg.type, 0, *(int*)value_ptr, _sp, 
 			      real_offset);
 	    }
 	} else {
 	    if ((type != DILL_F) && (type != DILL_D)) {
 		if (arg.is_immediate) {
-		    sparc_set(c, arg.out_reg, *(long*)value_ptr);
+		    sparc_set(s, arg.out_reg, *(long*)value_ptr);
 		} else {
-		    sparc_mov(c, type, 0, arg.out_reg, *(int*) value_ptr);
+		    sparc_mov(s, type, 0, arg.out_reg, *(int*) value_ptr);
 		}
 	    } else {
 		if (arg.is_immediate) {
 		    if ((type == DILL_F) || (type == DILL_D)) {
 			/* set appropriate register */
-			sparc_setf(c, type, 0, arg.out_reg, 
+			sparc_setf(s, type, 0, arg.out_reg, 
 				   *(double*)value_ptr);
 		    } else {
-			sparc_set(c, arg.out_reg, *(int*)value_ptr);
+			sparc_set(s, arg.out_reg, *(int*)value_ptr);
 		    }
 		} else {
 		    /* move to the appropriate float reg */
-		    sparc_mov(c, type, 0, arg.out_reg, *(int*)value_ptr);
+		    sparc_mov(s, type, 0, arg.out_reg, *(int*)value_ptr);
 		}
 		if (arg.in_reg != -1) {
 		    /* put value in int regs too */
 		    if (type == DILL_D) {
-			sparc_movd2i(c, arg.in_reg, arg.out_reg);
+			sparc_movd2i(s, arg.in_reg, arg.out_reg);
 		    } else {
-			sparc_movf2i(c, arg.in_reg, arg.out_reg);
+			sparc_movf2i(s, arg.in_reg, arg.out_reg);
 		    }
 		} else {
 		    /* put it on the stack as well */
-		    sparc_pstorei(c, arg.type, 0, arg.out_reg, _sp,
+		    sparc_pstorei(s, arg.type, 0, arg.out_reg, _sp,
 				  real_offset);
 		}
 	    }
@@ -1199,69 +1209,69 @@ static void internal_push(dill_stream c, int type, int immediate,
     }		
 }
 
-static void push_init(dill_stream c)
+static void push_init(dill_stream s)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     smi->cur_arg_offset = 0;
 }
 
-extern void sparc_push(dill_stream c, int type, int reg)
+extern void sparc_push(dill_stream s, int type, int reg)
 {
     if ((type == DILL_V) && (reg == -1)) {
-	push_init(c);
+	push_init(s);
     } else {
-	internal_push(c, type, 0, &reg);
+	internal_push(s, type, 0, &reg);
     }
 }
 
-extern void sparc_pushi(dill_stream c, int type, long value)
+extern void sparc_pushi(dill_stream s, int type, long value)
 {
-    internal_push(c, type, 1, &value);
+    internal_push(s, type, 1, &value);
 }
 
-extern void sparc_pushpi(dill_stream c, int type, void *value)
+extern void sparc_pushpi(dill_stream s, int type, void *value)
 {
-    internal_push(c, type, 1, &value);
+    internal_push(s, type, 1, &value);
 }
 
-extern void sparc_pushfi(dill_stream c, int type, double value)
+extern void sparc_pushfi(dill_stream s, int type, double value)
 {
-    internal_push(c, type, 1, &value);
+    internal_push(s, type, 1, &value);
 }
 
-extern int sparc_calli(dill_stream c, int type, void *xfer_address, char *name)
+extern int sparc_calli(dill_stream s, int type, void *xfer_address, char *name)
 {
     int caller_side_ret_reg = _o0;
 
     /* save temporary registers */
-    dill_mark_call_location(c, NULL, xfer_address);
-    INSN_OUT(c, HDR(0x1)|0);
-    sparc_nop(c);
+    dill_mark_call_location(s, NULL, xfer_address);
+    INSN_OUT(s, HDR(0x1)|0);
+    sparc_nop(s);
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
 	caller_side_ret_reg = _f0;
     }
-    push_init(c);
+    push_init(s);
     return caller_side_ret_reg;
 }
 
-extern int sparc_callr(dill_stream c, int type, int src)
+extern int sparc_callr(dill_stream s, int type, int src)
 {
     int caller_side_ret_reg = _o0;
 
     /* save temporary registers */
-    sparc_jal(c, _o7, src);
-    sparc_nop(c);
+    sparc_jal(s, _o7, src);
+    sparc_nop(s);
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
 	caller_side_ret_reg = _f0;
     }
-    push_init(c);
+    push_init(s);
     return caller_side_ret_reg;
 }
 
 extern void
-sparc_branchi(dill_stream c, int op, int type, int src, long imm, int label)
+sparc_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 {
     switch(type) {
     case DILL_F:
@@ -1285,14 +1295,14 @@ sparc_branchi(dill_stream c, int op, int type, int src, long imm, int label)
 	op += 6; /* second set of codes */
 	/* fall through */
     default:
-	sparc_FORM3imm_arith(c, 0x14, 0, _g0, src, imm); /* subcc */
-	dill_mark_branch_location(c, label);
-	INSN_OUT(c, HDR(0)|COND(op_conds[op])|(2<<22)|/*disp */0);/* bp*/
-	sparc_nop(c);
+	sparc_FORM3imm_arith(s, 0x14, 0, _g0, src, imm); /* subcc */
+	dill_mark_branch_location(s, label);
+	INSN_OUT(s, HDR(0)|COND(op_conds[op])|(2<<22)|/*disp */0);/* bp*/
+	sparc_nop(s);
     }
 }
 
-extern void sparc_ret(dill_stream c, int data1, int data2, int src)
+extern void sparc_ret(dill_stream s, int data1, int data2, int src)
 {
     switch (data1) {
     case DILL_C:
@@ -1304,20 +1314,20 @@ extern void sparc_ret(dill_stream c, int data1, int data2, int src)
     case DILL_L:
     case DILL_UL:
     case DILL_P:
-	if (src != _i0) sparc_int_mov(c, _i0, src);
+	if (src != _i0) sparc_int_mov(s, _i0, src);
 	break;
     case DILL_F:
-	if (src != _f0) sparc_movf(c, _f0, src);
+	if (src != _f0) sparc_movf(s, _f0, src);
 	break;
     case DILL_D:
-	if (src != _f0) sparc_movd(c, _f0, src);
+	if (src != _f0) sparc_movd(s, _f0, src);
 	break;
     }
-    sparc_simple_ret(c);
-    sparc_restore(c);
+    sparc_simple_ret(s);
+    sparc_restore(s);
 }
 
-extern void sparc_reti(dill_stream c, int data1, int data2, long imm)
+extern void sparc_reti(dill_stream s, int data1, int data2, long imm)
 {
     switch (data1) {
     case DILL_C:
@@ -1329,38 +1339,38 @@ extern void sparc_reti(dill_stream c, int data1, int data2, long imm)
     case DILL_L:
     case DILL_UL:
     case DILL_P:
-	sparc_set(c, _i0, imm);
+	sparc_set(s, _i0, imm);
 	break;
     case DILL_F:
     case DILL_D:
 	break;/* no return immediate of floats */
     }
-    sparc_simple_ret(c);
-    sparc_restore(c);
+    sparc_simple_ret(s);
+    sparc_restore(s);
 }
 
 static void
-sparc_data_link(dill_stream c)
+sparc_data_link(dill_stream s)
 {
-    struct branch_table *t = &c->p->branch_table;
+    struct branch_table *t = &s->p->branch_table;
     int i;
     for (i=0; i < t->data_mark_count; i++) {
 	int label = t->data_marks[i].label;
-	void *label_addr = t->label_locs[label] + (char*)c->p->code_base;
+	void *label_addr = t->label_locs[label] + (char*)s->p->code_base;
 	*t->data_marks[i].addr = label_addr;
     }
 }
 
 static void
-sparc_branch_link(dill_stream c)
+sparc_branch_link(dill_stream s)
 {
-    struct branch_table *t = &c->p->branch_table;
+    struct branch_table *t = &s->p->branch_table;
     int i;
 
     for(i=0; i< t->branch_count; i++) {
 	int label = t->branch_locs[i].label;
 	int label_offset = t->label_locs[label] - t->branch_locs[i].loc;
-	int *branch_addr = (int*)((char *)c->p->code_base + 
+	int *branch_addr = (int*)((char *)s->p->code_base + 
 				  t->branch_locs[i].loc);
         /* div addr diff by 4 for sparc offset value */
 	label_offset = label_offset >> 2;  
@@ -1377,13 +1387,13 @@ sparc_branch_link(dill_stream c)
  * we'll call to the PLT entry rather than directly to the routine.
  */
 static void
-sparc_PLT_emit(dill_stream c)
+sparc_PLT_emit(dill_stream s)
 {
-    call_t *t = &c->p->call_table;
+    call_t *t = &s->p->call_table;
     int i;
 
     for(i=0; i< t->call_count; i++) {
-	int *call_addr = (int*) ((unsigned long)c->p->code_base + 
+	int *call_addr = (int*) ((unsigned long)s->p->code_base + 
 				 t->call_locs[i].loc);
 	long call_offset = (unsigned long)t->call_locs[i].xfer_addr - 
 	    (unsigned long)call_addr;
@@ -1392,22 +1402,22 @@ sparc_PLT_emit(dill_stream c)
 	call_offset = call_offset >> 30;
 	if ((call_offset != 0) && (call_offset != -1)) {
 	    t->call_locs[i].mach_info = (void*)
-		((long)c->p->cur_ip - (long)c->p->code_base);
-	    sparc_set(c, _g1, (unsigned long)t->call_locs[i].xfer_addr);
-	    sparc_jump_to_reg(c, _g1);
-	    sparc_nop(c);
+		((long)s->p->cur_ip - (long)s->p->code_base);
+	    sparc_set(s, _g1, (unsigned long)t->call_locs[i].xfer_addr);
+	    sparc_jump_to_reg(s, _g1);
+	    sparc_nop(s);
 	}
     }
 }
 
 static void
-sparc_call_link(dill_stream c)
+sparc_call_link(dill_stream s)
 {
-    call_t *t = &c->p->call_table;
+    call_t *t = &s->p->call_table;
     int i;
 
     for(i=0; i< t->call_count; i++) {
-	int *call_addr = (int*) ((unsigned long)c->p->code_base + 
+	int *call_addr = (int*) ((unsigned long)s->p->code_base + 
 				 t->call_locs[i].loc);
 	if (t->call_locs[i].mach_info == NULL) {
 	    /* no PLT */
@@ -1420,7 +1430,7 @@ sparc_call_link(dill_stream c)
 	    *call_addr |= (call_offset & 0x3fffffff);
 	} else {
 	    /* call through PLT */
-	    unsigned long PLT_addr = (unsigned long)c->p->code_base + 
+	    unsigned long PLT_addr = (unsigned long)s->p->code_base + 
 				      (unsigned long)t->call_locs[i].mach_info;
 	    int call_offset = PLT_addr - (unsigned long)call_addr;
 	    
@@ -1470,57 +1480,57 @@ sparc_flush(void *base, void *limit)
 }    
 
 static void
-sparc_emit_save(dill_stream c)
+sparc_emit_save(dill_stream s)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
-    void *save_ip = c->p->cur_ip;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
+    void *save_ip = s->p->cur_ip;
     int ar_size = smi->fp_save_end + smi->act_rec_size;
     ar_size = roundup(ar_size, 16) + 16;
 
-    c->p->cur_ip = (char*)c->p->code_base + smi->save_insn_offset;
-    sparc_savei(c, -ar_size);
-    c->p->fp = (char*)c->p->code_base + smi->save_insn_offset;
-    c->p->cur_ip = save_ip;
+    s->p->cur_ip = (char*)s->p->code_base + smi->save_insn_offset;
+    sparc_savei(s, -ar_size);
+    s->p->fp = (char*)s->p->code_base + smi->save_insn_offset;
+    s->p->cur_ip = save_ip;
 }
     
 extern void
-sparc_end(c)
-dill_stream c;
+sparc_end(s)
+dill_stream s;
 {
-    sparc_simple_ret(c);
-    sparc_restore(c);
-    sparc_PLT_emit(c);   /* must be done before linking */
-    sparc_branch_link(c);
-    sparc_call_link(c);
-    sparc_data_link(c);
-    sparc_emit_save(c);
-    sparc_flush(c->p->code_base, c->p->code_limit);
+    sparc_simple_ret(s);
+    sparc_restore(s);
+    sparc_PLT_emit(s);   /* must be done before linking */
+    sparc_branch_link(s);
+    sparc_call_link(s);
+    sparc_data_link(s);
+    sparc_emit_save(s);
+    sparc_flush(s->p->code_base, s->p->code_limit);
 }
 
 extern void *
-sparc_clone_code(c, new_base, available_size)
-dill_stream c;
+sparc_clone_code(s, new_base, available_size)
+dill_stream s;
 void *new_base;
 int available_size;
 {
-    int size = dill_code_size(c);
+    int size = dill_code_size(s);
     if (available_size < size) {
 	return NULL;
     }
-    void *old_base = c->p->code_base;
-    void *native_base = c->p->code_base;
-    if (native_base == NULL) native_base = c->p->native.code_base;
+    void *old_base = s->p->code_base;
+    void *native_base = s->p->code_base;
+    if (native_base == NULL) native_base = s->p->native.code_base;
     memcpy(new_base, native_base, size);
-    c->p->code_base = new_base;
-    c->p->cur_ip = (void*)((long)new_base + size);
-    c->p->fp = new_base;
-    sparc_branch_link(c);
-    sparc_call_link(c);
-    sparc_data_link(c);
-    sparc_flush(c->p->code_base, c->p->code_limit);
-    c->p->code_base = old_base;
-    c->p->cur_ip = (void*)((long) old_base + size);
-    c->p->fp = old_base;
+    s->p->code_base = new_base;
+    s->p->cur_ip = (void*)((long)new_base + size);
+    s->p->fp = new_base;
+    sparc_branch_link(s);
+    sparc_call_link(s);
+    sparc_data_link(s);
+    sparc_flush(s->p->code_base, s->p->code_limit);
+    s->p->code_base = old_base;
+    s->p->cur_ip = (void*)((long) old_base + size);
+    s->p->fp = old_base;
     while (*(int*)new_base == 0x10000) {
 	/* skip UNIMPs */
 	new_base = (void*) ((long) new_base + 4);
@@ -1529,15 +1539,15 @@ int available_size;
 }
 
 extern void
-sparc_pset(dill_stream c, int type, int junk, int dest, long imm)
+sparc_pset(dill_stream s, int type, int junk, int dest, long imm)
 {
-    sparc_set(c, dest, imm);
+    sparc_set(s, dest, imm);
 }	
 
 extern void
-sparc_setp(dill_stream c, int type, int junk, int dest, void *imm)
+sparc_setp(dill_stream s, int type, int junk, int dest, void *imm)
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     union {
 	void *a;
 	int i;
@@ -1545,14 +1555,14 @@ sparc_setp(dill_stream c, int type, int junk, int dest, void *imm)
     } a;
     a.a = imm;
     if (smi->stack_align == 4) {
-	sparc_set(c, dest, a.i);
+	sparc_set(s, dest, a.i);
     } else {
-	sparc_set(c, dest, a.l);
+	sparc_set(s, dest, a.l);
     }
 }
 
 extern void
-sparc_setf(dill_stream c, int type, int junk, int dest, double imm)
+sparc_setf(dill_stream s, int type, int junk, int dest, double imm)
 {
     union {
 	float f;
@@ -1563,22 +1573,22 @@ sparc_setf(dill_stream c, int type, int junk, int dest, double imm)
 	long l;
 	int i[2];
     } b;
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     if (type == DILL_F) {
 	a.f = (float) imm;
-	sparc_set(c, _g1, a.i);
-	sparc_movi2f(c, dest, _g1);
+	sparc_set(s, _g1, a.i);
+	sparc_movi2f(s, dest, _g1);
     } else if (smi->stack_align == 4) {
 	b.d = imm;
-	sparc_set(c, _g1, b.i[0]);
-	sparc_movi2f(c, dest, _g1);
-	sparc_set(c, _g1, b.i[1]);
-	sparc_movi2f(c, dest+1, _g1);
+	sparc_set(s, _g1, b.i[0]);
+	sparc_movi2f(s, dest, _g1);
+	sparc_set(s, _g1, b.i[1]);
+	sparc_movi2f(s, dest+1, _g1);
     } else {
 	/* double sparcv9 */
 	b.d = imm;
-	sparc_set(c, _g1, b.l);
-	sparc_movi2d(c, dest, _g1);
+	sparc_set(s, _g1, b.l);
+	sparc_movi2d(s, dest, _g1);
     }
 }	
 
@@ -1596,108 +1606,108 @@ sparc_setf(dill_stream c, int type, int junk, int dest, double imm)
 #define lo(x) ((x) & ((1 << 11) - 1))
 
 extern void
-sparc_set(c, r, val)
-dill_stream c;
+sparc_set(s, r, val)
+dill_stream s;
 int r;
 long val;
 {
     if  (((long)val) < 4096 && ((long)val) >= -4096) {
-	sparc_ori(c, r, _g0, (val&0x1fff));
+	sparc_ori(s, r, _g0, (val&0x1fff));
 #if SIZEOF_LONG == 8
     } else if ((val >> 34) == 0) {
 	/* fits in 34 positive bits */
-	sparc_sethi(c, r, val>>12);
-	sparc_lshi(c, r,r,2);
-	sparc_ori(c, r,r,val & 0xfff);
+	sparc_sethi(s, r, val>>12);
+	sparc_lshi(s, r,r,2);
+	sparc_ori(s, r,r,val & 0xfff);
     } else if ((val >> 34) == -1) {
 	/* fits in 34 negative bits */
-	sparc_sethi(c, r, ~(val>>12));
-	sparc_lshi(c, r,r,2);
-	sparc_xori(c, r,r,(val & 0xfff)|0x1000);
+	sparc_sethi(s, r, ~(val>>12));
+	sparc_lshi(s, r,r,2);
+	sparc_xori(s, r,r,(val & 0xfff)|0x1000);
     } else {
 	if (r != _g1) {
 	    /* case where we can use g1 as a temporary */
-	    sparc_sethi(c, r,hh(val));
-	    sparc_sethi(c, _g1,lm(val));
+	    sparc_sethi(s, r,hh(val));
+	    sparc_sethi(s, _g1,lm(val));
 /*	    printf("lm (%lx) = %lx\n", val, lm(val));*/
-	    sparc_ori(c, r,r,hm(val));
-	    sparc_ori(c, _g1,_g1,lo(val));
-	    sparc_xlshi(c, r,r,32);
-	    sparc_or(c, r,r,_g1);
+	    sparc_ori(s, r,r,hm(val));
+	    sparc_ori(s, _g1,_g1,lo(val));
+	    sparc_xlshi(s, r,r,32);
+	    sparc_or(s, r,r,_g1);
 	    /* can't use g1! */
 	} else {
 	    /* set hi, set low */
-	    sparc_sethi(c, r, hh(val));
-	    sparc_ori(c, r, r, hm(val));
+	    sparc_sethi(s, r, hh(val));
+	    sparc_ori(s, r, r, hm(val));
 	    if ((val & 0xFF000000) != 0) {
 		/* top 8 of low 32 are non-zero */
-		sparc_lshi(c, r,r,8);
-		sparc_ori(c, r, r, (val & 0xFF000000) >> 24);
-		sparc_lshi(c, r,r,12);
+		sparc_lshi(s, r,r,8);
+		sparc_ori(s, r, r, (val & 0xFF000000) >> 24);
+		sparc_lshi(s, r,r,12);
 	    } else {
-		sparc_lshi(c, r,r, 20);
+		sparc_lshi(s, r,r, 20);
 	    }
-	    sparc_ori(c, r, r, (val & 0x00fff000) >> 12);
-	    sparc_lshi(c, r,r,12);
-	    sparc_ori(c, r, r, val & 0xfff);
+	    sparc_ori(s, r, r, (val & 0x00fff000) >> 12);
+	    sparc_lshi(s, r,r,12);
+	    sparc_ori(s, r, r, val & 0xfff);
 	}
     }
 #else
     } else if (! (val & 0x3ff)) {
 	/* no low bits */
-	sparc_sethi(c, r, ((val >> 10) & 0x3fffff));
+	sparc_sethi(s, r, ((val >> 10) & 0x3fffff));
     } else {
-	sparc_sethi(c, r, ((val >> 10) & 0x3fffff));
-	sparc_ori(c, r, r, (val & 0x3ff));
+	sparc_sethi(s, r, ((val >> 10) & 0x3fffff));
+	sparc_ori(s, r, r, (val & 0x3ff));
     }        
 #endif
 }
 
-extern void sparc_bswap(c, junk, typ, dest, src)
-dill_stream c;
+extern void sparc_bswap(s, junk, typ, dest, src)
+dill_stream s;
 int junk;
 int typ;
 int dest;
 int src;
 {
-    sparc_mach_info smi = (sparc_mach_info) c->p->mach_info;
-    sparc_pstorei(c, typ, 0, src, _fp, smi->conversion_word);
-    sparc_pbsloadi(c, typ, 0, dest, _fp, smi->conversion_word);
+    sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
+    sparc_pstorei(s, typ, 0, src, _fp, smi->conversion_word);
+    sparc_pbsloadi(s, typ, 0, dest, _fp, smi->conversion_word);
 }
 
 #define bit_R(x) ((unsigned long)1<<x)
 
 extern void
-sparc_reg_init(dill_stream c)
+sparc_reg_init(dill_stream s)
 {
-    c->p->var_i.init_avail[0] = (bit_R(_l0)|bit_R(_l1)|bit_R(_l2)|bit_R(_l3)|
+    s->p->var_i.init_avail[0] = (bit_R(_l0)|bit_R(_l1)|bit_R(_l2)|bit_R(_l3)|
 				 bit_R(_l4)|bit_R(_l5)|bit_R(_l6)|bit_R(_l7));
-    c->p->var_i.members[0] = c->p->var_i.init_avail[0] |
+    s->p->var_i.members[0] = s->p->var_i.init_avail[0] |
 	(bit_R(_i0)|bit_R(_i1)|bit_R(_i2)|bit_R(_i3)|
 	 bit_R(_i4)|bit_R(_i5)|bit_R(_i6)|bit_R(_i7));
-    c->p->tmp_i.init_avail[0] = (bit_R(_g2)|bit_R(_g3));
-    c->p->tmp_i.members[0] = c->p->tmp_i.init_avail[0] | bit_R(_g1);
-    c->p->var_f.init_avail[0] = 0;
-    c->p->var_f.members[0] = c->p->var_f.init_avail[0];
-    c->p->tmp_f.init_avail[0] = (bit_R(_f2)|bit_R(_f4)|bit_R(_f6)|
+    s->p->tmp_i.init_avail[0] = (bit_R(_g2)|bit_R(_g3));
+    s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0] | bit_R(_g1);
+    s->p->var_f.init_avail[0] = 0;
+    s->p->var_f.members[0] = s->p->var_f.init_avail[0];
+    s->p->tmp_f.init_avail[0] = (bit_R(_f2)|bit_R(_f4)|bit_R(_f6)|
 				 bit_R(_f8)|bit_R(_f10)|bit_R(_f12)|bit_R(_f14)|
 				 bit_R(_f16)|bit_R(_f18)|bit_R(_f20)|bit_R(_f22)|
 				 bit_R(_f24)|bit_R(_f26)|bit_R(_f28)|bit_R(_f30));
-    c->p->tmp_f.members[0] = c->p->tmp_f.init_avail[0];
+    s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
 
 extern void*
-gen_sparc_mach_info(c, v9)
-dill_stream c;
+gen_sparc_mach_info(s, v9)
+dill_stream s;
 int v9;
 {
     sparc_mach_info smi = malloc(sizeof(*smi));
-    if (c->p->mach_info != NULL) {
-	free(c->p->mach_info);
-	c->p->mach_info = NULL;
-	c->p->native.mach_info = NULL;
+    if (s->p->mach_info != NULL) {
+	free(s->p->mach_info);
+	s->p->mach_info = NULL;
+	s->p->native.mach_info = NULL;
     }
-    sparc_reg_init(c);
+    sparc_reg_init(s);
     smi->act_rec_size = 0;
     smi->conversion_word = 0;
     smi->cur_arg_offset = 0;
@@ -1721,7 +1731,7 @@ int v9;
 #define MAXLENGTH (1<<23) /* Max length of function that can be disassembled */
 
 extern int
-sparc_init_disassembly_info(dill_stream c, void * ptr)
+sparc_init_disassembly_info(dill_stream s, void * ptr)
 {
     struct disassemble_info *i = ptr;
 #ifdef INIT_DISASSEMBLE_INFO_THREE_ARG
@@ -1731,12 +1741,12 @@ sparc_init_disassembly_info(dill_stream c, void * ptr)
     INIT_DISASSEMBLE_INFO(*i, stdout);
 #endif
     i->mach = bfd_mach_sparc_v9;
-    if (c->p->code_base != NULL) {
-	i->buffer = (bfd_byte *)c->p->code_base;
-	i->buffer_vma = (bfd_vma)(long)c->p->code_base;
+    if (s->p->code_base != NULL) {
+	i->buffer = (bfd_byte *)s->p->code_base;
+	i->buffer_vma = (bfd_vma)(long)s->p->code_base;
     } else {
-	i->buffer = (bfd_byte *)c->p->native.code_base;
-	i->buffer_vma = (bfd_vma)(long)c->p->native.code_base;
+	i->buffer = (bfd_byte *)s->p->native.code_base;
+	i->buffer_vma = (bfd_vma)(long)s->p->native.code_base;
     }
     i->buffer_length = MAXLENGTH;
 #ifdef HAVE_PRINT_INSN_SPARC
@@ -1747,7 +1757,7 @@ sparc_init_disassembly_info(dill_stream c, void * ptr)
 }
 
 extern int
-sparc_print_insn(dill_stream c, void *info_ptr, void *insn)
+sparc_print_insn(dill_stream s, void *info_ptr, void *insn)
 {
 #ifdef HAVE_PRINT_INSN_SPARC
     return print_insn_sparc((unsigned long) insn, (disassemble_info*)info_ptr);
@@ -1757,12 +1767,12 @@ sparc_print_insn(dill_stream c, void *info_ptr, void *insn)
 }
 #else
 extern int
-sparc_init_disassembly_info(dill_stream c, void * ptr){return 0;}
-extern int sparc_print_insn(dill_stream c, void *info_ptr, void *insn){return 0;}
+sparc_init_disassembly_info(dill_stream s, void * ptr){return 0;}
+extern int sparc_print_insn(dill_stream s, void *info_ptr, void *insn){return 0;}
 #endif
 
 extern void
-sparc_print_reg(dill_stream c, int typ, int reg)
+sparc_print_reg(dill_stream s, int typ, int reg)
 {
     switch(typ) {
     case DILL_C: case DILL_UC:
@@ -1799,7 +1809,7 @@ sparc_print_reg(dill_stream c, int typ, int reg)
 }
 
 extern int
-sparc_count_insn(dill_stream c, int start, int end)
+sparc_count_insn(dill_stream s, int start, int end)
 {
     return (end - start)>>2;
 }
