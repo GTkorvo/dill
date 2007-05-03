@@ -44,6 +44,8 @@ sub upperc {
 &arithi_insn("rsh", "i u ul l", "ia64_shifti", "0", "DILL_t");
 &branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "ia64_branch");
 &branchi_insn( "eq ge gt le lt ne", "i u ul l p", "ia64_branchi");
+&compare_insn( "eq ge gt le lt ne", "i u ul l p d f", "ia64_compare");
+&comparei_insn( "eq ge gt le lt ne", "i u ul l p", "ia64_comparei");
 
 print COUT "jmp_table ${mach}_jump_table;\n";
 print COUT "extern void dill_ia64_init(dill_stream c)\n{\n";
@@ -53,6 +55,7 @@ print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
 print COUT $jmp_a2_assigns;
 print COUT $jmp_b_assigns;
+print COUT $jmp_c_assigns;
 print COUT "\t  ${mach}_jump_table->proc_start = (dill_mach_proc_start) ia64_proc_start;\n";
 print COUT "\t  ${mach}_jump_table->end = ia64_end;\n";
 print COUT "\t  ${mach}_jump_table->clone_code = ia64_clone_code;\n";
@@ -72,6 +75,7 @@ print COUT "\t  ${mach}_jump_table->convert = ia64_convert;\n";
 print COUT "\t  ${mach}_jump_table->mov = ia64_mov;\n";
 print COUT "\t  ${mach}_jump_table->set = ia64_pset;\n";
 print COUT "\t  ${mach}_jump_table->setf = ia64_setf;\n";
+print COUT "\t  ${mach}_jump_table->setp = ia64_setp;\n";
 print COUT "\t  ${mach}_jump_table->jv = ia64_jump_to_label;\n";
 print COUT "\t  ${mach}_jump_table->jp = ia64_jump_to_reg;\n";
 print COUT "\t  ${mach}_jump_table->jpi = ia64_jump_to_imm;\n";
@@ -155,7 +159,7 @@ sub branch_insn {
 	$op = $_;
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_b[dill_jmp_b${op}${_}] = $subr;\n";
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_b${op}_code;\n";
+	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_${op}_code;\n";
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
 	}
     }
@@ -167,6 +171,28 @@ sub branchi_insn {
 	$op = $_;
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_bi[dill_jmp_b${op}${_}] = $subr;\n";
+	}
+    }
+}
+
+sub compare_insn {
+    local($ops, $types, $subr) = @_;
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->jmp_c[dill_jmp_c${op}${_}] = $subr;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data1 = dill_${op}_code;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
+	}
+    }
+}
+
+sub comparei_insn {
+    local($ops, $types, $subr) = @_;
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->jmp_ci[dill_jmp_c${op}${_}] = $subr;\n";
 	}
     }
 }

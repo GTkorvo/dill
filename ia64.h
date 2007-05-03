@@ -108,18 +108,24 @@ ia64_mov(dill_stream c, int type, int junk, int dest, int src);
 extern void
 ia64_pset(dill_stream c, int type, int junk, int dest, long imm);
 extern void
+ia64_setp(dill_stream c, int type, int junk, int dest, void *imm);
+extern void
 ia64_setf(dill_stream c, int type, int junk, int dest, double imm);
 extern void
 ia64_branch(dill_stream c, int op, int type, int src1, int src2, int label);
 extern void
 ia64_branchi(dill_stream c, int op, int type, int src, long imm, int label);
+extern void
+ia64_compare(dill_stream c, int op, int type, int dest, int src1, int src2);
+extern void
+ia64_comparei(dill_stream c, int op, int type, int dest, int src, long imm);
 extern void 
 ia64_lea(dill_stream c, int junk, int junk1, int dest, int src, long imm);
 extern void ia64_jump_to_label(dill_stream c, unsigned long label);
 extern void ia64_jump_to_reg(dill_stream c, unsigned long reg);
 extern void ia64_jump_to_imm(dill_stream c, unsigned long imm);
 extern void ia64_jal(dill_stream c, int return_addr_reg, int target);
-extern int ia64_calli(dill_stream c, int type, void *xfer_address);
+extern int ia64_calli(dill_stream c, int type, void *xfer_address, char *name);
 extern int ia64_callr(dill_stream c, int type, int src);
 extern void ia64_push(dill_stream c, int type, int reg);
 extern void ia64_pushi(dill_stream c, int type, long value);

@@ -709,25 +709,25 @@ extern void ia64_mod(dill_stream s, int data1, int data2, int dest, int src1,
     int return_reg;
     if (data1 == 1) {
 	/* signed case */
-	return_reg = dill_scalll(s, (void*)ia64_hidden_mod, "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)ia64_hidden_mod, "ia64_hidden_mod", "%l%l", src1, src2);
 	dill_movl(s, dest, return_reg);
     } else {
 	/* unsigned case */
-	return_reg = dill_scalll(s, (void*)ia64_hidden_umod, "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)ia64_hidden_umod, "ia64_hidden_umod", "%l%l", src1, src2);
 	dill_movul(s, dest, return_reg);
     }
 }
 
 
 
-extern void ia64_setl(dill_stream s, int r, long val)
+extern void ia64_setl(dill_stream st, int r, long val)
 {
     if ((val < 0x1fffff) && (val > -(0x1fffff))) {
 	int imm7b = val & 0x7f;
 	int imm9d = (val >> 7) & 0x1ff;
 	int imm5c = (val >> 16) & 0x1f;
 	int s = (val >> 21) & 0x1;
-	MIIs(s, FORMAT_A5(s, imm9d, imm5c, R0, imm7b, r, 0), nop_i, nop_i);
+	MIIs(st, FORMAT_A5(s, imm9d, imm5c, R0, imm7b, r, 0), nop_i, nop_i);
     } else {
 	int imm7b = val & 0x7f;
 	int imm9d = (val >> 7) & 0x1ff;
@@ -735,8 +735,18 @@ extern void ia64_setl(dill_stream s, int r, long val)
 	int ic = (val >> 21) & 0x1;
 	long slot1 = (val >> 22) & 0x1ffffffffff;
 	int i = (val >> 63) & 0x1;
-	MLXs(s, nop_m, slot1, FORMAT_X2(i, imm9d, imm5c, ic, 0, imm7b, r, 0));
+	MLXs(st, nop_m, slot1, FORMAT_X2(i, imm9d, imm5c, ic, 0, imm7b, r, 0));
     }
+}
+
+extern void ia64_setp(dill_stream s, int type, int junk, int r, void *val)
+{
+    union {
+	long l;
+	void *a;
+    } u;
+    u.a = val;
+    ia64_setl(s, r, u.l);
 }
 
 extern void ia64_modi(dill_stream s, int data1, int data2, int dest, int src1, 
@@ -874,27 +884,27 @@ int src2;
     }
     if (div == 1) {
 	if ((type == DILL_U) || (type == DILL_UL)) {
-	    return_reg = dill_scalll(s, (void*)ia64_hidden_udiv, "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)ia64_hidden_udiv, "ia64_hidden_udiv", "%l%l", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scalll(s, (void*)ia64_hidden_div, "%ul%ul", src1, src2);
+	    return_reg = dill_scalll(s, (void*)ia64_hidden_div, "ia64_hidden_div", "%ul%ul", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	}
 	    
     } else {
 	if ((type == DILL_U) || (type == DILL_UL)) {
-	    return_reg = dill_scalll(s, (void*)ia64_hidden_umod, "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)ia64_hidden_umod, "ia64_hidden_umod", "%l%l", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scalll(s, (void*)ia64_hidden_mod, "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)ia64_hidden_mod, "ia64_hidden_mod", "%l%l", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	}
     }
 }
 
 
-extern void ia64_arith3i(s, x4, x2b, dest, src, imm)
-dill_stream s;
+extern void ia64_arith3i(st, x4, x2b, dest, src, imm)
+dill_stream st;
 int x4;
 int x2b;
 int dest;
@@ -910,10 +920,10 @@ long imm;
 	if ((imm < 0x7f) && (imm > -(0x7f))) {
 	    int imm7b = imm & 0x7f;
 	    int s = (imm >> 7 ) & 1;
-	    MIIs(s, nop_m, FORMAT_A3(s, /*x2a*/0, /*ve*/0, x4, x2b, src, imm7b, dest, 0), nop_i);
+	    MIIs(st, nop_m, FORMAT_A3(s, /*x2a*/0, /*ve*/0, x4, x2b, src, imm7b, dest, 0), nop_i);
 	} else {
-	    ia64_setl(s, R2, imm);
-	    ia64_arith3(s, x4-8, x2b, dest, src, R2);
+	    ia64_setl(st, R2, imm);
+	    ia64_arith3(st, x4-8, x2b, dest, src, R2);
 	}
     } else {
 	/* add */
@@ -921,10 +931,10 @@ long imm;
 	    int imm7b = imm & 0x7f;
 	    int imm6d = (imm >> 7) & 0x3f;
 	    int s = (imm >> 13 ) & 1;
-	    MIIs(s, FORMAT_A4(s, /*x2a*/2, /*ve*/0, imm6d, src, imm7b, dest, 0), nop_i, nop_m);
+	    MIIs(st, FORMAT_A4(s, /*x2a*/2, /*ve*/0, imm6d, src, imm7b, dest, 0), nop_i, nop_m);
 	} else {
-	    ia64_setl(s, R2, imm);
-	    ia64_arith3(s, x4, x2b, dest, src, R2);
+	    ia64_setl(st, R2, imm);
+	    ia64_arith3(st, x4, x2b, dest, src, R2);
 	}
     }
 }
@@ -964,7 +974,7 @@ int src2;
     if (type == DILL_D) x = 0;
     if (type == DILL_F) x = 1;
 
-    return_reg = dill_scalld(s, (void*)ia64_hidden_fdiv, "%d%d", src1, src2);
+    return_reg = dill_scalld(s, (void*)ia64_hidden_fdiv, "ia64_hidden_fdiv", "%d%d", src1, src2);
     MFIs(s, nop_m, FORMAT_F1(0x8, x, /*sf*/0, return_reg, F1, F0, dest, 0), nop_i);
 
 }
@@ -1413,7 +1423,7 @@ extern void ia64_pushfi(dill_stream s, int type, double value)
     internal_push(s, type, 1, &value);
 }
 
-extern int ia64_calli(dill_stream s, int type, void *xfer_address)
+extern int ia64_calli(dill_stream s, int type, void *xfer_address, char *name)
 {
     int caller_side_ret_reg = R8;
     int creg = R14, gpsave = R2, gpload = R3;
@@ -1475,6 +1485,26 @@ ia64_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 	ia64_setl(s, R2, imm);
 	ia64_branch(s, op, type, src, R2, label);
     }
+}
+
+extern void
+ia64_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
+{
+    int label = dill_alloc_label(s);
+    ia64_setl(s, dest, 1);
+    ia64_branch(s, op, type, src1, src2, label);
+    ia64_setl(s, dest, 0);
+    dill_mark_label(s, label);
+}
+
+extern void
+ia64_comparei(dill_stream s, int op, int type, int dest, int src, long imm)
+{
+    int label = dill_alloc_label(s);
+    ia64_setl(s, dest, 1);
+    ia64_branchi(s, op, type, src, imm, label);
+    ia64_setl(s, dest, 0);
+    dill_mark_label(s, label);
 }
 
 extern void ia64_ret(dill_stream s, int data1, int data2, int src)
