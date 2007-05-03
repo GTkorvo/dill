@@ -549,7 +549,6 @@ EXTERN long dill_get_client_data(dill_exec_ctx ec, int key);
 EXTERN void* dill_take_code(dill_stream s);
 EXTERN int dill_alloc_label(dill_stream s);
 EXTERN void dill_mark_label(dill_stream s, int label);
-EXTERN void dill_mark_data(dill_stream s, void *addr, int label);
 EXTERN int dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int reg_class);
 EXTERN int dill_getreg(dill_stream s, int typ);
 EXTERN void dill_raw_putreg(dill_stream s, dill_reg reg_p, int type);

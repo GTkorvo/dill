@@ -77,7 +77,7 @@ dill_branch_init(dill_stream s)
 	t->label_locs[i] = -1;
     }
     t->branch_count = 0;
-    t->data_mark_count = 0;
+    t->data_segment_size = 0;
 }
 
 static void
@@ -165,7 +165,7 @@ dill_free_context(dill_stream s)
 {
     if (s->p->branch_table.label_locs) free(s->p->branch_table.label_locs);
     if (s->p->branch_table.branch_locs) free(s->p->branch_table.branch_locs);
-    if (s->p->branch_table.data_marks) free(s->p->branch_table.data_marks);
+    if (s->p->branch_table.data_segment) free(s->p->branch_table.data_segment);
     free(s->p->call_table.call_locs);
     free(s->p->ret_table.ret_locs);
     free(s->p->c_param_regs);
@@ -212,8 +212,8 @@ dill_cross_init(char *arch)
     bt->label_locs = malloc(sizeof(bt->label_locs[0]));
     bt->branch_alloc = 1;
     bt->branch_locs = malloc(sizeof(bt->branch_locs[0]));
-    bt->data_mark_count = 0;
-    bt->data_marks = malloc(sizeof(bt->data_marks[0]));
+    bt->data_segment_size = 0;
+    bt->data_segment = malloc(1);
     ct = &s->p->call_table;
     ct->call_alloc = 1;
     ct->call_count = 0;
@@ -482,14 +482,15 @@ extern void dill_mark_call_location(dill_stream s, char *xfer_name,
     t->call_count++;
 }
 
-EXTERN void
-dill_mark_data(dill_stream s, void *addr, int label)
+EXTERN int
+dill_add_const(dill_stream s, void *addr, int size)
 {
     struct branch_table *t = &s->p->branch_table;
-    t->data_marks = malloc(sizeof(t->data_marks[0]) * (t->data_mark_count+1));
-    t->data_marks[t->data_mark_count].addr = addr;
-    t->data_marks[t->data_mark_count].label = label;
-    t->data_mark_count++;
+    int offset = t->data_segment_size;
+    t->data_segment = realloc(t->data_segment, offset + size); 
+    memcpy(t->data_segment + offset, addr, size);
+    t->data_segment_size += size;
+    return offset;
 }
 
 static

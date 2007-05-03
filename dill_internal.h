@@ -38,8 +38,8 @@ struct branch_table {
     int branch_count;
     int branch_alloc;
     struct branch_location *branch_locs;
-    int data_mark_count;
-    struct data_mark *data_marks;
+    int data_segment_size;
+    char *data_segment;
 };
 
 typedef struct branch_table *branch_t;

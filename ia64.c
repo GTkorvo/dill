@@ -1256,9 +1256,14 @@ extern void ia64_jump_to_reg(dill_stream s, unsigned long reg)
     BBBs(s, FORMAT_B4(/*d*/0, /*wh*/1, 0x20, B6, 0, 0, 0), nop_m, nop_i);
 }
 
-extern void ia64_jump_to_imm(dill_stream s, unsigned long imm)
+extern void ia64_jump_to_imm(dill_stream s, void *imm)
 {
-    ia64_setl(s, R2, imm);
+    union {
+	long l;
+	void *a;
+    } u;
+    u.a = imm;
+    ia64_setl(s, R2, u.l);
     ia64_jump_to_reg(s, R2);
 }
 
@@ -1567,13 +1572,6 @@ extern void ia64_retf(dill_stream s, int data1, int data2, double imm)
 static void
 ia64_data_link(dill_stream s)
 {
-    struct branch_table *t = &s->p->branch_table;
-    int i;
-    for (i=0; i < t->data_mark_count; i++) {
-	int label = t->data_marks[i].label;
-	void *label_addr = t->label_locs[label] + (char*)s->p->code_base;
-	*t->data_marks[i].addr = label_addr;
-    }
 }
 
 static void

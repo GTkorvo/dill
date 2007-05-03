@@ -213,7 +213,9 @@ sub convert {
 	    if (${from} eq ${_}) { 
 		next;
 	    }
-	    $vm_cvt_code .= "\tcase CONV(DILL_" . &upperc(${from}) . ", DILL_" . &upperc($_) . "): dest->u.${_}.${_} = $convert_right{$from}; break;\n";
+	    $dest_fld = ${_};
+	    if ($_ eq "p") {$dest_fld = "ul";}
+	    $vm_cvt_code .= "\tcase CONV(DILL_" . &upperc(${from}) . ", DILL_" . &upperc($_) . "): dest->u.${dest_fld}.${dest_fld} = $convert_right{$from}; break;\n";
 	}
     }
 }
