@@ -1352,13 +1352,13 @@ extern void sparc_reti(dill_stream s, int data1, int data2, long imm)
 static void
 sparc_data_link(dill_stream s)
 {
-    struct branch_table *t = &s->p->branch_table;
+/*    struct branch_table *t = &s->p->branch_table;
     int i;
     for (i=0; i < t->data_mark_count; i++) {
 	int label = t->data_marks[i].label;
 	void *label_addr = t->label_locs[label] + (char*)s->p->code_base;
 	*t->data_marks[i].addr = label_addr;
-    }
+	}*/
 }
 
 static void
