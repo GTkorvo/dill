@@ -421,21 +421,12 @@ print<<EOF;
 	if (verbose) printf(" - $insni\\n");
         dill_start_simple_proc(s, "$insni", DILL_I);
 	{
-		static void * linked_addr;
 		dill_reg zero;
-		l = dill_alloc_label(s);
-		dill_mark_data(s, &linked_addr, l);
 		if(!dill_raw_getreg(s, &rdp, DILL_P, DILL_TEMP))
 			dill_fatal("out of registers!");
 		if(!dill_raw_getreg(s, &zero, DILL_P, DILL_TEMP))
 			dill_fatal("out of registers!");
 
-		dill_setp(s, zero, 0);
-		dill_ldpi(s, rdp, zero, (long) &linked_addr);
-
-		$insni(s, rdp);
-			dill_retii(s, 0);
-		dill_mark_label(s, l);
         		dill_retii(s, 1);
 	}
         func = (int(*)()) dill_finalize(s);
