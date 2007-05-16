@@ -1900,37 +1900,58 @@ x86_reg_init(dill_stream s, x86_mach_info smi)
 }
 
 #define bit_sse (1<<25)
+#define _SSE2_FEATURE_BIT 0x04000000
 
 extern void*
 gen_x86_mach_info(s)
 dill_stream s;
 {
+    int dwFeature = 0;
     static int host_supports_SSE = -1;
     x86_mach_info smi = malloc(sizeof(*smi));
     if (s->p->mach_info != NULL) {
-	free(s->p->mach_info);
-	s->p->mach_info = NULL;
-	s->p->native.mach_info = NULL;
+		free(s->p->mach_info);
+		s->p->mach_info = NULL;
+		s->p->native.mach_info = NULL;
     }
     if (host_supports_SSE == -1) {
-#if defined(HOST_X86)
-	int fl1, fl2;
-	/* Invoke CPUID(1), return %edx; caller can examine bits to
-	   determine what's supported.  */
-	__asm__ ("pushl %%ecx; pushl %%ebx; cpuid; popl %%ebx; popl %%ecx"
-		 : "=d" (fl2), "=a" (fl1) : "1" (1) : "cc");
-	host_supports_SSE = ((fl2 & bit_sse) == bit_sse);
+#if defined(HOST_X86) && defined(_MSC_VER)
+		_asm {
+	        push ebx
+			push ecx
+			push edx
+			
+			//get the Feature bits
+			xor eax, eax
+	        mov eax, 1
+			cpuid
+			mov dwFeature, edx
+
+			pop edx
+			pop ecx
+			pop ebx
+		}
+		if (dwFeature & _SSE2_FEATURE_BIT) {
+			host_supports_SSE = 1;
+		}
+#elif defined(HOST_X86) && defined(__GNUC__)
+		int fl1, fl2;
+		/* Invoke CPUID(1), return %edx; caller can examine bits to
+			determine what's supported.  */
+		__asm__ ("pushl %%ecx; pushl %%ebx; cpuid; popl %%ebx; popl %%ecx"
+			: "=d" (fl2), "=a" (fl1) : "1" (1) : "cc");
+		host_supports_SSE = ((fl2 & bit_sse) == bit_sse);
 #else
-	host_supports_SSE = 1;
+		host_supports_SSE = 1;
 #endif
-	if (getenv("DILL_NO_SSE")) host_supports_SSE = 0;
-	if (s->dill_debug) {
-	    if (host_supports_SSE) {
-		printf("x86 SSE code generated\n");
-	    } else {
-		printf("x86 8087 code generated\n");
-	    }
-	}
+		if (getenv("DILL_NO_SSE")) host_supports_SSE = 0;
+		if (s->dill_debug) {
+			if (host_supports_SSE) {
+				printf("x86 SSE code generated\n");
+			} else {
+				printf("x86 8087 code generated\n");
+			}
+		}
     }
     smi->generate_SSE = host_supports_SSE;
     x86_reg_init(s, smi);
