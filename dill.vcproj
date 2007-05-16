@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="dill"
-	ProjectGUID="{752C5DA9-A570-4550-BF30-EA1D5BD6205A}"
+	ProjectGUID="{A525C378-C99B-41A3-861B-AD5DEA11F6EC}"
 	RootNamespace="dill"
 	Keyword="Win32Proj"
 	>
