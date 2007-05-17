@@ -36,6 +36,8 @@ while ($_ = $ARGV[0]) {
 &branch_insn( "eq ge gt le lt ne", "== >= > <= < !=", "i u ul l p $DT $FT");
 &branchi_insn( "eq ge gt le lt ne", "== >= > <= < !=", "i u ul l p");
 
+&compare_insn( "eq ge gt le lt ne", "== >= > <= < !=", "i u ul l p $DT $FT");
+
 &convert( "c $DT $FT i l s u ul us", "i u ul l");
 &convert( "$DT $FT i l u ul", "$FT $DT");
 &convert( "i l u ul", "c s");
@@ -582,6 +584,83 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_);
+	    if (expected_result != result) {
+		printf("Failed dill_$full_op test, expected %d, got %d, for $c_pformat $c_op $c_pformat\\n",
+		       expected_result, result, $print_cast{$_} source1_$_, $print_cast{$_} source2_$_);
+		dill_dump(c);
+		failed++;
+	    }
+$br_label	}
+    }
+    if (verbose) printf(" done\\n");
+EOF
+	}
+    }
+}
+
+sub compare_insn {
+    local ($dill_ops, $c_ops, $type_list) = @_;
+    @c_ops = split(' ', $c_ops);
+    foreach(split(' ', $dill_ops)) {
+	$dill_op = $_;
+	$c_op = shift(@c_ops);
+	
+	foreach(split(' ', $type_list)) {
+	    $dill_type = "DILL_".&upperc(${_});
+	    $c_type = $c_types{${_}};
+	    $c_pformat = $c_print_formats{${_}};
+	    $line = __LINE__ + 3;
+	    $arg_str = "$drisc_arg_formats{${_}}$drisc_arg_formats{${_}}";
+	    $full_op = "${dill_op}${_}";
+	    print COUT "\n    /* test for dill_$full_op */\n";
+	    print COUT "    if (verbose) printf(\"test for dill_$full_op\");\n";
+	    if (defined($c_src1_values{"br${_}"})) {
+		$vals = $c_src1_values{"br${_}"};
+		print COUT "    for (i=0 ; i < sizeof($vals)/sizeof($vals\[0\]) ; i++) {\n";
+		print COUT "        $c_type source1_$_ = $vals\[i\];\n";
+	    } else {
+		print COUT "    {\n";
+		print COUT "        $c_type source1_$_ = rand1_$_;\n";
+	    }
+	    if (defined($c_src2_values{"br${_}"})) {
+		$vals = $c_src2_values{"br${_}"};
+		print COUT "        for (j=0 ; j < sizeof($vals)/sizeof($vals\[0\]) ; j++) {\n";
+		print COUT "            $c_type source2_$_ = $vals\[j\];\n";
+	    } else {
+		print COUT "        {\n";
+		print COUT "            $c_type source2_$_ = rand2_$_;\n";
+	    }
+	    if ($_ eq "p") {
+		$br_continue = "if (((long)source2_$_ < 0) || ((long)source1_$_ < 0))goto skip$skip_count;";
+		$br_label = "skip$skip_count: ;\n";
+		$skip_count++;
+	    } else {
+		$br_continue = "";
+		$br_label = "";
+	    }
+# print COUT "# line ". (__LINE__ + 2) . " \"general.ops\"\n";
+print COUT<<EOF;
+
+	    dill_exec_ctx ec;
+	    dill_reg opnd1, opnd2, dest;
+	    int result;
+	    int expected_result;
+	    int (*proc)(dill_exec_ctx ec, $c_type a, $c_type b);
+
+	    if (verbose) {printf(".");fflush(stdout);}
+	    $br_continue
+	    dill_start_proc(c, "no name", DILL_I, "%EC$arg_str");
+	    opnd1 = dill_param_reg(c, 1);
+	    opnd2 = dill_param_reg(c, 2);
+	
+	    dest = dill_getreg(c, DILL_I);
+	    dill_$full_op(c, dest, opnd1, opnd2);
+	    dill_reti(c, dest);
+	    proc = (int(*)(dill_exec_ctx, $c_type, $c_type)) dill_finalize(c);
+	    expected_result = source1_$_ $c_op source2_$_;
+
+	    ec = dill_get_exec_context(c);
+	    result = proc(ec, source1_$_, source2_$_);
 	    if (expected_result != result) {
 		printf("Failed dill_$full_op test, expected %d, got %d, for $c_pformat $c_op $c_pformat\\n",
 		       expected_result, result, $print_cast{$_} source1_$_, $print_cast{$_} source2_$_);

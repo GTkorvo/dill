@@ -1932,6 +1932,13 @@ static unsigned char set_op_conds[] = {
     0x96, /* dill_ble_code */
     0x92, /* dill_blt_code */
     0x95, /* dill_bne_code */
+
+    0x94, /* dill_beq_code */   /* floating */ /* z = 1*/
+    0x96, /* dill_bge_code */   /* jna */
+    0x92, /* dill_bgt_code */
+    0x93, /* dill_ble_code */   /* c = 0 */
+    0x97, /* dill_blt_code */   
+    0x95, /* dill_bne_code */
 };
 
 extern void
@@ -1947,6 +1954,10 @@ x86_64_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
     case DILL_UL:
 	op += 6; /* second set of codes */
 	/* fall through */
+	break;
+    case DILL_F:
+    case DILL_D:
+	op += 12; /* third set of codes */
     }
     if (src1 > RDI) rex |= REX_B;
     if (src2 > RDI) rex |= REX_R;

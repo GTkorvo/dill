@@ -23,6 +23,7 @@ sub upperc {
 
 &branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "virtual_branch");
 &branchi_insn( "eq ge gt le lt ne", "i u ul l p", "virtual_branchi");
+&compare_insn( "eq ge gt le lt ne", "i u ul l p d f", "virtual_compare");
 
 &convert( "c d f i l s u ul us uc", "i u ul l");
 &convert( "d f i l u ul", "f d");
@@ -38,6 +39,8 @@ print VMOUT "void emulate_arith2(int code, struct reg_type *dest, struct reg_typ
 print VMOUT "{\n    switch(code) {\n$vm_a2_code    }\n}\n";
 print VMOUT "int emulate_branch(int code, struct reg_type *src1, struct reg_type *src2)\n";
 print VMOUT "{\n    switch(code) {\n$vm_br_code    }return 0;\n}\n";
+print VMOUT "int emulate_compare(int code, struct reg_type *src1, struct reg_type *src2)\n";
+print VMOUT "{\n    switch(code) {\n$vm_c_code    }return 0;\n}\n";
 print VMOUT "int emulate_branchi(int code, struct reg_type *src1, long imm)\n";
 print VMOUT "{\n    switch(code) {\n$vm_bri_code    }return 0;\n}\n";
 
@@ -58,6 +61,7 @@ print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
 print COUT $jmp_a2_assigns;
 print COUT $jmp_b_assigns;
+print COUT $jmp_c_assigns;
 print COUT "\t  ${mach}_jump_table->proc_start = (dill_mach_proc_start) virtual_proc_start;\n";
 print COUT "\t  ${mach}_jump_table->end = (dill_mach_end)virtual_end;\n";
 print COUT "\t  ${mach}_jump_table->type_align = s->p->native.mach_jump->type_align;\n";
@@ -188,16 +192,16 @@ sub branchi_insn {
     }
 }
 
-sub branch_insn {
+sub compare_insn {
     local($ops, $types, $subr) = @_;
     foreach (split(' ', $ops)) {
 	$op = $_;
 	$c_op = $c_operations{$op};
 	foreach (split(' ', $types)) {
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_b[dill_jmp_b${op}${_}] = $subr;\n";
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data1 = dill_jmp_b${op}${_};\n";
-	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->b_data[dill_jmp_b${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
-	    $vm_br_code .=  "\t  case dill_jmp_b${op}${_}:  return ($src2_cast{$_} src1->u.${_}.${_}) $c_op ($src2_cast{$_} src2->u.${_}.${_});\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->jmp_c[dill_jmp_c${op}${_}] = $subr;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data1 = dill_jmp_c${op}${_};\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
+	    $vm_c_code .=  "\t  case dill_jmp_c${op}${_}:  return ($src2_cast{$_} src1->u.${_}.${_}) $c_op ($src2_cast{$_} src2->u.${_}.${_});\n";
 	}
     }
 }
@@ -283,6 +287,18 @@ dill_varith3(dill_stream s, int op3, int op, int dest, int src1, int src2)
     virtual_insn i;
     i.class_code = iclass_arith3;
     i.insn_code = op3;
+    i.opnds.a3.dest = dest;
+    i.opnds.a3.src1 = src1;
+    i.opnds.a3.src2 = src2;
+    INSN_OUT(s, i);
+}
+
+static void 
+virtual_compare(dill_stream s, int op, int junk, int dest, int src1, int src2)
+{
+    virtual_insn i;
+    i.class_code = iclass_compare;
+    i.insn_code = op;
     i.opnds.a3.dest = dest;
     i.opnds.a3.src1 = src1;
     i.opnds.a3.src2 = src2;

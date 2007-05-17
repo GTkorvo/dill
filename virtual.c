@@ -35,6 +35,7 @@ extern char *arith3_name[];
 extern char *arith2_name[];
 extern char *dill_type_names[];
 extern char *branch_op_names[];
+extern char *compare_op_names[];
 
 typedef void (*apply_func)(dill_stream c, basic_block b,
 			   virtual_insn *ip, int loc);
@@ -156,6 +157,15 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 	       OPND(insn->opnds.br.src2), insn->opnds.br.label);
         break;
     }
+    case iclass_compare:
+    {
+	int c_op = insn->insn_code;
+        printf("%s %c%d, %c%d, %c%d", compare_op_names[c_op], 
+	       OPND(insn->opnds.a3.dest), 
+	       OPND(insn->opnds.a3.src1), 
+	       OPND(insn->opnds.a3.src2));
+        break;
+    }
     case iclass_branchi:
     {
 	int br_op = insn->insn_code;
@@ -257,6 +267,7 @@ insn_same_except_dest(virtual_insn *i, virtual_insn *j)
     if (i->class_code != j->class_code) return 0;
     switch(i->class_code) {
     case iclass_arith3:
+    case iclass_compare:
 	return ((icode == jcode) && (i->opnds.a3.src1 == j->opnds.a3.src1) &&
 		(i->opnds.a3.src2 == j->opnds.a3.src2));
         break;
@@ -639,6 +650,7 @@ insn_defines(virtual_insn *insn)
 {
     switch(insn->class_code) {
     case iclass_arith3:
+    case iclass_compare:
 	return insn->opnds.a3.dest;
     case iclass_arith3i:
 	return insn->opnds.a3i.dest;
@@ -702,6 +714,7 @@ insn_define_test(virtual_insn *insn, int vreg)
 {
     switch(insn->class_code) {
     case iclass_arith3:
+    case iclass_compare:
 	return insn->opnds.a3.dest == vreg;
     case iclass_arith3i:
 	return insn->opnds.a3i.dest == vreg;
@@ -769,6 +782,7 @@ insn_uses(virtual_insn *insn, int *used)
     used[2] = -1;
     switch(insn->class_code) {
     case iclass_arith3:
+    case iclass_compare:
 	used[0] = insn->opnds.a3.src1;
 	used[1] = insn->opnds.a3.src2;
 	break;
@@ -853,6 +867,7 @@ replace_insn_src(virtual_insn *insn, int replace_vreg, int new_vreg)
 {
     switch(insn->class_code) {
     case iclass_arith3:
+    case iclass_compare:
 	if (replace_vreg == insn->opnds.a3.src1) {
 	    insn->opnds.a3.src1 = new_vreg; return;};
 	if (replace_vreg == insn->opnds.a3.src2) {
@@ -949,6 +964,7 @@ insn_use_test(virtual_insn *insn, int vreg)
 {
     switch(insn->class_code) {
     case iclass_arith3:
+    case iclass_compare:
 	if (vreg == insn->opnds.a3.src1) return 1;
 	if (vreg == insn->opnds.a3.src2) return 1;
 	break;
@@ -1068,6 +1084,7 @@ build_bbs(dill_stream c, void *vinsns, void *code_end)
     while((insn = &insns[i++]) < (virtual_insn *)code_end) {
 	switch(insn->class_code) {
 	case iclass_arith3:
+	case iclass_compare:
 	    bb_uses(c, bb, insn->opnds.a3.src1);
 	    bb_uses(c, bb, insn->opnds.a3.src2);
 	    bb_defines(c, bb,  insn->opnds.a3.dest);
@@ -1245,6 +1262,7 @@ do_use_def_count(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
     virtual_insn *insn = &((virtual_insn *)insns)[loc];
     switch(insn->class_code) {
     case iclass_arith3:
+    case iclass_compare:
 	set_used(c, insn->opnds.a3.src1);
 	set_used(c, insn->opnds.a3.src2);
 	set_defined(c,  insn->opnds.a3.dest);
@@ -1614,6 +1632,60 @@ is_commutative(int insn_code)
     return 0;
     }
 }
+static int
+is_compare_commutative(int insn_code)
+{
+    switch(insn_code) {
+    case dill_jmp_ceqi:
+    case dill_jmp_cequ:
+    case dill_jmp_cequl:
+    case dill_jmp_ceql:
+    case dill_jmp_ceqp:
+    case dill_jmp_ceqd:
+    case dill_jmp_ceqf:
+	return 1;
+    case dill_jmp_cgei:
+    case dill_jmp_cgeu:
+    case dill_jmp_cgeul:
+    case dill_jmp_cgel:
+    case dill_jmp_cgep:
+    case dill_jmp_cged:
+    case dill_jmp_cgef:
+    case dill_jmp_cgti:
+    case dill_jmp_cgtu:
+    case dill_jmp_cgtul:
+    case dill_jmp_cgtl:
+    case dill_jmp_cgtp:
+    case dill_jmp_cgtd:
+    case dill_jmp_cgtf:
+    case dill_jmp_clei:
+    case dill_jmp_cleu:
+    case dill_jmp_cleul:
+    case dill_jmp_clel:
+    case dill_jmp_clep:
+    case dill_jmp_cled:
+    case dill_jmp_clef:
+    case dill_jmp_clti:
+    case dill_jmp_cltu:
+    case dill_jmp_cltul:
+    case dill_jmp_cltl:
+    case dill_jmp_cltp:
+    case dill_jmp_cltd:
+    case dill_jmp_cltf:
+	return 0;
+    case dill_jmp_cnei:
+    case dill_jmp_cneu:
+    case dill_jmp_cneul:
+    case dill_jmp_cnel:
+    case dill_jmp_cnep:
+    case dill_jmp_cned:
+    case dill_jmp_cnef:
+	return 1;
+    default:
+	printf("Unknown opcode in is_compare_commutative\n");
+	return 0;
+    }
+}
 
 static int
 store_oprnd(dill_stream c, int tmp_num, int vreg)
@@ -1739,6 +1811,60 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		( c->j->jmp_a3)[insn_code](c,
 					   c->j->a3_data[insn_code].data1,
 					   c->j->a3_data[insn_code].data2,
+					   dest_preg, src1_preg, src2_preg);
+		if (preg_of(c, bb, dest_vreg) == -1) {
+		    /* no dest reg, store result */
+		    last_store_loc = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
+		    store_oprnd(c, 0, dest_vreg);
+		    last_dest_vreg = dest_vreg;
+		} else {
+		    last_dest_vreg = -1;
+		}
+	    }
+	    break;
+	    case iclass_compare: {
+		/* compare 3 operand insns */
+		int dest_vreg = ip->opnds.a3.dest;
+		int src1_vreg = ip->opnds.a3.src1;
+		int src2_vreg = ip->opnds.a3.src2;
+		int dest_preg;
+		int src1_preg;
+		int src2_preg;
+		int insn_code = ip->insn_code;
+		if ((last_dest_vreg == src2_vreg) && 
+		    is_compare_commutative(insn_code)) {
+		    /* we only optimize opnd1, switch them */
+		    src1_vreg = ip->opnds.a3.src2;
+		    src2_vreg = ip->opnds.a3.src1;
+		}
+		dest_preg = preg_of(c, bb, dest_vreg);
+		src1_preg = preg_of(c, bb, src1_vreg);
+		src2_preg = preg_of(c, bb, src2_vreg);
+		if (src1_preg == -1) {
+		    /* load src1 */
+		    if ((last_dest_vreg == src1_vreg) && 
+			(tmp_for_vreg(c, 0, src1_vreg) != -1)) {
+			if (has_single_def_use(c, src1_vreg)) {
+			    if (c->dill_debug) {
+				printf(" -- Eliminating previous store -- \n");
+			    }
+			    c->p->cur_ip = (char*)c->p->code_base + last_store_loc;
+			}
+			src1_preg = tmp_for_vreg(c, 0, src1_vreg);
+		    } else {
+			src1_preg = load_oprnd(c, 0, src1_vreg);
+		    }
+		}
+		if (src2_preg == -1) {
+		    /* load src2 */
+		    src2_preg = load_oprnd(c, 1, src2_vreg);
+		}
+		if (dest_preg == -1) {
+		    dest_preg = c->p->v_tmps[dill_type_of(c, dest_vreg)][0];
+		}
+		( c->j->jmp_c)[insn_code](c,
+					   c->j->c_data[insn_code].data1,
+					   c->j->c_data[insn_code].data2,
 					   dest_preg, src1_preg, src2_preg);
 		if (preg_of(c, bb, dest_vreg) == -1) {
 		    /* no dest reg, store result */
@@ -2960,6 +3086,12 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 					   c->j->a3_data[insn_code].data2,
 					   pdest, pused[0], pused[1]);
 		break;
+	    case iclass_compare:
+		( c->j->jmp_c)[insn_code](c,
+					  c->j->c_data[insn_code].data1,
+					  c->j->c_data[insn_code].data2,
+					  pdest, pused[0], pused[1]);
+		break;
 	    case iclass_arith2: 
 		( c->j->jmp_a2)[insn_code](c,
 					   c->j->a2_data[insn_code].data1,
@@ -3507,6 +3639,7 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 	}
     }
 	break;
+    case iclass_compare:
     case iclass_reti:
 	break;
     case iclass_branch:
@@ -3783,6 +3916,7 @@ do_const_prop(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	    case iclass_reti:
 	    case iclass_branch:
 	    case iclass_branchi:
+	    case iclass_compare:
 	    case iclass_jump_to_label:
 	    case iclass_jump_to_reg:
 	    case iclass_jump_to_imm:
