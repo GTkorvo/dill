@@ -168,6 +168,8 @@ sub arithi_insn {
 
 sub branch_insn {
     local($ops, $types, $subr) = @_;
+%src1_cast = ('p', '(char*)');
+%src2_cast = ('p', '(char*)');
     foreach (split(' ', $ops)) {
 	$op = $_;
 	$c_op = $c_operations{$op};
