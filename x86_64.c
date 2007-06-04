@@ -1298,14 +1298,10 @@ x86_64_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
     }
 }
 
-static long dill_hidden_mod(long a, long b)
-{ return a % b; }
-static long dill_hidden_umod(unsigned long a, unsigned long b)
-{ return a % b; }
-static double dill_hidden_ULtoD(unsigned long a)
-{ return (double) a; }
-static unsigned long dill_hidden_DtoUL(double a)
-{ unsigned long l = a; return l; }
+extern long dill_x86_64_hidden_mod(long a, long b);
+extern long dill_x86_64_hidden_umod(unsigned long a, unsigned long b);
+extern double dill_x86_64_hidden_ULtoD(unsigned long a);
+extern unsigned long dill_x86_64_hidden_DtoUL(double a);
 
 extern void x86_64_mod(dill_stream s, int data1, int data2, int dest, int src1, 
 		      int src2)
@@ -1313,11 +1309,11 @@ extern void x86_64_mod(dill_stream s, int data1, int data2, int dest, int src1,
     int return_reg;
     if (data1 == 1) {
 	/* signed case */
-	return_reg = dill_scalll(s, (void*)dill_hidden_mod, "dill_hidden_mod", "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)dill_x86_64_hidden_mod, "dill_x86_64_hidden_mod", "%l%l", src1, src2);
 	dill_movl(s, dest, return_reg);
     } else {
 	/* unsigned case */
-	return_reg = dill_scalll(s, (void*)dill_hidden_umod, "dill_hidden_umod", "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)dill_x86_64_hidden_umod, "dill_x86_64_hidden_umod", "%l%l", src1, src2);
 	dill_movul(s, dest, return_reg);
     }
 }
@@ -1765,7 +1761,7 @@ x86_64_convert(dill_stream s, int from_type, int to_type,
 	    x86_64_convert(s, DILL_F, DILL_D, XMM0, src);
 	    src = XMM0;
 	}
-	return_reg = dill_scallul(s, (void*)dill_hidden_DtoUL, "dill_hidden_DtoUL", "%d", src);
+	return_reg = dill_scallul(s, (void*)dill_x86_64_hidden_DtoUL, "dill_x86_64_hidden_DtoUL", "%d", src);
 	if (to_type == DILL_U) {
 	    x86_64_lshi(s, dest, return_reg, 32);
 	    x86_64_rshi(s, dest, dest, 32);
@@ -1812,7 +1808,7 @@ x86_64_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_UL,DILL_D):
     case CONV(DILL_UL,DILL_F):
     {
-	int return_reg = dill_scalld(s, (void*)dill_hidden_ULtoD, "dill_hidden_ULtoD", "%l", src);
+	int return_reg = dill_scalld(s, (void*)dill_x86_64_hidden_ULtoD, "dill_x86_64_hidden_ULtoD", "%l", src);
 	if (to_type == DILL_F) {
 	    BYTE_OUT1R3(s, 0xf2, REX_W, 0xf, 0x5a, ModRM(0x3, return_reg, return_reg));
 	}
@@ -2372,17 +2368,16 @@ x86_64_branch_link(dill_stream s)
     }
 }
 
+extern void
+x86_64_rt_call_link(char *code, call_t *t);
+
 static void
 x86_64_call_link(dill_stream s)
 {
     call_t *t = &s->p->call_table;
     int i;
 
-    for(i=0; i< t->call_count; i++) {
-	long *call_addr = (long *) ((unsigned long)s->p->code_base + 
-				    t->call_locs[i].loc + 2);
-	*call_addr = (unsigned long)t->call_locs[i].xfer_addr;
-    }
+    x86_64_rt_call_link(s->p->code_base, t);
 }
 
 static void
@@ -2430,6 +2425,16 @@ dill_stream s;
     x86_64_branch_link(s);
     x86_64_call_link(s);
     x86_64_data_link(s);
+    x86_64_emit_save(s);
+    x86_64_flush(s->p->code_base, s->p->code_limit);
+}
+
+extern void
+x86_64_package_end(s)
+dill_stream s;
+{
+    x86_64_simple_ret(s);
+    x86_64_branch_link(s);
     x86_64_emit_save(s);
     x86_64_flush(s->p->code_base, s->p->code_limit);
 }

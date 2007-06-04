@@ -10,7 +10,7 @@ noinst_PROGRAMS =
 
 LDADD = ../libdill.la
 
-test: call-test.stamp stest.stamp ctest.stamp regress.stamp t1.stamp
+test: call-test.stamp stest.stamp ctest.stamp regress.stamp t1.stamp pkg_test.stamp
 
 regress_LDADD = ../libdill.la ${MATH_LIB} 
 
@@ -42,6 +42,9 @@ regress.stamp:  regress@EXEEXT@
 
 t1.stamp: t1@EXEEXT@
 	./t1 && touch t1.stamp
+
+pkg_test.stamp: pkg_test@EXEEXT@
+	./pkg_test && touch pkg_test.stamp
 
 # t2.stamp:  t2@EXEEXT@
 # 	./t2 1>tmp.out 2>&1

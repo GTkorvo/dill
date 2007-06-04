@@ -57,6 +57,7 @@ print COUT $jmp_b_assigns;
 print COUT $jmp_c_assigns;
 print COUT "\t  ${mach}_jump_table->proc_start = (dill_mach_proc_start) x86_64_proc_start;\n";
 print COUT "\t  ${mach}_jump_table->end = x86_64_end;\n";
+print COUT "\t  ${mach}_jump_table->package_end = x86_64_package_end;\n";
 print COUT "\t  ${mach}_jump_table->clone_code = x86_64_clone_code;\n";
 print COUT "\t  ${mach}_jump_table->type_align = x86_64_type_align;\n";
 print COUT "\t  ${mach}_jump_table->type_size = x86_64_type_size;\n";

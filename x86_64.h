@@ -174,6 +174,7 @@ extern void x86_64_set(dill_stream c, int r, long imm);
 extern void x86_64_proc_start(dill_stream c, char *subr_name, int arg_count, 
 			   arg_info_list args, dill_reg *arglist);
 extern void x86_64_end(dill_stream c);
+extern void x86_64_package_end(dill_stream c);
 extern void *x86_64_clone_code(dill_stream c, void *base, int size);
 extern void x86_64_ret(dill_stream c, int data1, int data2, int src);
 extern void x86_64_reti(dill_stream c, int data1, int data2, long imm);
