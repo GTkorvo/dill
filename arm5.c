@@ -1059,12 +1059,12 @@ extern void arm_pushpi(dill_stream s, int type, void *value)
     internal_push(s, type, 1, &value);
 }
 
-extern int arm_calli(dill_stream s, int type, void *xfer_address)
+extern int arm_calli(dill_stream s, int type, void *xfer_address, char *name)
 {
     int caller_side_ret_reg = _a1;
 
     /* save temporary registers */
-    dill_mark_call_location(s, NULL, xfer_address);
+    dill_mark_call_location(s, name, xfer_address);
     INSN_OUT(s, COND(AL)|CLASS(5)|(1<<24)/*link*/);
     /*    arm_nop(s);*/
     /* restore temporary registers */

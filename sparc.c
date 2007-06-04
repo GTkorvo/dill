@@ -1244,7 +1244,7 @@ extern int sparc_calli(dill_stream s, int type, void *xfer_address, char *name)
     int caller_side_ret_reg = _o0;
 
     /* save temporary registers */
-    dill_mark_call_location(s, NULL, xfer_address);
+    dill_mark_call_location(s, name, xfer_address);
     INSN_OUT(s, HDR(0x1)|0);
     sparc_nop(s);
     /* restore temporary registers */

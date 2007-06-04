@@ -2203,7 +2203,7 @@ extern int x86_64_calli(dill_stream s, int type, void *xfer_address, char *name)
     if (tmp_call_reg > RDI) rex |= REX_B;
     
     /* save temporary registers */
-    dill_mark_call_location(s, NULL, xfer_address);
+    dill_mark_call_location(s, name, xfer_address);
     BYTE_OUT1LR(s, rex, 0xb8 + (0x7 & tmp_call_reg), 0);		/* setl */
     return x86_64_callr(s, type, R11);
 }
