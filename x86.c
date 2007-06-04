@@ -804,10 +804,8 @@ x86_pstore(dill_stream s, int type, int force_8087, int dest, int src1, int src2
     BYTE_OUT3(s, st_opcodes[type], ModRM(0x0, dest, 0x4), SIB(0,src1,src2));
 }
 
-static long dill_hidden_mod(long a, long b)
-{ return a % b; }
-static long dill_hidden_umod(unsigned long a, unsigned long b)
-{ return a % b; }
+extern long dill_x86_hidden_mod(long a, long b);
+extern long dill_x86_hidden_umod(unsigned long a, unsigned long b);
 
 extern void x86_mod(dill_stream s, int data1, int data2, int dest, int src1, 
 		      int src2)
@@ -815,11 +813,11 @@ extern void x86_mod(dill_stream s, int data1, int data2, int dest, int src1,
     int return_reg;
     if (data1 == 1) {
 	/* signed case */
-	return_reg = dill_scalll(s, (void*)dill_hidden_mod, "dill_hidden_mod", "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)dill_x86_hidden_mod, "dill_x86_hidden_mod", "%l%l", src1, src2);
 	dill_movl(s, dest, return_reg);
     } else {
 	/* unsigned case */
-	return_reg = dill_scalll(s, (void*)dill_hidden_umod, "dill_hidden_umod", "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)dill_x86_hidden_umod, "dill_x86_hidden_umod", "%l%l", src1, src2);
 	dill_movul(s, dest, return_reg);
     }
 }
@@ -1567,7 +1565,7 @@ extern int x86_calli(dill_stream s, int type, void *xfer_address, char *name)
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
 
     /* save temporary registers */
-    dill_mark_call_location(s, NULL, xfer_address);
+    dill_mark_call_location(s, name, xfer_address);
     BYTE_OUT1I(s, 0xe8, 0);
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
@@ -1714,6 +1712,14 @@ extern void x86_reti(dill_stream s, int data1, int data2, long imm)
     x86_simple_ret(c);
 }
 
+extern void x86_rt_call_link(char *code, call_t *t);
+
+static void
+x86_call_link(dill_stream s)
+{
+    x86_rt_call_link(s->p->code_base, &s->p->call_table);
+}
+
 static void
 x86_data_link(dill_stream s)
 {
@@ -1750,22 +1756,6 @@ x86_branch_link(dill_stream s)
 }
 
 static void
-x86_call_link(dill_stream s)
-{
-    call_t *t = &s->p->call_table;
-    int i;
-
-    for(i=0; i< t->call_count; i++) {
-	int *call_addr = (int*) ((char *)s->p->code_base + 
-				 t->call_locs[i].loc + 1);
-	int call_offset = (int)(((char*)t->call_locs[i].xfer_addr) - 
-	    ((char*)call_addr + 4));  /* add len of call insn */
-
-	*call_addr = call_offset;
-    }
-}
-
-static void
 x86_emit_save(dill_stream s)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
@@ -1791,6 +1781,16 @@ dill_stream s;
     x86_call_link(s);
     x86_data_link(s);
     x86_emit_save(s);
+}
+
+extern void
+x86_package_end(dill_stream s)
+{
+    x86_simple_ret(s);
+    x86_branch_link(s);
+    x86_emit_save(s);
+    /* at this point, code segment is finalized */
+    
 }
 
 extern void *

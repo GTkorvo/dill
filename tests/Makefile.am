@@ -2,7 +2,7 @@
 AUTOMAKE_OPTIONS = no-dependencies foreign
 
 if NATIVE_CG
-EXTRA_PROGRAMS = regress ctest stest call-test t1
+EXTRA_PROGRAMS = regress ctest stest call-test t1 pkg_test
 check-local: test
 endif NATIVE_CG
 

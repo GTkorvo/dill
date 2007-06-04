@@ -161,7 +161,7 @@ set_mach_reset(dill_stream s, char *arch)
 }
 
 EXTERN void
-dill_free_context(dill_stream s)
+dill_free_stream(dill_stream s)
 {
     if (s->p->branch_table.label_locs) free(s->p->branch_table.label_locs);
     if (s->p->branch_table.branch_locs) free(s->p->branch_table.branch_locs);
@@ -172,11 +172,15 @@ dill_free_context(dill_stream s)
     free(s->p->c_param_args);
     free(s->p->c_param_structs);
     free_code_blocks(s);
-    if (s->p->mach_info) free(s->p->mach_info);
+    if (s->p->mach_info) {
+      if ((s->p->mach_info != s->p->virtual.mach_info) && 
+	  (s->p->mach_info != s->p->native.mach_info)) free(s->p->mach_info);
+    }
     if (s->p->vregs) free(s->p->vregs);
     if (s->p->virtual.mach_info) free(s->p->virtual.mach_info);
     if (s->p->native.mach_info) free(s->p->native.mach_info);
     free(s->p);
+    s->p = NULL;
     free(s);
 }
 
@@ -390,6 +394,48 @@ dill_finalize(dill_stream s)
     s->p->save_param_count = s->p->c_param_count;
     s->p->c_param_count = 0;
     return dill_get_fp(s);
+}
+
+static char *
+dill_build_package(dill_stream s, int *pkg_len)
+{
+    struct call_table *t = &s->p->call_table;
+    int pkg_size = sizeof(struct dill_pkg_1);
+    char *pkg = malloc(pkg_size);
+    int i;
+
+    memset(pkg, 0, pkg_size);
+    ((struct dill_pkg_1 *)pkg)->magic = 0xbeef;
+    ((struct dill_pkg_1 *)pkg)->pkg_version = 1;
+    ((struct dill_pkg_1 *)pkg)->symbol_count = t->call_count;
+    for (i = 0; i < t->call_count; i++) {
+	int call_len = sizeof(int) + strlen(t->call_locs[i].xfer_name) + 1;
+	char *call_loc;
+
+	call_len = (call_len + 3) & -4;  /* round up to mod 4 */
+	pkg = realloc(pkg, pkg_size + call_len);
+	call_loc = pkg + pkg_size;
+	pkg_size += call_len;
+	*((int*)call_loc) = t->call_locs[i].loc;
+	*((int*)(call_loc + call_len - 4)) = 0;  /* zero last bit */
+	strcpy(call_loc + 4, t->call_locs[i].xfer_name);
+    }
+    pkg = realloc(pkg, pkg_size + dill_code_size(s));
+    ((struct dill_pkg_1 *)pkg)->code_size = dill_code_size(s);
+    memcpy(pkg + pkg_size, s->p->code_base, dill_code_size(s));
+    pkg_size += dill_code_size(s);
+    *pkg_len = pkg_size;
+    return pkg;
+}
+
+EXTERN char *
+dill_finalize_package(dill_stream s, int *pkg_len)
+{
+    (s->j->package_end)(s);
+    s->p->save_param_count = s->p->c_param_count;
+    s->p->c_param_count = 0;
+    char *p = dill_build_package(s, pkg_len);
+    return p;
 }
 
 EXTERN int
@@ -1115,6 +1161,7 @@ dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1, dill_reg src2
 	printf("Bad op type in dill_pbr\n");
     }
     switch (data_type) {
+    case DILL_C: case DILL_UC: case DILL_S: case DILL_US:
     case DILL_I: typ = 0; break;
     case DILL_U: typ = 1; break;
     case DILL_L: typ = 2; break;

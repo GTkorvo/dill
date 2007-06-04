@@ -205,6 +205,7 @@ extern void x86_set(dill_stream s, int r, long imm);
 extern void x86_proc_start(dill_stream s, char *subr_name, int arg_count, 
 			   arg_info_list args, dill_reg *arglist);
 extern void x86_end(dill_stream s);
+extern void x86_package_end(dill_stream s);
 extern void *x86_clone_code(dill_stream s, void *base, int size);
 extern void x86_ret(dill_stream s, int data1, int data2, int src);
 extern void x86_reti(dill_stream s, int data1, int data2, long imm);

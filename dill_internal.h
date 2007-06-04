@@ -237,3 +237,22 @@ extern void dill_mark_ret_location(dill_stream s);
 extern void dill_end_vararg_push(dill_stream s);
 EXTERN void dill_dump_reg(dill_stream s, int typ, int reg);
 extern void setup_VM_proc(dill_stream s);
+
+typedef struct dill_pkg_1 {
+    unsigned short magic;
+    char pkg_version;
+    char state;
+    short entry_offset;
+    short symbol_count;
+    int code_size;
+} dill_pkg_1;
+
+typedef struct xfer_rec {
+    /*! the textual name of the external entry */
+    char *xfer_name;
+    /*! the address of the external entry */
+    void *xfer_addr;
+} xfer_entry;
+
+extern void dill_lookup_xfer_addrs(call_t *t, xfer_entry *x);
+

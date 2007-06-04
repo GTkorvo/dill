@@ -63,23 +63,23 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libdill_la_DEPENDENCIES =
-am__libdill_la_SOURCES_DIST = dill_util.c dill_virtual.c virtual.c \
-	dill.c vm.c version.c dill_${ARCH_FILE}.c ${ARCH_FILE}.c \
-	dill_sparc.c sparc.c dill_x86.c x86.c dill_arm5.c arm5.c \
+am__libdill_la_SOURCES_DIST = dill_util.c dill_pkg.c dill_virtual.c virtual.c \
+	dill.c vm.c version.c dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c \
+	dill_sparc.c sparc.c dill_x86.c x86.c x86_rt.c dill_arm5.c arm5.c \
 	dill_x86_64.c x86_64.c
 @MULTI_TARGET_FALSE@@NATIVE_CG_FALSE@am_libdill_la_OBJECTS =  \
-@MULTI_TARGET_FALSE@@NATIVE_CG_FALSE@	dill_util.lo \
+@MULTI_TARGET_FALSE@@NATIVE_CG_FALSE@	dill_util.lo dill_pkg.lo \
 @MULTI_TARGET_FALSE@@NATIVE_CG_FALSE@	dill_virtual.lo \
 @MULTI_TARGET_FALSE@@NATIVE_CG_FALSE@	virtual.lo dill.lo vm.lo \
 @MULTI_TARGET_FALSE@@NATIVE_CG_FALSE@	version.lo
 @MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@am_libdill_la_OBJECTS =  \
-@MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@	dill_util.lo \
+@MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@	dill_util.lo dill_pkg.lo \
 @MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@	dill_virtual.lo virtual.lo \
 @MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@	dill.lo vm.lo \
 @MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@	dill_${ARCH_FILE}.lo \
 @MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@	${ARCH_FILE}.lo version.lo
-@MULTI_TARGET_TRUE@am_libdill_la_OBJECTS = dill_sparc.lo dill_util.lo \
-@MULTI_TARGET_TRUE@	sparc.lo dill_x86.lo x86.lo dill_arm5.lo \
+@MULTI_TARGET_TRUE@am_libdill_la_OBJECTS = dill_sparc.lo dill_util.lo dill_pkg.lo\
+@MULTI_TARGET_TRUE@	sparc.lo dill_x86.lo x86.lo x86_rt.lo dill_arm5.lo \
 @MULTI_TARGET_TRUE@	arm5.lo dill_virtual.lo dill_x86_64.lo \
 @MULTI_TARGET_TRUE@	x86_64.lo virtual.lo dill.lo vm.lo \
 @MULTI_TARGET_TRUE@	version.lo dill_ia64.c ia64.lo
@@ -248,9 +248,9 @@ BUILT_SOURCES = dill.h
 @BUILD_LIBRARY_TRUE@lib_LTLIBRARIES = libdill.la
 @BUILD_LIBRARY_TRUE@include_HEADERS = dill.h
 noinst_HEADERS = config.h dill_internal.h
-@MULTI_TARGET_FALSE@@NATIVE_CG_FALSE@libdill_la_SOURCES = dill_util.c  dill_virtual.c virtual.c dill.c vm.c version.c
-@MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@libdill_la_SOURCES = dill_util.c  dill_virtual.c virtual.c dill.c vm.c dill_${ARCH_FILE}.c ${ARCH_FILE}.c  version.c
-@MULTI_TARGET_TRUE@libdill_la_SOURCES = dill_sparc.c dill_util.c sparc.c dill_x86.c x86.c \
+@MULTI_TARGET_FALSE@@NATIVE_CG_FALSE@libdill_la_SOURCES = dill_util.c dill_pkg.c dill_virtual.c virtual.c dill.c vm.c version.c
+@MULTI_TARGET_FALSE@@NATIVE_CG_TRUE@libdill_la_SOURCES = dill_util.c dill_pkg.c dill_virtual.c virtual.c dill.c vm.c dill_${ARCH_FILE}.c ${ARCH_FILE}.c  version.c
+@MULTI_TARGET_TRUE@libdill_la_SOURCES = dill_sparc.c dill_util.c dill_pkg.c sparc.c dill_x86.c x86.c \
 @MULTI_TARGET_TRUE@		dill_arm5.c arm5.c dill_virtual.c dill_x86_64.c x86_64.c \
 @MULTI_TARGET_TRUE@		dill_ia64.c ia64.c virtual.c dill.c vm.c version.c
 
