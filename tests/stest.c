@@ -10,7 +10,7 @@
 #include "sys/mman.h"
 #endif
 
-void * mk_test(dill_stream c) {
+void * mk_test(dill_stream s) {
 	int i, regs, fregs;
 	int l[100];
 	int abortl1;
@@ -20,91 +20,91 @@ void * mk_test(dill_stream c) {
 	dill_reg r[32];
 	dill_reg fr[32];
 
-	dill_start_proc(c, "foo", DILL_I, "%i%d");
+	dill_start_proc(s, "foo", DILL_I, "%i%d");
 
-	abortl1 = dill_alloc_label(c);
-	abortl2 = dill_alloc_label(c);
-	abortl3 = dill_alloc_label(c);
+	abortl1 = dill_alloc_label(s);
+	abortl2 = dill_alloc_label(s);
+	abortl3 = dill_alloc_label(s);
 
-	for(i = 0; i < 5 && dill_raw_getreg(c, &r[i], DILL_I, DILL_TEMP); i++) {
+	for(i = 0; i < 5 && dill_raw_getreg(s, &r[i], DILL_I, DILL_TEMP); i++) {
 /*		(void)("allocated register %d\n", i);*/
-		dill_seti(c, r[i], i);
-		dill_savei(c, r[i]); 
+		dill_seti(s, r[i], i);
+		dill_savei(s, r[i]); 
 	}
 	regs = i;
 
-	for(i = 0; dill_raw_getreg(c, &fr[i], DILL_D, DILL_TEMP); i++) {
+	for(i = 0; dill_raw_getreg(s, &fr[i], DILL_D, DILL_TEMP); i++) {
 /*		(void)("allocated register %d\n", i);*/
-		dill_setd(c, fr[i], (double)i);
-		dill_saved(c, fr[i]); 
+		dill_setd(s, fr[i], (double)i);
+		dill_saved(s, fr[i]); 
 	}
 	fregs = i;
 
 	for(i = 0; i < 10; i++) {
-		l[i] = dill_local(c, DILL_I);
+		l[i] = dill_local(s, DILL_I);
 			
-		dill_seti(c, dill_param_reg(c,0), 100 + i);
-		dill_stii(c, dill_param_reg(c,0), dill_lp(c), l[i]);
+		dill_seti(s, dill_param_reg(s,0), 100 + i);
+		dill_stii(s, dill_param_reg(s,0), dill_lp(s), l[i]);
 	}
 
 	/* call a procedure, then verify that everything is in place. */
-	dill_scallv(c, (void*)printf, "printf", "%P", "hello world!\n");
+	dill_scallv(s, (void*)printf, "printf", "%P", "hello world!\n");
 
 
 	for(i = 0; i < regs; i++) {
-		dill_restorei(c, r[i]); 
-		dill_bneii(c, r[i], i, abortl1);
+		dill_restorei(s, r[i]); 
+		dill_bneii(s, r[i], i, abortl1);
 	}
 
 	for(i = 0; i < fregs; i++) {
 /*		(void)("allocated register %d\n", i);*/
-		dill_restored(c, fr[i]); 
-		dill_setd(c, dill_param_reg(c,1), (double)i);
-		dill_bned(c, fr[i], dill_param_reg(c,1), abortl2);
+		dill_restored(s, fr[i]); 
+		dill_setd(s, dill_param_reg(s,1), (double)i);
+		dill_bned(s, fr[i], dill_param_reg(s,1), abortl2);
 	}
 
 	for(i = 0; i < 10; i++) {
-		dill_ldii(c, dill_param_reg(c, 0), dill_lp(c), l[i]);
-		dill_bneii(c, dill_param_reg(c, 0), 100 + i, abortl3);
+		dill_ldii(s, dill_param_reg(s, 0), dill_lp(s), l[i]);
+		dill_bneii(s, dill_param_reg(s, 0), 100 + i, abortl3);
 	}
-	dill_retii(c, 0);
+	dill_retii(s, 0);
 
-	dill_mark_label(c, abortl1);
-	dill_retii(c, 1);		/* failure. */
-	dill_mark_label(c, abortl2);
-	dill_retii(c, 2);		/* failure. */
-	dill_mark_label(c, abortl3);
-	dill_retii(c, 3);		/* failure. */
+	dill_mark_label(s, abortl1);
+	dill_retii(s, 1);		/* failure. */
+	dill_mark_label(s, abortl2);
+	dill_retii(s, 2);		/* failure. */
+	dill_mark_label(s, abortl3);
+	dill_retii(s, 3);		/* failure. */
 
-	return dill_finalize(c);
+	return dill_finalize(s);
 }
 
 int main() { 
 	int (*ip)();
-	dill_stream c = dill_create_raw_stream();
+	dill_stream s = dill_create_raw_stream();
 	int ret;
 	char *target;
 
-	ip = (int (*)()) mk_test(c);
+	ip = (int (*)()) mk_test(s);
 	ret = ip();
 
 	if(ret == 0) {
 		printf("success!\n");
 	} else {
-		dill_dump(c);
+		dill_dump(s);
 		printf("failure at point %d!\n", ret);
 	}
-	ip = (int (*)()) mk_test(c);
+	ip = (int (*)()) mk_test(s);
 	ret = ip();
 	if(ret == 0)
 		printf("success!\n");
 	else {
-		dill_dump(c);
+		dill_dump(s);
 		printf("failure at point %d (second)\n", ret);
 	}
 #ifdef USE_MMAP_CODE_SEG
 	{
-	    int size = dill_code_size(c);
+	    int size = dill_code_size(s);
 	    static unsigned long ps = -1;
 	    if (ps == -1) {
 	        ps = (getpagesize ());
@@ -116,15 +116,15 @@ int main() {
 	}
 	if (target == (void*)-1) perror("mmap");
 #else
-	target = (void*)malloc(dill_code_size(c));
+	target = (void*)malloc(dill_code_size(s));
 #endif
-	ip = (int (*)()) dill_clone_code(c, target, dill_code_size(c));
-	dill_free_context(c);
+	ip = (int (*)()) dill_clone_code(s, target, dill_code_size(s));
+	dill_free_stream(s);
 	ret = ip();
 	if(ret == 0)
 		printf("success!\n");
 	else {
-		dill_dump(c);
+		dill_dump(s);
 		printf("failure at point %d (third)\n", ret);
 	}
 

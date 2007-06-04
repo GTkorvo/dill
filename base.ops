@@ -392,6 +392,8 @@ typedef enum {DILL_X86_CS_PREFIX = 0, DILL_X86_SS_PREFIX,
 typedef void (*dill_mach_init_routine)(dill_stream s);
 typedef void (*dill_mach_proc_start)(dill_stream s, char *name, int param_count, void *params, dill_reg *arg_reg_list);
 typedef void (*dill_mach_end)(dill_stream s);
+typedef void (*dill_mach_package_end)(dill_stream s);
+typedef void (*dill_mach_package_stitch)(void *package);
 typedef void *(*dill_mach_clone_code)(dill_stream s, void *new_base, int size);
 typedef void (*arith_op3)(dill_stream s, int data1, int data2, int dest, int src1, int src2);
 typedef void (*arith_op3i)(dill_stream s, int data1, int data2, int dest, int src1, long imm);
@@ -438,6 +440,7 @@ struct jmp_table_s {
     dill_mach_init_routine init;
     dill_mach_proc_start proc_start;
     dill_mach_end end;
+    dill_mach_package_end package_end;
     dill_mach_clone_code clone_code;
     int *type_align;
     arith_op3 *jmp_a3;
@@ -542,7 +545,7 @@ EXTERN dill_stream dill_create_raw_stream(void);
 EXTERN dill_stream dill_create_stream(void);
 
 EXTERN dill_exec_ctx dill_get_exec_context(dill_stream x);
-EXTERN void dill_free_context(dill_stream s);
+EXTERN void dill_free_stream(dill_stream s);
 EXTERN void dill_free_exec_context(dill_exec_ctx c);
 EXTERN void dill_assoc_client_data(dill_exec_ctx ec, int key, long value);
 EXTERN long dill_get_client_data(dill_exec_ctx ec, int key);
@@ -566,6 +569,8 @@ EXTERN dill_reg dill_vparam(dill_stream s, int argno);
 EXTERN void dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str);
 EXTERN void dill_dump(dill_stream s);
 EXTERN void *dill_finalize(dill_stream s);
+EXTERN char *dill_finalize_package(dill_stream s, int *pkg_len)
+EXTERN void *dill_package_stitch(char *package);
 EXTERN void *dill_clone_code(dill_stream s, void *new_base, int size);
 EXTERN int dill_code_size(dill_stream s);
 EXTERN int dill_do_reverse_vararg_push(dill_stream s);

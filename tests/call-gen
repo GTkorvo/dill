@@ -81,18 +81,18 @@ sub emit_uniform_call {
 	    $arg_str .= "%$type";
 	    $cast_str .= "$type{$type}, ";
 	    $param_str .= "s1$type, ";
-	    $arg_param_str .= "dill_param_reg(c2, $_), ";
+	    $arg_param_str .= "dill_param_reg(s2, $_), ";
 	}
 	$arg_str .= "%$type";
 	$cast_str .= "$type{$type}";
 	$param_str .= "s2$type";
-	$arg_param_str .= "dill_param_reg(c2, $max_arg_num)";
+	$arg_param_str .= "dill_param_reg(s2, $max_arg_num)";
 
 	$uptype = "\U$type\E";
 print<<"EOF";
     {	/* test for $cur_arg_count of type $type */
-	dill_stream c = dill_create_raw_stream();
-	dill_stream c2 = dill_create_raw_stream();
+	dill_stream s = dill_create_raw_stream();
+	dill_stream s2 = dill_create_raw_stream();
 	dill_reg param$max_arg_num;
 	$type{$type} (*proc)($cast_str);
 	$type{$type} (*proc2)($cast_str);
@@ -100,35 +100,35 @@ print<<"EOF";
 	if (verbose) {
 	    printf("test for $cur_arg_count of type $type ...");
 	}
-	dill_start_proc(c, \"param${cur_arg_count}_$type\", DILL_$uptype, \"$arg_str\");
-	param$max_arg_num = dill_param_reg(c, $max_arg_num);
-	dill_ret$rtype{$type}(c, param$max_arg_num);
-	proc = ($type{$type} (*)($cast_str)) dill_finalize(c);
+	dill_start_proc(s, \"param${cur_arg_count}_$type\", DILL_$uptype, \"$arg_str\");
+	param$max_arg_num = dill_param_reg(s, $max_arg_num);
+	dill_ret$rtype{$type}(s, param$max_arg_num);
+	proc = ($type{$type} (*)($cast_str)) dill_finalize(s);
 	result = proc($param_str);
 	if (result != s2$type) {
 	    printf(\"test for $cur_arg_count arguments of type \\\"$type\\\" failed, expected $c_print_formats{$type}, got $c_print_formats{$type}\\n\",
 		   s2$type, result);
-	    dill_dump(c);
+	    dill_dump(s);
 	    printf("\\n*************\\n\\n");
 	    dill_errors++;
 	}
 
-	dill_start_proc(c2, \"call${cur_arg_count}_$type\", DILL_$uptype, \"$arg_str\");
-	reg = dill_scall$type(c2, (void*)proc, \"proc_${cur_arg_count}_${type}\", \"$arg_str\", $arg_param_str);
-	dill_ret$rtype{$type}(c2, reg);
-	proc2 = ($type{$type} (*) ($cast_str)) dill_finalize(c2);
+	dill_start_proc(s2, \"call${cur_arg_count}_$type\", DILL_$uptype, \"$arg_str\");
+	reg = dill_scall$type(s2, (void*)proc, \"proc_${cur_arg_count}_${type}\", \"$arg_str\", $arg_param_str);
+	dill_ret$rtype{$type}(s2, reg);
+	proc2 = ($type{$type} (*) ($cast_str)) dill_finalize(s2);
 	result = proc2($param_str);
 	if (result != s2$type) {
 	    printf(\"test for calling procedure with %d arguments of type %s failed\\n\", $cur_arg_count,
 		   \"$type\");
-	    dill_dump(c2);
+	    dill_dump(s2);
 	    printf("\\n*************\\n\\n");
 	    dill_errors++;
 	} else if (verbose) {
 	    printf(" passed\\n");
 	}
-	dill_free_context(c);
-	dill_free_context(c2);
+	dill_free_stream(s);
+	dill_free_stream(s2);
     }
 EOF
     }
