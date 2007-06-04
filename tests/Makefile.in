@@ -33,7 +33,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @NATIVE_CG_TRUE@EXTRA_PROGRAMS = regress$(EXEEXT) ctest$(EXEEXT) \
-@NATIVE_CG_TRUE@	stest$(EXEEXT) call-test$(EXEEXT) t1$(EXEEXT) pkg_test$(EXEEXT)
+@NATIVE_CG_TRUE@	stest$(EXEEXT) call-test$(EXEEXT) t1$(EXEEXT) \
+@NATIVE_CG_TRUE@	pkg_test$(EXEEXT)
 noinst_PROGRAMS =
 subdir = tests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -58,6 +59,10 @@ ctest_SOURCES = ctest.c
 ctest_OBJECTS = ctest.$(OBJEXT)
 ctest_LDADD = $(LDADD)
 ctest_DEPENDENCIES = ../libdill.la
+pkg_test_SOURCES = pkg_test.c
+pkg_test_OBJECTS = pkg_test.$(OBJEXT)
+pkg_test_LDADD = $(LDADD)
+pkg_test_DEPENDENCIES = ../libdill.la
 regress_SOURCES = regress.c
 regress_OBJECTS = regress.$(OBJEXT)
 am__DEPENDENCIES_1 =
@@ -70,10 +75,6 @@ t1_SOURCES = t1.c
 t1_OBJECTS = t1.$(OBJEXT)
 t1_LDADD = $(LDADD)
 t1_DEPENDENCIES = ../libdill.la
-pkg_test_SOURCES = pkg_test.c
-pkg_test_OBJECTS = pkg_test.$(OBJEXT)
-pkg_test_LDADD = $(LDADD)
-pkg_test_DEPENDENCIES = ../libdill.la
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp =
 am__depfiles_maybe =
@@ -86,8 +87,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = call-test.c ctest.c regress.c stest.c t1.c  pkg_test.c
-DIST_SOURCES = call-test.c ctest.c regress.c stest.c t1.c pkg_test.c
+SOURCES = call-test.c ctest.c pkg_test.c regress.c stest.c t1.c
+DIST_SOURCES = call-test.c ctest.c pkg_test.c regress.c stest.c t1.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -254,6 +255,9 @@ call-test$(EXEEXT): $(call_test_OBJECTS) $(call_test_DEPENDENCIES)
 ctest$(EXEEXT): $(ctest_OBJECTS) $(ctest_DEPENDENCIES) 
 	@rm -f ctest$(EXEEXT)
 	$(LINK) $(ctest_OBJECTS) $(ctest_LDADD) $(LIBS)
+pkg_test$(EXEEXT): $(pkg_test_OBJECTS) $(pkg_test_DEPENDENCIES) 
+	@rm -f pkg_test$(EXEEXT)
+	$(LINK) $(pkg_test_OBJECTS) $(pkg_test_LDADD) $(LIBS)
 regress$(EXEEXT): $(regress_OBJECTS) $(regress_DEPENDENCIES) 
 	@rm -f regress$(EXEEXT)
 	$(LINK) $(regress_OBJECTS) $(regress_LDADD) $(LIBS)
@@ -263,9 +267,6 @@ stest$(EXEEXT): $(stest_OBJECTS) $(stest_DEPENDENCIES)
 t1$(EXEEXT): $(t1_OBJECTS) $(t1_DEPENDENCIES) 
 	@rm -f t1$(EXEEXT)
 	$(LINK) $(t1_OBJECTS) $(t1_LDADD) $(LIBS)
-pkg_test$(EXEEXT): $(pkg_test_OBJECTS) $(pkg_test_DEPENDENCIES) 
-	@rm -f pkg_test$(EXEEXT)
-	$(LINK) $(pkg_test_OBJECTS) $(pkg_test_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -467,7 +468,7 @@ uninstall-am:
 
 @NATIVE_CG_TRUE@check-local: test
 
-test: call-test.stamp stest.stamp ctest.stamp regress.stamp t1.stamp pkg_test.stamp
+test: call-test.stamp stest.stamp ctest.stamp regress.stamp t1.stamp
 
 regress.c:  test-gen
 	perl -w $(srcdir)/test-gen @TEST_PERL_FLAGS@ > regress.c
@@ -497,9 +498,6 @@ regress.stamp:  regress@EXEEXT@
 
 t1.stamp: t1@EXEEXT@
 	./t1 && touch t1.stamp
-
-pkg_test.stamp: pkg_test@EXEEXT@
-	./pkg_test && touch pkg_test.stamp
 
 # t2.stamp:  t2@EXEEXT@
 # 	./t2 1>tmp.out 2>&1
