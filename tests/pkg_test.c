@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "dill.h"
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char **argv) 
 { 
@@ -25,7 +26,7 @@ int main(int argc, char **argv)
 
 	dill_free_stream(s);
 
-	func = dill_package_stitch(pkg);
+	func = (int(*)()) dill_package_stitch(pkg);
 
 	result = func();
 	if (result != 5) {
@@ -61,7 +62,7 @@ int main(int argc, char **argv)
         pkg = dill_finalize_package(s, &pkg_len);
 	dill_free_stream(s);
 
-	func = dill_package_stitch(pkg);
+	func = (unsigned (*)(unsigned, unsigned)) dill_package_stitch(pkg);
 	result = func(s1u, s2u);
         expected_result = (s1u % s2u);
 	if (expected_result != result) {

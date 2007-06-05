@@ -28,7 +28,7 @@ x86_rt_call_link(char *code, call_t *t)
 }
 
 extern char *
-x86_package_stitch(char *code, call_t *t)
+x86_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
     dill_lookup_xfer_addrs(t, &x86_xfer_recs[0]);
     x86_rt_call_link(code, t);

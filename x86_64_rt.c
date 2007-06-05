@@ -52,7 +52,7 @@ x86_64_flush(void *base, void *limit)
 }    
 
 extern char *
-x86_64_package_stitch(char *code, call_t *t)
+x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
     dill_lookup_xfer_addrs(t, &x86_64_xfer_recs[0]);
     x86_64_rt_call_link(code, t);

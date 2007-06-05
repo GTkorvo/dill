@@ -63,6 +63,7 @@ extern void sparc_set(dill_stream c, int r, long imm);
 extern void sparc_proc_start(dill_stream c, char *subr_name, int arg_count, 
 			 arg_info_list args, dill_reg *arglist);
 extern void sparc_end(dill_stream c);
+extern void sparc_package_end(dill_stream c);
 extern void * sparc_clone_code(dill_stream c, void *new_base, int available_size);
 extern void sparc_ret(dill_stream c, int data1, int data2, int src);
 extern void sparc_reti(dill_stream c, int data1, int data2, long imm);

@@ -577,26 +577,18 @@ sparc_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
     }
 }
 
-static long sparc_hidden_modi(int a, int b)
-{ return a % b; }
-static long sparc_hidden_mod(long a, long b)
-{ return a % b; }
-static unsigned long sparc_hidden_umod(unsigned long a, unsigned long b)
-{ return a % b; }
-static unsigned int sparc_hidden_umodi(unsigned int a, unsigned int b)
-{ return a % b; }
-static double sparc_hidden_ultod(unsigned long a)
-{ return (double) a; }
-static float sparc_hidden_ultof(unsigned long a)
-{ return (float) a; }
-static unsigned long sparc_hidden_dtoul(double a)
-{ return (unsigned long) a; }
-static unsigned int sparc_hidden_dtou(double a)
-{ return (unsigned int) a; }
-static unsigned long sparc_hidden_ftoul(float a)
-{ return (unsigned long) a; }
-static unsigned int sparc_hidden_ftou(float a)
-{ return (unsigned int) a; }
+extern long dill_sparc_hidden_modi(int a, int b);
+extern long dill_sparc_hidden_mod(long a, long b);
+extern unsigned long dill_sparc_hidden_umod(unsigned long a, unsigned long b);
+extern unsigned int dill_sparc_hidden_umodi(unsigned int a, unsigned int b);
+extern double dill_sparc_hidden_ultod(unsigned long a);
+extern float dill_sparc_hidden_ultof(unsigned long a);
+extern unsigned long dill_sparc_hidden_dtoul(double a);
+extern unsigned int dill_sparc_hidden_dtou(double a);
+extern unsigned long dill_sparc_hidden_ftoul(float a);
+extern unsigned int dill_sparc_hidden_ftou(float a);
+extern long dill_sparc_hidden_udiv(unsigned long a, unsigned long b);
+
 
 extern void sparc_mod(dill_stream s, int data1, int type_long, int dest, 
 		      int src1, int src2)
@@ -605,19 +597,19 @@ extern void sparc_mod(dill_stream s, int data1, int type_long, int dest,
     if (data1 == 1) {
 	/* signed case */
 	if (type_long) {
-	    return_reg = dill_scalll(s, (void*)sparc_hidden_mod, "sparc_hidden_mod", "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)dill_sparc_hidden_mod, "dill_sparc_hidden_mod", "%l%l", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scalli(s, (void*)sparc_hidden_modi, "sparc_hidden_modi", "%i%i", src1, src2);
+	    return_reg = dill_scalli(s, (void*)dill_sparc_hidden_modi, "dill_sparc_hidden_modi", "%i%i", src1, src2);
 	    dill_movi(s, dest, return_reg);
 	}
     } else {
 	/* unsigned case */
 	if (type_long) {
-	    return_reg = dill_scalll(s, (void*)sparc_hidden_umod, "sparc_hidden_umod", "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)dill_sparc_hidden_umod, "dill_sparc_hidden_umod", "%l%l", src1, src2);
 	    dill_movul(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scallu(s, (void*)sparc_hidden_umodi, "sparc_hidden_umodi", "%u%u", src1, src2);
+	    return_reg = dill_scallu(s, (void*)dill_sparc_hidden_umodi, "dill_sparc_hidden_umodi", "%u%u", src1, src2);
 	    dill_movu(s, dest, return_reg);
 	}
     }
@@ -630,16 +622,13 @@ extern void sparc_modi(dill_stream s, int data1, int data2, int dest, int src1,
     sparc_mod(s, data1, data2, dest, src1, _g1);
 }
 
-extern long sparc_hidden_udiv(unsigned long a, unsigned long b)
-{ return a / b; }
-
 extern void sparc_div(dill_stream s, int op3, int type_long, int dest, int src1,
 		      int src2)
 {
     sparc_mach_info smi = (sparc_mach_info) s->p->mach_info;
     if ((op3 == 0x0d /* udiv */) && (type_long == 1)) {
 	int return_reg;
-	return_reg = dill_scalll(s, (void*)&sparc_hidden_udiv, "sparc_hidden_udiv", "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)&dill_sparc_hidden_udiv, "dill_sparc_hidden_udiv", "%l%l", src1, src2);
 	dill_movl(s, dest, return_reg);
 	return;
 
@@ -793,7 +782,7 @@ sparc_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    sparc_saverestore_floats(s, 0);
-	    ret = dill_scallu(s, (void*)sparc_hidden_ftou, "sparc_hidden_ftou", "%f", src);
+	    ret = dill_scallu(s, (void*)dill_sparc_hidden_ftou, "dill_sparc_hidden_ftou", "%f", src);
 	    sparc_saverestore_floats(s, 1);
 	    sparc_mov(s, DILL_UL, 0, dest, ret);
 	}
@@ -803,7 +792,7 @@ sparc_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    sparc_saverestore_floats(s, 0);
-	    ret = dill_scallul(s, (void*)sparc_hidden_ftoul, "sparc_hidden_ftoul", "%f", src);
+	    ret = dill_scallul(s, (void*)dill_sparc_hidden_ftoul, "dill_sparc_hidden_ftoul", "%f", src);
 	    sparc_saverestore_floats(s, 1);
 	    sparc_mov(s, DILL_UL, 0, dest, ret);
 	}
@@ -827,7 +816,7 @@ sparc_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    sparc_saverestore_floats(s, 0);
-	    ret = dill_scallu(s, (void*)sparc_hidden_dtou, "sparc_hidden_dtou", "%d", src);
+	    ret = dill_scallu(s, (void*)dill_sparc_hidden_dtou, "dill_sparc_hidden_dtou", "%d", src);
 	    sparc_saverestore_floats(s, 1);
 	    sparc_mov(s, DILL_U, 0, dest, ret);
 	}
@@ -836,7 +825,7 @@ sparc_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    sparc_saverestore_floats(s, 0);
-	    ret = dill_scallul(s, (void*)sparc_hidden_dtoul, "sparc_hidden_dtoul", "%d", src);
+	    ret = dill_scallul(s, (void*)dill_sparc_hidden_dtoul, "dill_sparc_hidden_dtoul", "%d", src);
 	    sparc_saverestore_floats(s, 1);
 	    sparc_mov(s, DILL_UL, 0, dest, ret);
 	}
@@ -864,7 +853,7 @@ sparc_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    sparc_saverestore_floats(s, 0);
-	    ret = dill_scalld(s, (void*)sparc_hidden_ultod, "sparc_hidden_ultod", "%l", src);
+	    ret = dill_scalld(s, (void*)dill_sparc_hidden_ultod, "dill_sparc_hidden_ultod", "%l", src);
 	    sparc_saverestore_floats(s, 1);
 	    sparc_mov(s, DILL_D, 0, dest, ret);
 	}
@@ -888,7 +877,7 @@ sparc_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    sparc_saverestore_floats(s, 0);
-	    ret = dill_scalld(s, (void*)sparc_hidden_ultof, "sparc_hidden_ultof", "%l", src);
+	    ret = dill_scalld(s, (void*)dill_sparc_hidden_ultof, "dill_sparc_hidden_ultof", "%l", src);
 	    sparc_saverestore_floats(s, 1);
 	    sparc_mov(s, DILL_D, 0, dest, ret);
 	}
@@ -1410,35 +1399,14 @@ sparc_PLT_emit(dill_stream s)
     }
 }
 
+extern void sparc_rt_call_link(char *code, call_t *t);
+
 static void
 sparc_call_link(dill_stream s)
 {
     call_t *t = &s->p->call_table;
-    int i;
 
-    for(i=0; i< t->call_count; i++) {
-	int *call_addr = (int*) ((unsigned long)s->p->code_base + 
-				 t->call_locs[i].loc);
-	if (t->call_locs[i].mach_info == NULL) {
-	    /* no PLT */
-	    int call_offset = (unsigned long)t->call_locs[i].xfer_addr -
-		(unsigned long)call_addr;
-	
-	    /* div addr diff by 4 for sparc offset value */
-	    call_offset = call_offset >> 2;
-	    *call_addr &= 0xc0000000;
-	    *call_addr |= (call_offset & 0x3fffffff);
-	} else {
-	    /* call through PLT */
-	    unsigned long PLT_addr = (unsigned long)s->p->code_base + 
-				      (unsigned long)t->call_locs[i].mach_info;
-	    int call_offset = PLT_addr - (unsigned long)call_addr;
-	    
-	    call_offset = call_offset >> 2;
-	    *call_addr &= 0xc0000000;
-	    *call_addr |= (call_offset & 0x3fffffff);
-	}
-    }
+    sparc_rt_call_link(s->p->code_base, t);
 }
 
 static void
@@ -1505,6 +1473,17 @@ dill_stream s;
     sparc_data_link(s);
     sparc_emit_save(s);
     sparc_flush(s->p->code_base, s->p->code_limit);
+}
+
+extern void
+sparc_package_end(s)
+dill_stream s;
+{
+    sparc_simple_ret(s);
+    sparc_restore(s);
+    sparc_PLT_emit(s);   /* must be done before linking */
+    sparc_branch_link(s);
+    sparc_emit_save(s);
 }
 
 extern void *

@@ -245,7 +245,7 @@ typedef struct dill_pkg_1 {
     short entry_offset;
     short symbol_count;
     int code_size;
-} dill_pkg_1;
+} *dill_pkg;
 
 typedef struct xfer_rec {
     /*! the textual name of the external entry */

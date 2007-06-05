@@ -166,6 +166,7 @@ print COUT $jmp_b_assigns;
 print COUT $jmp_c_assigns;
 print COUT "    ${mach}_jump_table->proc_start = (dill_mach_proc_start) sparc_proc_start;\n";
 print COUT "    ${mach}_jump_table->end = sparc_end;\n";
+print COUT "    ${mach}_jump_table->package_end = sparc_package_end;\n";
 print COUT "    ${mach}_jump_table->clone_code = sparc_clone_code;\n";
 print COUT "    ${mach}_jump_table->type_align = sparc_type_align;\n";
 print COUT "    ${mach}_jump_table->type_size = sparc_type_size;\n";

@@ -425,6 +425,7 @@ dill_build_package(dill_stream s, int *pkg_len)
     memcpy(pkg + pkg_size, s->p->code_base, dill_code_size(s));
     pkg_size += dill_code_size(s);
     *pkg_len = pkg_size;
+    ((struct dill_pkg_1 *)pkg)->entry_offset = (char*)s->p->fp - (char*)s->p->code_base;
     return pkg;
 }
 

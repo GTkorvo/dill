@@ -27,12 +27,12 @@ unpack_package(char *package, call_t *t, char **code_p)
     *code_p = p;
 }
 
-extern char * sparc_package_stitch(char *code, call_t *t);
-extern char * sparcv9_package_stitch(char *code, call_t *t);
-extern char * x86_package_stitch(char *code, call_t *t);
-extern char * x86_64_package_stitch(char *code, call_t *t);
-extern char * arm_package_stitch(char *code, call_t *t);
-extern char * ia64_package_stitch(char *code, call_t *t);
+extern char * sparc_package_stitch(char *code, call_t *t, dill_pkg pkg);
+extern char * sparcv9_package_stitch(char *code, call_t *t, dill_pkg pkg);
+extern char * x86_package_stitch(char *code, call_t *t, dill_pkg pkg);
+extern char * x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg);
+extern char * arm_package_stitch(char *code, call_t *t, dill_pkg pkg);
+extern char * ia64_package_stitch(char *code, call_t *t, dill_pkg pkg);
 
 extern void
 dill_lookup_xfer_addrs(call_t *t, xfer_entry *x)
@@ -57,22 +57,22 @@ dill_package_stitch(char *pkg)
     unpack_package(pkg, &t, &code);
 /*    lookup_xfer_addrs(&t, user_addrs);*/
 #if defined(HOST_X86)
-    char *p = x86_package_stitch(code, &t);
+    char *p = x86_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
 #if defined(HOST_SPARC)
-    char *p = sparc_package_stitch(code, &t);
+    char *p = sparc_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
 #if defined(HOST_SPARCV9)
-    char *p = sparcv9_package_stitch(code, &t);
+    char *p = sparcv9_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
 #if defined(HOST_X86_64)
-    char *p = x86_64_package_stitch(code, &t);
+    char *p = x86_64_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
 #if defined(HOST_IA64)
-    char *p = ia64_package_stitch(code, &t);
+    char *p = ia64_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
 #if defined(HOST_ARM5)
-    char *p = arm5_package_stitch(code, &t);
+    char *p = arm5_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
     free(t.call_locs);
     return p;
