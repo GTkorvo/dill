@@ -28,7 +28,6 @@ unpack_package(char *package, call_t *t, char **code_p)
 }
 
 extern char * sparc_package_stitch(char *code, call_t *t, dill_pkg pkg);
-extern char * sparcv9_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * x86_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * arm_package_stitch(char *code, call_t *t, dill_pkg pkg);
@@ -63,7 +62,7 @@ dill_package_stitch(char *pkg)
     char *p = sparc_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
 #if defined(HOST_SPARCV9)
-    char *p = sparcv9_package_stitch(code, &t, (dill_pkg) pkg);
+    char *p = sparc_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
 #if defined(HOST_X86_64)
     char *p = x86_64_package_stitch(code, &t, (dill_pkg) pkg);

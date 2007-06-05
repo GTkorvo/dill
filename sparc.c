@@ -1376,7 +1376,7 @@ sparc_branch_link(dill_stream s)
  * we'll call to the PLT entry rather than directly to the routine.
  */
 static void
-sparc_PLT_emit(dill_stream s)
+sparc_PLT_emit(dill_stream s, int force_PLT)
 {
     call_t *t = &s->p->call_table;
     int i;
@@ -1386,27 +1386,48 @@ sparc_PLT_emit(dill_stream s)
 				 t->call_locs[i].loc);
 	long call_offset = (unsigned long)t->call_locs[i].xfer_addr - 
 	    (unsigned long)call_addr;
+	int jump_value;
+
         /* div addr diff by 4 for sparc offset value */
 	call_offset = call_offset >> 2;
+	jump_value = (char*)s->p->cur_ip - (char*)call_addr;
 	call_offset = call_offset >> 30;
-	if ((call_offset != 0) && (call_offset != -1)) {
-	    t->call_locs[i].mach_info = (void*)
-		((long)s->p->cur_ip - (long)s->p->code_base);
-	    sparc_set(s, _g1, (unsigned long)t->call_locs[i].xfer_addr);
+	t->call_locs[i].mach_info = (void*)0;
+	if (((call_offset != 0) && (call_offset != -1)) || force_PLT) {
+
+	    int plt_offset = (char*)s->p->cur_ip - (char*)s->p->code_base;
+	    t->call_locs[i].mach_info = (void*)1;
+
+	    sparc_nop(s);
+	    sparc_nop(s);
+	    sparc_nop(s);
+	    sparc_nop(s);
+	    sparc_nop(s);
+	    sparc_nop(s);
+
+/*	    sparc_set(s, _g1, (unsigned long)t->call_locs[i].xfer_addr);*/
 	    sparc_jump_to_reg(s, _g1);
 	    sparc_nop(s);
+
+	    /* fixup call to reference just-generated PLT code*/
+	    call_addr = (int*) ((unsigned long)s->p->code_base + 
+				t->call_locs[i].loc);
+	    t->call_locs[i].loc = plt_offset;
+	    jump_value = jump_value >> 2;
+	    *call_addr &= 0xc0000000;
+	    *call_addr |= (jump_value & 0x3fffffff);
 	}
     }
 }
 
-extern void sparc_rt_call_link(char *code, call_t *t);
+extern void sparc_rt_call_link(char *code, call_t *t, int force_plt);
 
 static void
 sparc_call_link(dill_stream s)
 {
     call_t *t = &s->p->call_table;
 
-    sparc_rt_call_link(s->p->code_base, t);
+    sparc_rt_call_link(s->p->code_base, t, /* don't force plt */ 0);
 }
 
 static void
@@ -1467,7 +1488,7 @@ dill_stream s;
 {
     sparc_simple_ret(s);
     sparc_restore(s);
-    sparc_PLT_emit(s);   /* must be done before linking */
+    sparc_PLT_emit(s, 0);   /* must be done before linking */
     sparc_branch_link(s);
     sparc_call_link(s);
     sparc_data_link(s);
@@ -1479,9 +1500,13 @@ extern void
 sparc_package_end(s)
 dill_stream s;
 {
+    int force_plt = 0;
     sparc_simple_ret(s);
     sparc_restore(s);
-    sparc_PLT_emit(s);   /* must be done before linking */
+#if defined(HOST_SPARCV9)
+    force_plt = 1;
+#endif
+    sparc_PLT_emit(s, force_plt);   /* must be done before linking */
     sparc_branch_link(s);
     sparc_emit_save(s);
 }
@@ -1572,17 +1597,6 @@ sparc_setf(dill_stream s, int type, int junk, int dest, double imm)
 }	
 
 #define SIMM34_P(im) (((long)im) < (long)1<<33 ) && (((long)im) >= -((long)1<<33) )
-/* upper 22 of 64 bits */
-#define hh(x) (((unsigned long) x) >> 42)
-/* bits 11-32 */
-#define lm(x) hi((x) & (((unsigned long)1<<32) -1))
-/* lower 10 of upper 32 */
-#define hm(x) lo( ((unsigned long) x)>>32)
-
-/* upper 22 bits of 32 */
-#define hi(x) (((unsigned long)x) >> 10)
-/* lower 10 bits */
-#define lo(x) ((x) & ((1 << 11) - 1))
 
 extern void
 sparc_set(s, r, val)

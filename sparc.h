@@ -13,6 +13,18 @@
  #define COND(x) (((x)&0xf)<<25)
  #define CC(x)  (((x)&0x3)<<20)
  #define P(x)  (((x)&0x1)<<19)
+/* upper 22 of 64 bits */
+#define hh(x) (((unsigned long) x) >> 42)
+/* bits 11-32 */
+#define lm(x) hi((x) & (((unsigned long)1<<32) -1))
+/* lower 10 of upper 32 */
+#define hm(x) lo( ((unsigned long) x)>>32)
+
+/* upper 22 bits of 32 */
+#define hi(x) (((unsigned long)x) >> 10)
+/* lower 10 bits */
+#define lo(x) ((x) & ((1 << 11) - 1))
+
 extern void sparc_FORM3_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void sparc_FORM3imm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
 extern void sparc_FORM3_farith(dill_stream c, int op3, int op, int dest, int src1, int src2);

@@ -2375,7 +2375,6 @@ static void
 x86_64_call_link(dill_stream s)
 {
     call_t *t = &s->p->call_table;
-    int i;
 
     x86_64_rt_call_link(s->p->code_base, t);
 }
