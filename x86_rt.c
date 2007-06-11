@@ -1,4 +1,7 @@
 #include "config.h"
+#ifdef USE_MMAP_CODE_SEG
+#include <sys/mman.h>
+#endif
 #include "dill.h"
 #include "dill_internal.h"
 #include "x86.h"
@@ -30,7 +33,15 @@ x86_rt_call_link(char *code, call_t *t)
 extern char *
 x86_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
+    char *tmp = code;
     dill_lookup_xfer_addrs(t, &x86_xfer_recs[0]);
     x86_rt_call_link(code, t);
-    return code;
+#ifdef USE_MMAP_CODE_SEG
+    tmp = (void*)mmap(0, pkg->code_size,
+		      PROT_EXEC | PROT_READ | PROT_WRITE, 
+		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+    memcpy(tmp, code, pkg->code_size);
+#endif
+    return tmp;
 }
+
