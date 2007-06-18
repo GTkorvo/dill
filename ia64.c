@@ -698,10 +698,11 @@ ia64_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
     }
 }
 
-static long ia64_hidden_mod(long a, long b)
-{ return a % b; }
-static long ia64_hidden_umod(unsigned long a, unsigned long b)
-{ return a % b; }
+extern long dill_ia64_hidden_mod(long a, long b);
+extern long dill_ia64_hidden_umod(unsigned long a, unsigned long b);
+extern long dill_ia64_hidden_div(long a, long b);
+extern long dill_ia64_hidden_udiv(unsigned long a, unsigned long b);
+extern double dill_ia64_hidden_fdiv(double a, double b);
 
 extern void ia64_mod(dill_stream s, int data1, int data2, int dest, int src1, 
 		      int src2)
@@ -709,11 +710,11 @@ extern void ia64_mod(dill_stream s, int data1, int data2, int dest, int src1,
     int return_reg;
     if (data1 == 1) {
 	/* signed case */
-	return_reg = dill_scalll(s, (void*)ia64_hidden_mod, "ia64_hidden_mod", "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)dill_ia64_hidden_mod, "dill_ia64_hidden_mod", "%l%l", src1, src2);
 	dill_movl(s, dest, return_reg);
     } else {
 	/* unsigned case */
-	return_reg = dill_scalll(s, (void*)ia64_hidden_umod, "ia64_hidden_umod", "%l%l", src1, src2);
+	return_reg = dill_scalll(s, (void*)dill_ia64_hidden_umod, "dill_ia64_hidden_umod", "%l%l", src1, src2);
 	dill_movul(s, dest, return_reg);
     }
 }
@@ -849,11 +850,6 @@ long imm;
 		  nop_m, nop_i);
 }
 
-static long ia64_hidden_div(long a, long b)
-{ return a / b; }
-static long ia64_hidden_udiv(unsigned long a, unsigned long b)
-{ return a / b; }
-
 extern void ia64_div_modi(s, type, div, dest, src1, imm)
 dill_stream s;
 int type;
@@ -884,19 +880,19 @@ int src2;
     }
     if (div == 1) {
 	if ((type == DILL_U) || (type == DILL_UL)) {
-	    return_reg = dill_scalll(s, (void*)ia64_hidden_udiv, "ia64_hidden_udiv", "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)dill_ia64_hidden_udiv, "dill_ia64_hidden_udiv", "%l%l", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scalll(s, (void*)ia64_hidden_div, "ia64_hidden_div", "%ul%ul", src1, src2);
+	    return_reg = dill_scalll(s, (void*)dill_ia64_hidden_div, "dill_ia64_hidden_div", "%ul%ul", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	}
 	    
     } else {
 	if ((type == DILL_U) || (type == DILL_UL)) {
-	    return_reg = dill_scalll(s, (void*)ia64_hidden_umod, "ia64_hidden_umod", "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)dill_ia64_hidden_umod, "dill_ia64_hidden_umod", "%l%l", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scalll(s, (void*)ia64_hidden_mod, "ia64_hidden_mod", "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)dill_ia64_hidden_mod, "dill_ia64_hidden_mod", "%l%l", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	}
     }
@@ -959,9 +955,6 @@ int src2;
     MFIs(s, nop_m, FORMAT_F1(opcode, x, /*sf*/0, mult4, mult3, add1, dest, 0), nop_i);
 }
 
-static double ia64_hidden_fdiv(double a, double b)
-{ return a / b; }
-
 extern void ia64_fdiv(s, type, junk, dest, src1, src2)
 dill_stream s;
 int type;
@@ -974,7 +967,7 @@ int src2;
     if (type == DILL_D) x = 0;
     if (type == DILL_F) x = 1;
 
-    return_reg = dill_scalld(s, (void*)ia64_hidden_fdiv, "ia64_hidden_fdiv", "%d%d", src1, src2);
+    return_reg = dill_scalld(s, (void*)dill_ia64_hidden_fdiv, "dill_ia64_hidden_fdiv", "%d%d", src1, src2);
     MFIs(s, nop_m, FORMAT_F1(0x8, x, /*sf*/0, return_reg, F1, F0, dest, 0), nop_i);
 
 }
@@ -1593,20 +1586,13 @@ ia64_branch_link(dill_stream s)
     }
 }
 
+extern void ia64_rt_call_link(char *code, call_t *t);
+
 static void
 ia64_call_link(dill_stream s)
 {
     call_t *t = &s->p->call_table;
-    int i;
-
-    for(i=0; i< t->call_count; i++) {
-	int *call_addr = (int*) ((unsigned long)s->p->code_base + 
-				 t->call_locs[i].loc + 1);
-	int call_offset = (unsigned long)t->call_locs[i].xfer_addr - 
-	    (unsigned long)((char*)call_addr + 4);  /* add len of call insn */
-
-	*call_addr = call_offset;
-    }
+    ia64_rt_call_link(s->p->code_base, t);
 }
 
 static void
@@ -1800,6 +1786,15 @@ dill_stream s;
     ia64_data_link(s);
     ia64_emit_save(s);
     ia64_flush(s->p->code_base, s->p->code_limit);
+}
+
+extern void
+ia64_package_end(s)
+dill_stream s;
+{
+    ia64_simple_ret(s);
+    ia64_branch_link(s);
+    ia64_emit_save(s);
 }
 
 extern void *

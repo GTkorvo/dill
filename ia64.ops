@@ -58,6 +58,7 @@ print COUT $jmp_b_assigns;
 print COUT $jmp_c_assigns;
 print COUT "\t  ${mach}_jump_table->proc_start = (dill_mach_proc_start) ia64_proc_start;\n";
 print COUT "\t  ${mach}_jump_table->end = ia64_end;\n";
+print COUT "\t  ${mach}_jump_table->package_end = ia64_package_end;\n";
 print COUT "\t  ${mach}_jump_table->clone_code = ia64_clone_code;\n";
 print COUT "\t  ${mach}_jump_table->type_align = ia64_type_align;\n";
 print COUT "\t  ${mach}_jump_table->type_size = ia64_type_size;\n";

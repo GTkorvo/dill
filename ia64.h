@@ -73,6 +73,7 @@ extern void ia64_set(dill_stream c, int r, long imm);
 extern void ia64_proc_start(dill_stream c, char *subr_name, int arg_count, 
 			   arg_info_list args, dill_reg *arglist);
 extern void ia64_end(dill_stream c);
+extern void ia64_package_end(dill_stream c);
 extern void *ia64_clone_code(dill_stream c, void *base, int size);
 extern void ia64_ret(dill_stream c, int data1, int data2, int src);
 extern void ia64_reti(dill_stream c, int data1, int data2, long imm);
