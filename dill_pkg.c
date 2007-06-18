@@ -10,8 +10,12 @@ static void
 unpack_package(char *package, call_t *t, char **code_p)
 {
     int count;
-    char *p = package + sizeof(struct dill_pkg_1);
+    int pkg_size = sizeof(struct dill_pkg_1);
+    char *p;
     struct dill_pkg_1 *pkg = (struct dill_pkg_1 *) package;
+
+    pkg_size = (pkg_size + 7) & -8;  /* round up to mod 8 */
+    p = package + pkg_size;
     if (pkg->magic != 0xbeef) printf("Not valid package\n");
     if (pkg->pkg_version != 1) printf("Not valid package version\n");
     t->call_alloc = t->call_count = pkg->symbol_count;
@@ -21,7 +25,7 @@ unpack_package(char *package, call_t *t, char **code_p)
 	t->call_locs[count].loc = *((int*)p);
 	t->call_locs[count].xfer_name = (p + sizeof(int));
 	call_len = sizeof(int) + strlen(t->call_locs[count].xfer_name) + 1;
-	call_len = (call_len + 3) & -4;  /* round up to mod 4 */
+	call_len = (call_len + 7) & -8;  /* round up to mod 8 */
 	p += call_len;
     }
     *code_p = p;

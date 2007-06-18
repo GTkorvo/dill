@@ -401,9 +401,11 @@ dill_build_package(dill_stream s, int *pkg_len)
 {
     struct call_table *t = &s->p->call_table;
     int pkg_size = sizeof(struct dill_pkg_1);
-    char *pkg = malloc(pkg_size);
+    char *pkg;
     int i;
 
+    pkg_size = (pkg_size + 7) & -8;  /* round up to mod 8 */
+    pkg = malloc(pkg_size);
     memset(pkg, 0, pkg_size);
     ((struct dill_pkg_1 *)pkg)->magic = 0xbeef;
     ((struct dill_pkg_1 *)pkg)->pkg_version = 1;
@@ -412,7 +414,7 @@ dill_build_package(dill_stream s, int *pkg_len)
 	int call_len = sizeof(int) + strlen(t->call_locs[i].xfer_name) + 1;
 	char *call_loc;
 
-	call_len = (call_len + 3) & -4;  /* round up to mod 4 */
+	call_len = (call_len + 7) & -8;  /* round up to mod 8 */
 	pkg = realloc(pkg, pkg_size + call_len);
 	call_loc = pkg + pkg_size;
 	pkg_size += call_len;
