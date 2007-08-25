@@ -554,7 +554,7 @@ print<<EOF;
 	/* reg <- (reg $op reg) */
 	if (verbose) printf(" - $insn\\n");
         dill_start_proc(s, "$insn",  DILL_$upt, "%$t%$t");
-		if(!dill_raw_getreg(s, &rdi, $type_enum{$t}, DILL_TEMP))
+		if(!dill_raw_getreg(s, &rdi, DILL_I, DILL_TEMP))
 			dill_fatal("out of registers!");
 
         	dill_$insn(s, rdi, dill_param_reg(s, 0), dill_param_reg(s, 1));
