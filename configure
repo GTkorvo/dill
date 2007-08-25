@@ -10674,7 +10674,7 @@ if test x$kernel_build = xtrue; then
    NO_DISASSEMBLER="yes"
 fi
 if test -n "$cercs_cv_binutils_link_dir";  then
-   if test  -r /net/hp41/chaos/ia64/lib/libopcodes.so; then
+   if test ! -r $cercs_cv_binutils_link_dir/libopcodes.so; then
       { echo "$as_me:$LINENO: WARNING: REDHAT libopcodes.so oddity.  No disassembler included" >&5
 echo "$as_me: WARNING: REDHAT libopcodes.so oddity.  No disassembler included" >&2;};
       NO_DISASSEMBLER="yes"
