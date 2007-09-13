@@ -347,13 +347,13 @@ dill_param_struct_alloc(dill_stream s, int argno, int type,
 }
 
 EXTERN void
-dill_start_simple_proc(dill_stream s, char *subr_name, int ret_type)
+dill_start_simple_proc(dill_stream s, const char *subr_name, int ret_type)
 {
     int i;
     if (!s->p->unavail_called) reset_context(s);
     s->p->ret_type = ret_type;
     s->p->unavail_called = 0;
-    (s->j->proc_start)(s, subr_name, s->p->c_param_count, s->p->c_param_args,
+    (s->j->proc_start)(s, (char*)subr_name, s->p->c_param_count, s->p->c_param_args,
 		       NULL);
     for (i=0; i < s->p->c_param_count; i++) {
 	if (s->p->c_param_regs[i] != NULL) {
@@ -544,7 +544,7 @@ dill_add_const(dill_stream s, void *addr, int size)
 
 static
 arg_info_list
-translate_arg_str(char *string, int *count)
+translate_arg_str(const char *string, int *count)
 {
     int cnt = 0;
     arg_info_list list = malloc(sizeof(list[0]));
@@ -987,7 +987,7 @@ typedef union {
 } type_union;
 
 static void 
-do_vararg_push(dill_stream s, char *arg_str, va_list ap)
+do_vararg_push(dill_stream s, const char *arg_str, va_list ap)
 {
     int i, arg_count;
     int reverse = 0;
@@ -1074,58 +1074,58 @@ do_vararg_push(dill_stream s, char *arg_str, va_list ap)
 }
 
 
-void dill_scallv(dill_stream s, void *ptr, char *name, char *arg_str, ...)
+void dill_scallv(dill_stream s, void *ptr, const char *name, const char *arg_str, ...)
 {
     va_list ap;
 
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    (void) s->j->calli(s, DILL_V, ptr, name);
+    (void) s->j->calli(s, DILL_V, ptr, (char*)name);
     va_end(ap);
 }
 
-int dill_scalli(dill_stream s, void* ptr, char *name, char *arg_str, ...)
+int dill_scalli(dill_stream s, void* ptr, const char *name, const char *arg_str, ...)
 {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_I, ptr, name);
+    ret_reg = s->j->calli(s, DILL_I, ptr, (char*)name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scallu(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
+int dill_scallu(dill_stream s, void *ptr, const char *name, const char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_U, ptr, name);
+    ret_reg = s->j->calli(s, DILL_U, ptr, (char*)name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scallp(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
+int dill_scallp(dill_stream s, void *ptr, const char *name, const char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_P, ptr, name);
+    ret_reg = s->j->calli(s, DILL_P, ptr, (char*)name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scallul(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
+int dill_scallul(dill_stream s, void *ptr, const char *name, const char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
     do_vararg_push(s, arg_str, ap);
-    ret_reg = s->j->calli(s, DILL_UL, ptr, name);
+    ret_reg = s->j->calli(s, DILL_UL, ptr, (char*)name);
     va_end(ap);
     return ret_reg;
 }
 
-int dill_scalll(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
+int dill_scalll(dill_stream s, void *ptr, const char *name, const char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
@@ -1135,7 +1135,7 @@ int dill_scalll(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
     return ret_reg;
 }
 
-int dill_scallf(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
+int dill_scallf(dill_stream s, void *ptr, const char *name, const char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);
@@ -1145,7 +1145,7 @@ int dill_scallf(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
     return ret_reg;
 }
 
-int dill_scalld(dill_stream s, void *ptr, char *name, char *arg_str, ...) {
+int dill_scalld(dill_stream s, void *ptr, const char *name, const char *arg_str, ...) {
     int ret_reg;
     va_list ap;
     va_start(ap, arg_str);

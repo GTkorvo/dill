@@ -106,7 +106,7 @@ void b () {
 
      dill_start_proc(s, "b_gen", DILL_I, "%i%i");
      f = dill_getreg(s, DILL_P);
-     dill_setp(s, f, gg);
+     dill_setp(s, f, (void *)gg);
      dill_retp(s, f);
      pp = (void *(*)())dill_finalize(s);
 
@@ -127,7 +127,7 @@ void c () {
      b = dill_getreg(s, DILL_I);
      f = dill_getreg(s, DILL_I);
 
-     dill_setp(s, f, gg);
+     dill_setp(s, f, (void*)gg);
      dill_seti(s, a, 1);
      dill_seti(s, b, 2);  
      dill_push_init(s);

@@ -17,14 +17,14 @@ install-exec-local:
 noinst_HEADERS = config.h dill_internal.h
 
 if MULTI_TARGET
-libdill_la_SOURCES = dill_sparc.c dill_util.c dill_pkg.c sparc.c dill_x86.c x86.c x86_rt.c \
+libdill_la_SOURCES = dill_sparc.c dill_util.c dill_cplus.c dill_pkg.c sparc.c dill_x86.c x86.c x86_rt.c \
 		dill_arm5.c arm5.c dill_virtual.c dill_x86_64.c x86_64.c \
 		dill_ia64.c ia64.c virtual.c dill.c vm.c version.c
 else !MULTI_TARGET
 if NATIVE_CG
-libdill_la_SOURCES = dill_util.c dill_pkg.c dill_virtual.c virtual.c dill.c vm.c dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c version.c
+libdill_la_SOURCES = dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c version.c
 else !NATIVE_CG
-libdill_la_SOURCES = dill_util.c dill_pkg.c dill_virtual.c virtual.c dill.c vm.c version.c
+libdill_la_SOURCES = dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c version.c
 endif !NATIVE_CG
 endif !MULTI_TARGET
 

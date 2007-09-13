@@ -316,9 +316,9 @@ sub call {
     foreach (split(' ', $types)) {
 	$type = $_;
 	if ($type eq 'v') {
-	    print HOUT "extern void dill_scall${type}(dill_stream s, void *ptr, char *name, char *arg_str, ...);\n";
+	    print HOUT "extern void dill_scall${type}(dill_stream s, void *ptr, const char *name, const char *arg_str, ...);\n";
 	} else {
-	    print HOUT "extern int dill_scall${type}(dill_stream s, void *ptr, char *name, char *arg_str, ...);\n";
+	    print HOUT "extern int dill_scall${type}(dill_stream s, void *ptr, const char *name, const char *arg_str, ...);\n";
 	}
 	print HOUT "#define dill_call${type}(s, ptr, name) s->j->calli(s, DILL_" . &upperc($type) . " , ptr, name)\n";
 	print HOUT "#define dill_callr${type}(s, src) s->j->callr(s, DILL_" . &upperc($type) . " , src)\n";
@@ -415,7 +415,7 @@ typedef void (*jmp_op)(dill_stream s, unsigned long arg);
 typedef void (*jmp_opa)(dill_stream s, void *arg);
 typedef void (*jal_op)(dill_stream s, int dest, int target);
 typedef void (*special_op)(dill_stream s, special_operations type, long param);
-typedef int (*call_opi)(dill_stream s, int type, void *xfer_address, char *name);
+typedef int (*call_opi)(dill_stream s, int type, void *xfer_address, const char *name);
 typedef int (*call_opr)(dill_stream s, int type, int src);
 typedef void (*setf_opi)(dill_stream s, int data1, int data2, int dest, double imm);
 typedef void (*setp_opi)(dill_stream s, int data1, int data2, int dest, void *imm);
@@ -559,7 +559,7 @@ EXTERN void dill_raw_unavailreg(dill_stream s, int type, dill_reg reg);
 EXTERN void dill_raw_availreg(dill_stream s, int type, dill_reg reg);
 EXTERN void dill_alloc_specific(dill_stream s, dill_reg reg_p, int type, int reg_class);
 EXTERN void dill_dealloc_specific(dill_stream s, dill_reg reg_p, int type, int reg_class);
-EXTERN void dill_start_simple_proc(dill_stream s, char *name, int ret_type);
+EXTERN void dill_start_simple_proc(dill_stream s, const char *name, int ret_type);
 EXTERN void dill_param_alloc(dill_stream s, int argno, int type, 
 			  dill_reg *regp);
 EXTERN void dill_param_struct_alloc(dill_stream s, int argno, int type, 
@@ -581,6 +581,27 @@ EXTERN void dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1,
 EXTERN void dill_pcompare(dill_stream s, int op_type, int data_type, 
 			  dill_reg dest, dill_reg src1, 
 			  dill_reg src2);
+
+/*! Return the 'this' pointer to be used in a DCG method call
+ *
+ * Given a method pointer and an object pointer, return the 'this'
+ * pointer that must be provided during call to that method.  This may be
+ * the same as the object address, or in the case of multiple inheritance it
+ * may be different.  This routine is used in conjunction with
+ * get_xfer_ptr() to support DCG of C++ method calls.
+ * \\return the address (as a void*) of the method's code
+ */
+EXTERN void *get_this_ptr(void *method_ptr, void *object_ptr);
+
+/*!  Return the transfer address to be used in a DCG method call
+ *
+ * Given a method pointer and an object pointer, return the transfer address
+ * that should be used to call the method.  I.E. the base address of the
+ * subroutine that implements it.  This routine is used in conjunction with
+ * get_this_ptr() to support DCG of C++ method calls.  
+ * \\return the address (as a void*) of the method's code
+ */
+EXTERN void *get_xfer_ptr(void *method_ptr, void *object_ptr);
 
 #define dill_type_align(s, t) s->j->type_align[t]
 #define dill_type_size(s, t) s->j->type_size[t]

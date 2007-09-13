@@ -2,13 +2,17 @@
 AUTOMAKE_OPTIONS = no-dependencies foreign
 
 if NATIVE_CG
-EXTRA_PROGRAMS = regress ctest stest call-test t1 pkg_test
+EXTRA_PROGRAMS = regress ctest stest call-test t1 pkg_test cplus
 check-local: test
 endif NATIVE_CG
 
 noinst_PROGRAMS = 
 
 LDADD = ../libdill.la
+
+TESTS = cplus
+
+cplus_SOURCES= cplus.cc
 
 test: call-test.stamp stest.stamp ctest.stamp regress.stamp t1.stamp pkg_test.stamp
 
