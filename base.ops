@@ -248,6 +248,7 @@ sub convert {
 	    print HOUT "#define dill_cv${from}2${_}(s, dest, src) (s->j->convert)(s, DILL_" . &upperc(${from}) . ", DILL_" . &upperc($_) . ", dest, src)\n";
 	}
     }
+    print HOUT "#define dill_pconvert(s, from_type, to_type, dest, src) (s->j->convert)(s, from_type, to_type, dest, src)\n";
 }
 
 sub ret {
@@ -368,6 +369,8 @@ typedef struct jmp_table_s *jmp_table;
  * ensures thread safety. 
  */
 typedef struct dill_stream_s *dill_stream;
+
+typedef struct dill_exec_s *dill_exec_handle;
 
 typedef struct dec *dill_exec_ctx;
 
@@ -568,9 +571,11 @@ EXTERN dill_reg dill_param_reg(dill_stream s, int argno);
 EXTERN dill_reg dill_vparam(dill_stream s, int argno);
 EXTERN void dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str);
 EXTERN void dill_dump(dill_stream s);
-EXTERN void *dill_finalize(dill_stream s);
+EXTERN dill_exec_handle dill_finalize(dill_stream s);
 EXTERN char *dill_finalize_package(dill_stream s, int *pkg_len);
-EXTERN void *dill_package_stitch(char *package);
+EXTERN dill_exec_handle dill_package_stitch(char *package);
+EXTERN void dill_free_handle(dill_exec_handle h);
+EXTERN void *dill_get_fp(dill_exec_handle h);
 EXTERN void *dill_clone_code(dill_stream s, void *new_base, int size);
 EXTERN int dill_code_size(dill_stream s);
 EXTERN int dill_do_reverse_vararg_push(dill_stream s);

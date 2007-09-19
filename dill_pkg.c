@@ -52,9 +52,10 @@ dill_lookup_xfer_addrs(call_t *t, xfer_entry *x)
     }
 }
 
-extern void *
+EXTERN dill_exec_handle
 dill_package_stitch(char *pkg)
 {
+    dill_exec_handle handle = malloc(sizeof(*handle));
     char *code;
     call_t t;
     unpack_package(pkg, &t, &code);
@@ -78,6 +79,7 @@ dill_package_stitch(char *pkg)
     char *p = arm5_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
     free(t.call_locs);
-    return p;
+    handle->fp = (void(*)()) p;
+    return handle;
 }
 

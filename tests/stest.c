@@ -10,7 +10,7 @@
 #include "sys/mman.h"
 #endif
 
-void * mk_test(dill_stream s) {
+dill_exec_handle mk_test(dill_stream s) {
 	int i, regs, fregs;
 	int l[100];
 	int abortl1;
@@ -82,11 +82,14 @@ void * mk_test(dill_stream s) {
 int main() { 
 	int (*ip)();
 	dill_stream s = dill_create_raw_stream();
+	dill_exec_handle h;
 	int ret;
 	char *target;
 
-	ip = (int (*)()) mk_test(s);
+	h = mk_test(s);
+	ip = (int (*)()) dill_get_fp(h);
 	ret = ip();
+	dill_free_handle(h);
 
 	if(ret == 0) {
 		printf("success!\n");
@@ -94,8 +97,11 @@ int main() {
 		dill_dump(s);
 		printf("failure at point %d!\n", ret);
 	}
-	ip = (int (*)()) mk_test(s);
+	h = mk_test(s);
+	ip = (int (*)()) dill_get_fp(h);
 	ret = ip();
+	dill_free_handle(h);
+
 	if(ret == 0)
 		printf("success!\n");
 	else {

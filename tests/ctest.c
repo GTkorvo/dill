@@ -8,6 +8,7 @@ int main(int argc, char **argv)
     dill_reg r;
     int i;
     dill_stream c = dill_create_raw_stream();
+    dill_exec_handle h;
     void (*func)();
     int verbose = 0, no_float = 0;
 
@@ -45,9 +46,11 @@ int main(int argc, char **argv)
 	dill_push_argpi(c, "Hello: %d %d %d %d\n");
     }
     dill_callv(c, (void*)printf, "printf");
-    func = (void (*)())dill_finalize(c);
+    h = dill_finalize(c);
+    func = (void (*)())dill_get_fp(h);
     if (verbose) dill_dump(c);
     func();
+    dill_free_handle(h);
 
     dill_start_simple_proc(c, "foo", DILL_V);
     dill_push_init(c);
@@ -65,9 +68,11 @@ int main(int argc, char **argv)
 	dill_push_argpi(c, "Hello: %d %d %d %d\n");
     }
     dill_callv(c, (void*)printf, "printf");
-    func = (void (*)()) dill_finalize(c);
+    h = dill_finalize(c);
+    func = (void (*)()) dill_get_fp(h);
     if (verbose) dill_dump(c);
     func();
+    dill_free_handle(h);
 
     dill_start_simple_proc(c, "foo", DILL_V);
     dill_push_init(c);
@@ -97,9 +102,11 @@ int main(int argc, char **argv)
 	dill_push_argpi(c, "Hello: %d %d %d %d %d %d %d %d %d %d\n");
     }
     dill_callv(c, (void*)printf, "printf");
-    func = (void (*)())dill_finalize(c);
+    h = dill_finalize(c);
+    func = (void (*)())dill_get_fp(h);
     if (verbose) dill_dump(c);
     func();
+    dill_free_handle(h);
 
     if (!no_float) {
 	dill_start_simple_proc(c, "foo", DILL_V);
@@ -130,9 +137,11 @@ int main(int argc, char **argv)
 	    dill_push_argpi(c, "Hello: %e %e %e %e %e %e %e %e %e %e\n");
 	}
 	dill_callv(c, (void*)printf, "printf");
-	func = (void (*)())dill_finalize(c);
+	h = dill_finalize(c);
+	func = (void (*)())dill_get_fp(h);
 	if (verbose) dill_dump(c);
 	func();
+	dill_free_handle(h);
     } else {
 	/* just do the printf so the output is the same */
 	printf("Hello: %e %e %e %e %e %e %e %e %e %e\n", 10.0, 20.0, 30.0, 

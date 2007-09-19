@@ -17,6 +17,7 @@ int main(int argc, char **argv)
     {
 	dill_stream s = dill_create_raw_stream();
 	int (*func)();
+	dill_exec_handle h;
 	int result;
 	char *pkg;
 	int pkg_len;
@@ -26,7 +27,8 @@ int main(int argc, char **argv)
 
 	dill_free_stream(s);
 
-	func = (int(*)()) dill_package_stitch(pkg);
+	h = dill_package_stitch(pkg);
+	func = (int(*)()) dill_get_fp(h);
 
 	result = func();
 	if (result != 5) {
@@ -40,6 +42,7 @@ int main(int argc, char **argv)
 
     {
 	dill_stream s = dill_create_raw_stream();
+	dill_exec_handle h;
 	unsigned expected_result;
 	unsigned result;
 	unsigned(*func)(unsigned,unsigned);
@@ -62,7 +65,8 @@ int main(int argc, char **argv)
         pkg = dill_finalize_package(s, &pkg_len);
 	dill_free_stream(s);
 
-	func = (unsigned (*)(unsigned, unsigned)) dill_package_stitch(pkg);
+	h = dill_package_stitch(pkg);
+	func = (unsigned (*)(unsigned, unsigned)) dill_get_fp(h);
 	result = func(s1u, s2u);
         expected_result = (s1u % s2u);
 	if (expected_result != result) {

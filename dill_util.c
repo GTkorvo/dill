@@ -382,18 +382,26 @@ dill_start_simple_proc(dill_stream s, const char *subr_name, int ret_type)
 }
 
 EXTERN void *
-dill_get_fp(dill_stream s)
+dill_get_fp(dill_exec_handle h)
 {
-    return (void *) s->p->fp;
+    return (void *) h->fp;
 }
 
-EXTERN void *
+EXTERN void 
+dill_free_handle(dill_exec_handle h)
+{
+    free(h);
+}
+
+EXTERN dill_exec_handle
 dill_finalize(dill_stream s)
 {
+    dill_exec_handle handle = malloc(sizeof(*handle));
     (s->j->end)(s);
     s->p->save_param_count = s->p->c_param_count;
     s->p->c_param_count = 0;
-    return dill_get_fp(s);
+    handle->fp = s->p->fp;
+    return handle;
 }
 
 static char *
@@ -1156,6 +1164,12 @@ int dill_scalld(dill_stream s, void *ptr, const char *name, const char *arg_str,
 }
 
 extern void
+dill_error(char *msg)
+{
+    printf(msg);
+}
+
+extern void
 dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1, dill_reg src2, 
        int label)
 {
@@ -1173,7 +1187,7 @@ dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1, dill_reg src2
     case DILL_D: typ = 5; break;
     case DILL_F: typ = 6; break;
     default:
-	printf("BAD  data type in dill_pbr\n");
+	dill_error("BAD  data type in dill_pbr\n");
 	typ = 0;
     }
     index = typ + 7 * op_type;
@@ -1197,7 +1211,7 @@ dill_pcompare(dill_stream s, int op_type, int data_type, dill_reg dest, dill_reg
     case DILL_D: typ = 5; break;
     case DILL_F: typ = 6; break;
     default:
-	printf("BAD  data type in dill_pbr\n");
+	dill_error("BAD  data type in dill_pbr\n");
 	typ = 0;
     }
     index = typ + 7 * op_type;

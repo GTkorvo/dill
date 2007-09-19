@@ -256,3 +256,7 @@ typedef struct xfer_rec {
 
 extern void dill_lookup_xfer_addrs(call_t *t, xfer_entry *x);
 
+struct dill_exec_s {
+    void (*fp)();
+};
+

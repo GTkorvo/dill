@@ -66,6 +66,7 @@ int c_based_calls(C*c)
 
 int dcg_calls(C*c)
 {
+  dill_exec_handle h;
   void (C::*p)(int);
   void *x;
   int (C::*p2)();
@@ -99,7 +100,8 @@ int dcg_calls(C*c)
   dill_setp(s, this_reg, th);
   ret_reg = dill_scalli(s, x2, "C::add", "%p", this_reg);
   dill_reti(s, ret_reg);
-  proc = (int(*)()) dill_finalize(s);
+  h = dill_finalize(s);
+  proc = (int(*)()) dill_get_fp(h);
   return proc();
 };
 
@@ -109,12 +111,15 @@ int main(int argc, char **argv)
   int no_dcg = 0;
   int result;
   for (int i=1; i < argc; i++) {
-    if (argv[i] == "-no_dcg") {
+    std::string s = argv[i];
+    if (s == "-no_dcg") {
       no_dcg++;
-    } else if (argv[i] =="-v") {
+    } else if (s == "-v") {
+      verbose++;
+    } else if (s == "-verbose") {
       verbose++;
     } else {
-      std::cout << "Unknown arguent \"" << argv[i] << "\"" << std::endl;
+      std::cout << "Unknown argument \"" << s << "\"" << std::endl;
     }
   }
 
