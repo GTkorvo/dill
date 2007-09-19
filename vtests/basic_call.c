@@ -15,6 +15,7 @@ int ff(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j) {
 
 void a () {
     dill_stream s = dill_create_stream();
+     dill_exec_handle handle;
      dill_reg a,b,p3,d,e,f,g,h,i,j,w,z,cnt;
 /*     dill_reg func;*/
      int L1;
@@ -90,7 +91,8 @@ void a () {
      dill_addi(s, z, z, i);
      dill_addi(s, z, z, j);
      dill_reti(s, z);			/* (9*10/2)*3 = 135 */
-     ip = (int(*)())dill_finalize(s);
+     handle = dill_finalize(s);
+     ip = (int(*)())dill_get_fp(handle);
 
      if (verbose) dill_dump(s);
 
@@ -101,6 +103,7 @@ void a () {
 void b () {
      dill_reg f;
      void *(*pp)();
+     dill_exec_handle h;
      
      dill_stream s = dill_create_stream();
 
@@ -108,7 +111,8 @@ void b () {
      f = dill_getreg(s, DILL_P);
      dill_setp(s, f, (void *)gg);
      dill_retp(s, f);
-     pp = (void *(*)())dill_finalize(s);
+     h = dill_finalize(s);
+     pp = (void *(*)())dill_get_fp(h);
 
      if (verbose) dill_dump(s);
 
@@ -119,6 +123,7 @@ void b () {
 void c () {
      dill_reg a,b,f;
      int (*ip)();
+     dill_exec_handle h;
      
      dill_stream s = dill_create_stream();
 
@@ -140,7 +145,8 @@ void c () {
      }
      a = dill_callri(s, f);
      dill_reti(s, a);
-     ip = (int(*)())dill_finalize(s);
+     h = dill_finalize(s);
+     ip = (int(*)())dill_get_fp(h);
 
      if (verbose) dill_dump(s);
 
@@ -151,6 +157,7 @@ void c () {
 void d () {
      dill_reg a,b;
      int (*ip)();
+     dill_exec_handle h;
      
      dill_stream s = dill_create_stream();
 
@@ -170,7 +177,8 @@ void d () {
      }
      a = dill_calli(s, (void*)gg, "gg");
      dill_reti(s, a);
-     ip = (int(*)())dill_finalize(s);
+     h = dill_finalize(s);
+     ip = (int(*)())dill_get_fp(h);
 
      if (verbose) dill_dump(s);
 
@@ -181,6 +189,7 @@ void d () {
 void e () {
      dill_reg a,b,p3,d,e,f,g,h,i,j,k,l;
      int (*ip)(int (*)(int,int),int,int,int,int,int,int,int,int,int);
+     dill_exec_handle handle;
      
      dill_stream s = dill_create_stream();
 
@@ -240,7 +249,8 @@ void e () {
      dill_addi(s, k,k,j);
      dill_addii(s, l,k,3);
      dill_reti(s, l);
-     ip = (int(*)())dill_finalize(s);
+     handle = dill_finalize(s);
+     ip = (int(*)())dill_get_fp(handle);
 
      if (verbose) dill_dump(s);
 
@@ -254,6 +264,7 @@ void f () {
      int ip = 5;
      char *pp = "hello!";
      void *(*proc)();
+     dill_exec_handle h;
      
      dill_stream s = dill_create_stream();
 
@@ -278,7 +289,8 @@ void f () {
      }
      a = dill_calli(s, (void*)printf, "printf");
      dill_reti(s, a);
-     proc = (void *(*)())dill_finalize(s);
+     h = dill_finalize(s);
+     proc = (void *(*)())dill_get_fp(h);
 
      if (verbose) dill_dump(s);
 
@@ -299,6 +311,7 @@ void g () {
      double dh = 9.1;
      double di = 10.1;
      void *(*proc)();
+     dill_exec_handle h;
      
      dill_stream s = dill_create_stream();
 
@@ -333,7 +346,8 @@ void g () {
      }
      a = dill_calli(s, (void*)printf, "printf");
      dill_reti(s, a);
-     proc = (void *(*)())dill_finalize(s);
+     h = dill_finalize(c);
+     proc = (void *(*)())dill_get_fp(h);
 
      if (verbose) dill_dump(s);
 
