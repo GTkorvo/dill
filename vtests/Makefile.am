@@ -2,9 +2,9 @@
 AUTOMAKE_OPTIONS = no-dependencies foreign
 
 if BUILD_LIBRARY
-EXTRA_PROGRAMS = basic_call general t1
+EXTRA_PROGRAMS = basic_call general t1 branch
 
-TESTS = general$(EXEEXT) t1$(EXEEXT)
+TESTS = general$(EXEEXT) t1$(EXEEXT) branch
 
 check-local: basic_call.stamp
 endif BUILD_LIBRARY

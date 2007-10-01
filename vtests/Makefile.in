@@ -32,7 +32,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @BUILD_LIBRARY_TRUE@EXTRA_PROGRAMS = basic_call$(EXEEXT) \
-@BUILD_LIBRARY_TRUE@	general$(EXEEXT) t1$(EXEEXT)
+@BUILD_LIBRARY_TRUE@	general$(EXEEXT) t1$(EXEEXT) \
+@BUILD_LIBRARY_TRUE@	branch$(EXEEXT)
 subdir = vtests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -47,6 +48,10 @@ basic_call_SOURCES = basic_call.c
 basic_call_OBJECTS = basic_call.$(OBJEXT)
 basic_call_LDADD = $(LDADD)
 basic_call_DEPENDENCIES = ../libdill.la
+branch_SOURCES = branch.c
+branch_OBJECTS = branch.$(OBJEXT)
+branch_LDADD = $(LDADD)
+branch_DEPENDENCIES = ../libdill.la
 general_SOURCES = general.c
 general_OBJECTS = general.$(OBJEXT)
 am__DEPENDENCIES_1 =
@@ -67,8 +72,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = basic_call.c general.c t1.c
-DIST_SOURCES = basic_call.c general.c t1.c
+SOURCES = basic_call.c branch.c general.c t1.c
+DIST_SOURCES = basic_call.c branch.c general.c t1.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -190,7 +195,7 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dependencies foreign
-@BUILD_LIBRARY_TRUE@TESTS = general$(EXEEXT) t1$(EXEEXT)
+@BUILD_LIBRARY_TRUE@TESTS = general$(EXEEXT) t1$(EXEEXT) branch$(EXEEXT)
 LDADD = ../libdill.la
 general_LDADD = ../libdill.la ${MATH_LIB} 
 NOOPT_COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -232,6 +237,9 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 basic_call$(EXEEXT): $(basic_call_OBJECTS) $(basic_call_DEPENDENCIES) 
 	@rm -f basic_call$(EXEEXT)
 	$(LINK) $(basic_call_OBJECTS) $(basic_call_LDADD) $(LIBS)
+branch$(EXEEXT): $(branch_OBJECTS) $(branch_DEPENDENCIES) 
+	@rm -f branch$(EXEEXT)
+	$(LINK) $(branch_OBJECTS) $(branch_LDADD) $(LIBS)
 general$(EXEEXT): $(general_OBJECTS) $(general_DEPENDENCIES) 
 	@rm -f general$(EXEEXT)
 	$(LINK) $(general_OBJECTS) $(general_LDADD) $(LIBS)
