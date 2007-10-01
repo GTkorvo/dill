@@ -464,36 +464,43 @@ add_pred(basic_block bb, int pred)
 }
 
 static void
+dump_bb(dill_stream c, struct basic_block *bb, int i)
+{
+    int j;
+    printf("\nBasic block %d, start %d, end %d, label %d, fall %d, branch_to %d\n",
+	   i, bb->start, bb->end, 
+	   bb->label, bb->fall_through,
+	   bb->end_branch_label);
+    printf("    defines :"); dump_reg_vec(bb->regs_defined);
+    printf("\n    uses :"); dump_reg_vec(bb->regs_used);
+    printf("\n    live_at_end :"); dump_reg_vec(bb->live_at_end);
+    printf("\n    succ :"); 
+    for (j=0; j < bb->succ_count; j++) {
+	printf(" %d", bb->succ_list[j]);
+    }
+    printf("\n    preds :"); 
+    for (j=0; j < bb->pred_count; j++) {
+	printf(" %d", bb->pred_list[j]);
+    }
+    if (bb->is_loop_start) printf(" - LOOP_START");
+    if (bb->is_loop_end) printf(" - LOOP_END");
+/*NOTUSED	printf("   Nesting depth %d", bb->loop_depth);*/
+    printf("\n");
+    for (j = bb->start; j <= bb->end; j++) {
+	printf(" %d - ", j);
+	virtual_print_insn(c, NULL, ((char *)c->p->code_base) + 
+			   j * sizeof(virtual_insn));
+	printf("\n");
+    }
+}
+
+static void
 dump_bbs(dill_stream c)
 {
     virtual_mach_info vmi = (virtual_mach_info)c->p->mach_info;
-    int i, j;
+    int i;
     for (i=0; i < vmi->bbcount; i++) {
-	printf("\nBasic block %d, start %d, end %d, label %d, fall %d, branch_to %d\n",
-	       i, vmi->bblist[i].start, vmi->bblist[i].end, 
-	       vmi->bblist[i].label, vmi->bblist[i].fall_through,
-	       vmi->bblist[i].end_branch_label);
-	printf("    defines :"); dump_reg_vec(vmi->bblist[i].regs_defined);
-	printf("\n    uses :"); dump_reg_vec(vmi->bblist[i].regs_used);
-	printf("\n    live_at_end :"); dump_reg_vec(vmi->bblist[i].live_at_end);
-	printf("\n    succ :"); 
-	for (j=0; j < vmi->bblist[i].succ_count; j++) {
-	    printf(" %d", vmi->bblist[i].succ_list[j]);
-	}
-	printf("\n    preds :"); 
-	for (j=0; j < vmi->bblist[i].pred_count; j++) {
-	    printf(" %d", vmi->bblist[i].pred_list[j]);
-	}
-	if (vmi->bblist[i].is_loop_start) printf(" - LOOP_START");
-	if (vmi->bblist[i].is_loop_end) printf(" - LOOP_END");
-/*NOTUSED	printf("   Nesting depth %d", vmi->bblist[i].loop_depth);*/
-	printf("\n");
-	for (j = vmi->bblist[i].start; j <= vmi->bblist[i].end; j++) {
-	    printf(" %d - ", j);
-	    virtual_print_insn(c, NULL, ((char *)c->p->code_base) + 
-			       j * sizeof(virtual_insn));
-	    printf("\n");
-	}
+	dump_bb(c, &vmi->bblist[i], i);
     }
 }
 
@@ -1184,8 +1191,16 @@ build_bbs(dill_stream c, void *vinsns, void *code_end)
 	for (j=0; j < t->next_label; j++) {
 	    if ((unsigned)t->label_locs[j] == 
 		((char*)insn - (char*)insns) + sizeof(virtual_insn)) {
+		int fall_through = 1;
+		switch (insns[i-1].class_code) {
+		case iclass_ret:
+		case iclass_reti:
+		    fall_through = 0;
+		default:
+		    break;
+		}
 		if (bb->start != i) {
-		    end_bb(bb, -1, 1);
+		    end_bb(bb, -1, fall_through);
 		}
 		bb->label = j;
 	    }
@@ -3016,6 +3031,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	reset_reg_state(&state);
 	if (c->dill_debug) {
 	    printf("============= Starting basic block %d ===========\n", i);
+	    dump_bb(c, bb, i);
 	}
 	insn_start = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
 	for (j = bb->start; j <= bb->end; j++) {
