@@ -1,7 +1,14 @@
 #include "config.h"
+
+#ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
+
+#ifdef STDC_HEADERS
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#endif
 
 #include "dill.h"
 #include "dill_internal.h"
