@@ -34,7 +34,11 @@ void *get_xfer_ptr( method_pointer m, void *object_ptr)
 	void **vtable = *((void***)object_ptr);
 
 	vtable = (void **)(((char*)vtable) + vtableindex);
+#ifdef HOST_IA64
+	cptr = vtable;
+#else
 	cptr = *vtable;
+#endif
     }
     return cptr;
 }
