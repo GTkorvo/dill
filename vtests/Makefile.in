@@ -34,6 +34,8 @@ host_triplet = @host@
 @BUILD_LIBRARY_TRUE@EXTRA_PROGRAMS = basic_call$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	general$(EXEEXT) t1$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	branch$(EXEEXT)
+@BUILD_LIBRARY_TRUE@TESTS = general$(EXEEXT) t1$(EXEEXT) \
+@BUILD_LIBRARY_TRUE@	branch$(EXEEXT)
 subdir = vtests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -195,7 +197,6 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dependencies foreign
-@BUILD_LIBRARY_TRUE@TESTS = general$(EXEEXT) t1$(EXEEXT) branch$(EXEEXT)
 LDADD = ../libdill.la
 general_LDADD = ../libdill.la ${MATH_LIB} 
 NOOPT_COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \

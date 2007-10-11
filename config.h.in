@@ -87,10 +87,6 @@
 /* Define if compiling for linux kernel */
 #undef LINUX_KERNEL_MODULE
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LT_OBJDIR
-
 /* Define if you want more than just native target */
 #undef MULTI_TARGET
 
