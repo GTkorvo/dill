@@ -23,7 +23,6 @@ void *get_xfer_ptr( method_pointer m, void *object_ptr)
 {
     void *cptr;
     cptr = m->u.call_ptr;
-    printf("M vflag == %d, m->delta = %d, m->u.vtindex = %lx\n", m->vflag, m->delta, m->u.vtindex);
 #ifdef NOTDEF
     if (m->vflag != 0) {  /* vflag indicates virtual on some archs*/
 #elseif NOTDEF
@@ -33,11 +32,9 @@ void *get_xfer_ptr( method_pointer m, void *object_ptr)
 #endif
 	int vtableindex = m->u.vtindex & -4;
 	void **vtable = *((void***)object_ptr);
-	printf("Virtual, vtableindex = %d\n", vtableindex);
 
 	vtable = (void **)(((char*)vtable) + vtableindex);
 	cptr = *vtable;
-	printf("Returning cptr %lx\n", cptr);
     }
     return cptr;
 }
