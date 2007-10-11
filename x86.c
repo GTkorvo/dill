@@ -18,6 +18,9 @@
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
+#ifdef STDC_HEADERS
+#include <stdlib.h>
+#endif
 #include <string.h>
 #else
 #include "kdill.h"

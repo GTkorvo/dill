@@ -1,8 +1,14 @@
 /* Test that save/restore and locals do not overlap in the activation record. */
+#include "config.h"
 #include <assert.h>
 #include <stdio.h>
+#ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
+#ifdef STDC_HEADERS
 #include <unistd.h>
+#include <stdlib.h>
+#endif
 
 #include "../config.h"
 #include "dill.h"
