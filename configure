@@ -19726,7 +19726,7 @@ tmpdir=`echo ${prefix} |  sed 's%/$%%'`
 search_list="$search_list $tmpdir/include/dis-asm.h"
 fi
 if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/include/dis-asm.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/include/dis-asm.h"
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/include/dis-asm.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/include/dis-asm.h $CHAOS_HOMEDIR/include/dis-asm.h"
 fi
 if test "include" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
@@ -19749,7 +19749,7 @@ if test -n "$tmp_search_results"; then
 cercs_tmp=$tmp_search_results
 fi
 
-if test -n "$cercs_tmp"; then
+if test -n "$cercs_tmp" -a "$cercs_tmp" != "/usr/include/dis-asm.h"; then
 cercs_cv_binutils_include_arg=-I`$PATHPROG $cercs_tmp | sed 's#\\\\#/#g' | sed "s#.dis-asm.h##g"`
 fi
 
@@ -19813,7 +19813,7 @@ tmpdir=`echo ${prefix} |  sed 's%/$%%'`
 search_list="$search_list $tmpdir/lib/libopcodes.la"
 fi
 if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/lib/libopcodes.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/lib/libopcodes.la"
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/lib/libopcodes.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/lib/libopcodes.la $CHAOS_HOMEDIR/lib/libopcodes.la"
 fi
 if test "lib" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
@@ -20006,7 +20006,7 @@ tmpdir=`echo ${prefix} |  sed 's%/$%%'`
 search_list="$search_list $tmpdir/include/avcall.h"
 fi
 if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/include/avcall.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/include/avcall.h"
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/include/avcall.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/include/avcall.h $CHAOS_HOMEDIR/include/avcall.h"
 fi
 if test "include" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
@@ -20029,7 +20029,7 @@ if test -n "$tmp_search_results"; then
 cercs_tmp=$tmp_search_results
 fi
 
-if test -n "$cercs_tmp"; then
+if test -n "$cercs_tmp" -a "$cercs_tmp" != "/usr/include/avcall.h"; then
 cercs_cv_ffcall_include_arg=-I`$PATHPROG $cercs_tmp | sed 's#\\\\#/#g' | sed "s#.avcall.h##g"`
 fi
 
@@ -20093,7 +20093,7 @@ tmpdir=`echo ${prefix} |  sed 's%/$%%'`
 search_list="$search_list $tmpdir/lib/libavcall.la"
 fi
 if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/lib/libavcall.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/lib/libavcall.la"
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/lib/libavcall.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/lib/libavcall.la $CHAOS_HOMEDIR/lib/libavcall.la"
 fi
 if test "lib" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do

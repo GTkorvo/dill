@@ -42,7 +42,7 @@ AC_CACHE_VAL(translit(cercs_cv_$1_include_arg, `/',`_'),
 [
 ifelse([$4],1,cercs_tmp=`pwd`/../$1,
 CERCS_FIND_FILE($1, $2, cercs_tmp, $with_translit, include))
-if test -n "$cercs_tmp"; then
+if test -n "$cercs_tmp" -a "$cercs_tmp" != "/usr/include/$2"; then
 translit(cercs_cv_$1_include_arg, `/',`_')=-I`$PATHPROG $cercs_tmp | sed 's#\\\\#/#g' | sed "s#.$2##g"`
 fi
 ])
@@ -153,7 +153,7 @@ tmpdir=`echo ${prefix} |  sed 's%/$%%'`
 search_list="$search_list $tmpdir/$5/$2"
 fi
 if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/$5/$2 $CHAOS_HOMEDIR/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$5/$2"
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/$1/$5/$2 $CHAOS_HOMEDIR/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$5/$2 $CHAOS_HOMEDIR/$5/$2"
 fi
 if test "$5" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
