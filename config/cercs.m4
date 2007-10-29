@@ -1,3 +1,4 @@
+dnl  Mon Oct 29 09:09:35 EDT 2007
 dnl
 dnl cercs_require_package(package, include_file, library_file)
 dnl   either include file or library_file may be left off if not needed
@@ -134,7 +135,13 @@ fi
 search_list="$search_list $EXPANDED/$2 $EXPANDED/$5/$2 $EXPANDED/share/$2 $EXPANDED/$cercs_cv_archive/$2 $EXPANDED/$cercs_cv_archive/$5/$2 $EXPANDED/$1/$2 $EXPANDED/$1/$cercs_cv_archive/$2 $EXPANDED/$1/$5/$2 $EXPANDED/$1/$5/$cercs_cv_archive/$2"
 fi
 if test -z "$with_installed_specified"; then
-search_list="$search_list `pwd`/../$1/$2 `pwd`/../$5/$2 `pwd`/../share/$2 $HOME/$1/$2 $HOME/$cercs_cv_archive/$5/$2 $HOME/$5/$2"
+search_list="$search_list `pwd`/../$1/$2 `pwd`/../$5/$2 `pwd`/../share/$2"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/$1/$2 $HOME/$cercs_cv_archive/$5/$2 $HOME/$5/$2"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/$1/$5/$2 $CHAOS_HOMEDIR/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$5/$2 $CHAOS_HOMEDIR/$5/$2"
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'` 
@@ -151,9 +158,6 @@ fi
 if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'` 
 search_list="$search_list $tmpdir/$5/$2"
-fi
-if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/$1/$5/$2 $CHAOS_HOMEDIR/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$5/$2 $CHAOS_HOMEDIR/$5/$2"
 fi
 if test "$5" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do

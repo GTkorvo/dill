@@ -19707,7 +19707,13 @@ fi
 search_list="$search_list $EXPANDED/dis-asm.h $EXPANDED/include/dis-asm.h $EXPANDED/share/dis-asm.h $EXPANDED/$cercs_cv_archive/dis-asm.h $EXPANDED/$cercs_cv_archive/include/dis-asm.h $EXPANDED/binutils/dis-asm.h $EXPANDED/binutils/$cercs_cv_archive/dis-asm.h $EXPANDED/binutils/include/dis-asm.h $EXPANDED/binutils/include/$cercs_cv_archive/dis-asm.h"
 fi
 if test -z "$with_installed_specified"; then
-search_list="$search_list `pwd`/../binutils/dis-asm.h `pwd`/../include/dis-asm.h `pwd`/../share/dis-asm.h $HOME/binutils/dis-asm.h $HOME/$cercs_cv_archive/include/dis-asm.h $HOME/include/dis-asm.h"
+search_list="$search_list `pwd`/../binutils/dis-asm.h `pwd`/../include/dis-asm.h `pwd`/../share/dis-asm.h"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/binutils/dis-asm.h $HOME/$cercs_cv_archive/include/dis-asm.h $HOME/include/dis-asm.h"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/include/dis-asm.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/include/dis-asm.h $CHAOS_HOMEDIR/include/dis-asm.h"
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'`
@@ -19725,9 +19731,6 @@ if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'`
 search_list="$search_list $tmpdir/include/dis-asm.h"
 fi
-if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/include/dis-asm.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/include/dis-asm.h $CHAOS_HOMEDIR/include/dis-asm.h"
-fi
 if test "include" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
      search_list="$search_list $tmp_lib_value/dis-asm.h"
@@ -19736,11 +19739,11 @@ fi
 
 search_list="$search_list /usr/include/dis-asm.h /usr/local/include/dis-asm.h /opt/binutils/include/dis-asm.h /opt/misc/include/dis-asm.h /opt/misc/include/$cercs_cv_archive/dis-asm.h"
 tmp_search_results=""
-echo "configure:19739: searching for $search_list " >&5
+echo "configure:19742: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:19743: first found $tmp_search_results " >&5
+	echo "configure:19746: first found $tmp_search_results " >&5
 	break
    fi
 done
@@ -19794,7 +19797,13 @@ fi
 search_list="$search_list $EXPANDED/libopcodes.la $EXPANDED/lib/libopcodes.la $EXPANDED/share/libopcodes.la $EXPANDED/$cercs_cv_archive/libopcodes.la $EXPANDED/$cercs_cv_archive/lib/libopcodes.la $EXPANDED/binutils/libopcodes.la $EXPANDED/binutils/$cercs_cv_archive/libopcodes.la $EXPANDED/binutils/lib/libopcodes.la $EXPANDED/binutils/lib/$cercs_cv_archive/libopcodes.la"
 fi
 if test -z "$with_installed_specified"; then
-search_list="$search_list `pwd`/../binutils/libopcodes.la `pwd`/../lib/libopcodes.la `pwd`/../share/libopcodes.la $HOME/binutils/libopcodes.la $HOME/$cercs_cv_archive/lib/libopcodes.la $HOME/lib/libopcodes.la"
+search_list="$search_list `pwd`/../binutils/libopcodes.la `pwd`/../lib/libopcodes.la `pwd`/../share/libopcodes.la"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/binutils/libopcodes.la $HOME/$cercs_cv_archive/lib/libopcodes.la $HOME/lib/libopcodes.la"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/lib/libopcodes.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/lib/libopcodes.la $CHAOS_HOMEDIR/lib/libopcodes.la"
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'`
@@ -19812,9 +19821,6 @@ if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'`
 search_list="$search_list $tmpdir/lib/libopcodes.la"
 fi
-if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/lib/libopcodes.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/lib/libopcodes.la $CHAOS_HOMEDIR/lib/libopcodes.la"
-fi
 if test "lib" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
      search_list="$search_list $tmp_lib_value/libopcodes.la"
@@ -19823,11 +19829,11 @@ fi
 
 search_list="$search_list /usr/lib/libopcodes.la /usr/local/lib/libopcodes.la /opt/binutils/lib/libopcodes.la /opt/misc/lib/libopcodes.la /opt/misc/lib/$cercs_cv_archive/libopcodes.la"
 tmp_search_results=""
-echo "configure:19826: searching for $search_list " >&5
+echo "configure:19832: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:19830: first found $tmp_search_results " >&5
+	echo "configure:19836: first found $tmp_search_results " >&5
 	break
    fi
 done
@@ -19987,7 +19993,13 @@ fi
 search_list="$search_list $EXPANDED/avcall.h $EXPANDED/include/avcall.h $EXPANDED/share/avcall.h $EXPANDED/$cercs_cv_archive/avcall.h $EXPANDED/$cercs_cv_archive/include/avcall.h $EXPANDED/ffcall/avcall.h $EXPANDED/ffcall/$cercs_cv_archive/avcall.h $EXPANDED/ffcall/include/avcall.h $EXPANDED/ffcall/include/$cercs_cv_archive/avcall.h"
 fi
 if test -z "$with_installed_specified"; then
-search_list="$search_list `pwd`/../ffcall/avcall.h `pwd`/../include/avcall.h `pwd`/../share/avcall.h $HOME/ffcall/avcall.h $HOME/$cercs_cv_archive/include/avcall.h $HOME/include/avcall.h"
+search_list="$search_list `pwd`/../ffcall/avcall.h `pwd`/../include/avcall.h `pwd`/../share/avcall.h"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/ffcall/avcall.h $HOME/$cercs_cv_archive/include/avcall.h $HOME/include/avcall.h"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/include/avcall.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/include/avcall.h $CHAOS_HOMEDIR/include/avcall.h"
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'`
@@ -20005,9 +20017,6 @@ if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'`
 search_list="$search_list $tmpdir/include/avcall.h"
 fi
-if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/include/avcall.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/include/avcall.h $CHAOS_HOMEDIR/include/avcall.h"
-fi
 if test "include" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
      search_list="$search_list $tmp_lib_value/avcall.h"
@@ -20016,11 +20025,11 @@ fi
 
 search_list="$search_list /usr/include/avcall.h /usr/local/include/avcall.h /opt/ffcall/include/avcall.h /opt/misc/include/avcall.h /opt/misc/include/$cercs_cv_archive/avcall.h"
 tmp_search_results=""
-echo "configure:20019: searching for $search_list " >&5
+echo "configure:20028: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:20023: first found $tmp_search_results " >&5
+	echo "configure:20032: first found $tmp_search_results " >&5
 	break
    fi
 done
@@ -20074,7 +20083,13 @@ fi
 search_list="$search_list $EXPANDED/libavcall.la $EXPANDED/lib/libavcall.la $EXPANDED/share/libavcall.la $EXPANDED/$cercs_cv_archive/libavcall.la $EXPANDED/$cercs_cv_archive/lib/libavcall.la $EXPANDED/ffcall/libavcall.la $EXPANDED/ffcall/$cercs_cv_archive/libavcall.la $EXPANDED/ffcall/lib/libavcall.la $EXPANDED/ffcall/lib/$cercs_cv_archive/libavcall.la"
 fi
 if test -z "$with_installed_specified"; then
-search_list="$search_list `pwd`/../ffcall/libavcall.la `pwd`/../lib/libavcall.la `pwd`/../share/libavcall.la $HOME/ffcall/libavcall.la $HOME/$cercs_cv_archive/lib/libavcall.la $HOME/lib/libavcall.la"
+search_list="$search_list `pwd`/../ffcall/libavcall.la `pwd`/../lib/libavcall.la `pwd`/../share/libavcall.la"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/ffcall/libavcall.la $HOME/$cercs_cv_archive/lib/libavcall.la $HOME/lib/libavcall.la"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/lib/libavcall.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/lib/libavcall.la $CHAOS_HOMEDIR/lib/libavcall.la"
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'`
@@ -20092,9 +20107,6 @@ if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'`
 search_list="$search_list $tmpdir/lib/libavcall.la"
 fi
-if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/lib/libavcall.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/lib/libavcall.la $CHAOS_HOMEDIR/lib/libavcall.la"
-fi
 if test "lib" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
      search_list="$search_list $tmp_lib_value/libavcall.la"
@@ -20103,11 +20115,11 @@ fi
 
 search_list="$search_list /usr/lib/libavcall.la /usr/local/lib/libavcall.la /opt/ffcall/lib/libavcall.la /opt/misc/lib/libavcall.la /opt/misc/lib/$cercs_cv_archive/libavcall.la"
 tmp_search_results=""
-echo "configure:20106: searching for $search_list " >&5
+echo "configure:20118: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:20110: first found $tmp_search_results " >&5
+	echo "configure:20122: first found $tmp_search_results " >&5
 	break
    fi
 done
