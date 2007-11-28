@@ -335,7 +335,13 @@ vmi->bbcount++;\
 vmi->bblist = realloc(vmi->bblist, sizeof(struct basic_block) * (vmi->bbcount +1));\
 bb = &vmi->bblist[vmi->bbcount];\
 bb->start = i;\
+bb->end = -1;\
 bb->label = -1;\
+bb->end_branch_label = -1;\
+bb->fall_through = 0;	  \
+bb->loop_depth = 0;				\
+bb->is_loop_start = 0;				\
+bb->is_loop_end = 0;				\
 bb->regs_used = new_bit_vec(c->p->vreg_count);\
 bb->regs_defined = new_bit_vec(c->p->vreg_count);
 
