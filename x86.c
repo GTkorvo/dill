@@ -1902,6 +1902,7 @@ x86_reg_init(dill_stream s, x86_mach_info smi)
     s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
 
+#define bit_mmx (1<<23)
 #define bit_sse (1<<25)
 
 extern void*
@@ -1944,6 +1945,7 @@ dill_stream s;
 	__asm__ ("pushl %%ecx; pushl %%ebx; cpuid; popl %%ebx; popl %%ecx"
 		 : "=d" (fl2), "=a" (fl1) : "1" (1) : "cc");
 	host_supports_SSE = ((fl2 & bit_sse) == bit_sse);
+	host_supports_SSE |= ((fl2 & bit_mmx) == bit_mmx);
 #else
 	host_supports_SSE = 1;
 #endif
