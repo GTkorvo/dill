@@ -1224,6 +1224,12 @@ x86_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_F,DILL_UL):
     case CONV(DILL_D,DILL_U):
     case CONV(DILL_D,DILL_UL):
+	if (smi->generate_SSE) {
+	    /* NO direct SSE 32-bit unsigned conversion */
+	    /* load operand from mmx to 8087 stack */
+	    x86_pstorei(s, from_type, 0, 0,  _frame_reg, smi->conversion_word);
+	    x86_ploadi(s, from_type, 1 /* force 8087 */, dest, _frame_reg, smi->conversion_word);
+	}
 	/* use dest for float control word */
 	/* fstcw (store control word) */
 	BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x7, _frame_reg), smi->fcu_word);
