@@ -1227,8 +1227,8 @@ x86_convert(dill_stream s, int from_type, int to_type,
 	if (smi->generate_SSE) {
 	    /* NO direct SSE 32-bit unsigned conversion */
 	    /* load operand from mmx to 8087 stack */
-	    x86_pstorei(s, from_type, 0, 0,  _frame_reg, smi->conversion_word);
-	    x86_ploadi(s, from_type, 1 /* force 8087 */, dest, _frame_reg, smi->conversion_word);
+	    x86_pstorei(s, from_type, 0, src,  _frame_reg, smi->conversion_word);
+	    x86_ploadi(s, from_type, 1 /* force 8087 */, 0, _frame_reg, smi->conversion_word);
 	}
 	/* use dest for float control word */
 	/* fstcw (store control word) */
