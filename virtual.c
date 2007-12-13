@@ -1094,6 +1094,11 @@ build_bbs(dill_stream c, void *vinsns, void *code_end)
     bb->regs_used = new_bit_vec(c->p->vreg_count);
     bb->regs_defined = new_bit_vec(c->p->vreg_count);
     bb->reg_assigns = NULL;
+    bb->end_branch_label = -1;
+    bb->fall_through = 0;
+    bb->loop_depth = 0;
+    bb->is_loop_start = 0;
+    bb->is_loop_end = 0;
     while((insn = &insns[i++]) < (virtual_insn *)code_end) {
 	switch(insn->class_code) {
 	case iclass_arith3:
