@@ -18,7 +18,6 @@ $DT = "d";
 while ($_ = $ARGV[0]) {
 	shift;
 	last if /^--$/;
-	if (/^-no_float/) {$FT=""; $DT="";}
 }
 
 &output_header;
