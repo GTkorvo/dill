@@ -494,7 +494,7 @@ dump_bb(dill_stream c, struct basic_block *bb, int i)
     printf("\n");
     for (j = bb->start; j <= bb->end; j++) {
 	printf(" %d - ", j);
-	virtual_print_insn(c, NULL, ((char *)c->p->code_base) + 
+	virtual_print_insn(c, NULL, ((char *)c->p->virtual.code_base) + 
 			   j * sizeof(virtual_insn));
 	printf("\n");
     }
