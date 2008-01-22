@@ -1496,6 +1496,7 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --enable-disassembly    enable binutils-based disassembly (default is NO)
   --enable-multitarget    Turn on non-native target builds
 
 Optional Packages:
@@ -5020,7 +5021,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5023 "configure"' > conftest.$ac_ext
+  echo '#line 5024 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7285,11 +7286,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7288: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7289: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7292: \$? = $ac_status" >&5
+   echo "$as_me:7293: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7575,11 +7576,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7578: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7579: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7582: \$? = $ac_status" >&5
+   echo "$as_me:7583: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7679,11 +7680,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7682: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7683: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7686: \$? = $ac_status" >&5
+   echo "$as_me:7687: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10028,7 +10029,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10031 "configure"
+#line 10032 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10128,7 +10129,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10131 "configure"
+#line 10132 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12548,11 +12549,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12551: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12552: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12555: \$? = $ac_status" >&5
+   echo "$as_me:12556: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12652,11 +12653,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12655: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12656: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12659: \$? = $ac_status" >&5
+   echo "$as_me:12660: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14214,11 +14215,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14217: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14218: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14221: \$? = $ac_status" >&5
+   echo "$as_me:14222: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14318,11 +14319,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14321: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14322: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14325: \$? = $ac_status" >&5
+   echo "$as_me:14326: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -16505,11 +16506,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16508: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16509: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16512: \$? = $ac_status" >&5
+   echo "$as_me:16513: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -16795,11 +16796,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16798: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16799: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16802: \$? = $ac_status" >&5
+   echo "$as_me:16803: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -16899,11 +16900,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16902: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16903: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:16906: \$? = $ac_status" >&5
+   echo "$as_me:16907: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -19552,6 +19553,15 @@ LIBTOOL='$(SHELL) $(top_builddir)/libtool'
 
 
 
+# Check whether --enable-disassembly was given.
+if test "${enable_disassembly+set}" = set; then
+  enableval=$enable_disassembly;
+else
+  enable_disassembly="no"
+fi
+
+
+if test x$enable_disassembly = xyes; then
 
 # Check whether --with-installed was given.
 if test "${with_installed+set}" = set; then
@@ -19739,11 +19749,11 @@ fi
 
 search_list="$search_list /usr/include/dis-asm.h /usr/local/include/dis-asm.h /opt/binutils/include/dis-asm.h /opt/misc/include/dis-asm.h /opt/misc/include/$cercs_cv_archive/dis-asm.h"
 tmp_search_results=""
-echo "configure:19742: searching for $search_list " >&5
+echo "configure:19752: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:19746: first found $tmp_search_results " >&5
+	echo "configure:19756: first found $tmp_search_results " >&5
 	break
    fi
 done
@@ -19829,11 +19839,11 @@ fi
 
 search_list="$search_list /usr/lib/libopcodes.la /usr/local/lib/libopcodes.la /opt/binutils/lib/libopcodes.la /opt/misc/lib/libopcodes.la /opt/misc/lib/$cercs_cv_archive/libopcodes.la"
 tmp_search_results=""
-echo "configure:19832: searching for $search_list " >&5
+echo "configure:19842: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:19836: first found $tmp_search_results " >&5
+	echo "configure:19846: first found $tmp_search_results " >&5
 	break
    fi
 done
@@ -19875,6 +19885,9 @@ LDFLAGS=$new_flags
 fi
 
 
+else
+NO_DISASSEMBLER="yes"
+fi
 if test x$kernel_build = xtrue; then
    NO_DISASSEMBLER="yes"
 fi
@@ -20025,11 +20038,11 @@ fi
 
 search_list="$search_list /usr/include/avcall.h /usr/local/include/avcall.h /opt/ffcall/include/avcall.h /opt/misc/include/avcall.h /opt/misc/include/$cercs_cv_archive/avcall.h"
 tmp_search_results=""
-echo "configure:20028: searching for $search_list " >&5
+echo "configure:20041: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:20032: first found $tmp_search_results " >&5
+	echo "configure:20045: first found $tmp_search_results " >&5
 	break
    fi
 done
@@ -20115,11 +20128,11 @@ fi
 
 search_list="$search_list /usr/lib/libavcall.la /usr/local/lib/libavcall.la /opt/ffcall/lib/libavcall.la /opt/misc/lib/libavcall.la /opt/misc/lib/$cercs_cv_archive/libavcall.la"
 tmp_search_results=""
-echo "configure:20118: searching for $search_list " >&5
+echo "configure:20131: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:20122: first found $tmp_search_results " >&5
+	echo "configure:20135: first found $tmp_search_results " >&5
 	break
    fi
 done
@@ -20299,6 +20312,7 @@ else
 emulation_possible="false"
 fi
 
+if test x$enable_disassembly = xyes; then
 if test "${ac_cv_header_dis_asm_h+set}" = set; then
   { echo "$as_me:$LINENO: checking for dis-asm.h" >&5
 echo $ECHO_N "checking for dis-asm.h... $ECHO_C" >&6; }
@@ -20480,6 +20494,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f conftest.err conftest.$ac_ext
+fi
 
 { echo "$as_me:$LINENO: checking size of long" >&5
 echo $ECHO_N "checking size of long... $ECHO_C" >&6; }
@@ -21202,6 +21217,7 @@ else
   NATIVE_CG_FALSE=
 fi
 
+if (test "$NO_DISASSEMBLER" != "yes") then
 if test "x$multitarget" = xfalse; then
   as_ecl_dis=`echo "ecl_cv_print_insn_$DIS_ROUTINE" | $as_tr_sh`
 
@@ -22769,14 +22785,6 @@ DIS_LIBS="$ecl_cv_disassembly_libs"
 LIBS=$CACHE_LIBS
 
 fi
-if (test "$NO_DISASSEMBLER" = "yes") then
-    DIS_LIBS=""
-
-cat >>confdefs.h <<\_ACEOF
-#define NO_DISASSEMBLER 1
-_ACEOF
-
-fi
 
 { echo "$as_me:$LINENO: checking bfd functions use bfd_byte typed args" >&5
 echo $ECHO_N "checking bfd functions use bfd_byte typed args... $ECHO_C" >&6; }
@@ -22828,6 +22836,15 @@ _ACEOF
 
 fi
 
+fi
+if (test "$NO_DISASSEMBLER" = "yes") then
+    DIS_LIBS=""
+
+cat >>confdefs.h <<\_ACEOF
+#define NO_DISASSEMBLER 1
+_ACEOF
+
+fi
 
 
 

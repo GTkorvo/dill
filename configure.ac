@@ -61,7 +61,14 @@ AC_PROG_LN_S
 AM_PROG_LIBTOOL
 
 dnl     checks for libraries
+AC_ARG_ENABLE(disassembly,AC_HELP_STRING([--enable-disassembly],
+                            [enable binutils-based disassembly (default is NO)]),,enable_disassembly="no")
+
+if test x$enable_disassembly = xyes; then
 CERCS_REQUIRE_OTHER_PACKAGE(binutils, dis-asm.h, libopcodes.la)
+else
+NO_DISASSEMBLER="yes"
+fi
 if test x$kernel_build = xtrue; then
    NO_DISASSEMBLER="yes"
 fi
@@ -83,6 +90,7 @@ emulation_possible="false"
 fi
 
 dnl     checks for header files
+if test x$enable_disassembly = xyes; then
 AC_CHECK_HEADER(dis-asm.h,AC_DEFINE(HAVE_DIS_ASM_H,1,[Define to 1 if you have the <dis-asm.h> header file.]),
 AC_MSG_WARN("No include file dis-asm.h found, no disassembler included");
 NO_DISASSEMBLER="yes")
@@ -93,6 +101,7 @@ struct disassemble_info info;
 INIT_DISASSEMBLE_INFO(info, stdout, fprintf);
 }
 ],AC_DEFINE(INIT_DISASSEMBLE_INFO_THREE_ARG,1,[Define if INIT_DISASSEMBLE_INFO takes three arguments instead of two]))
+fi
 
 dnl     checks for types
 AC_COMPILE_CHECK_SIZEOF(long)
@@ -194,6 +203,7 @@ fi
 
 AM_CONDITIONAL(BUILD_LIBRARY, test x$build_library = xtrue)
 AM_CONDITIONAL(NATIVE_CG, test x$native_cg = xtrue)
+if (test "$NO_DISASSEMBLER" != "yes") then
 if test "x$multitarget" = xfalse; then
   ECL_CHECK_DISASSEMBLER($DIS_ROUTINE)
 else
@@ -203,11 +213,12 @@ else
   ECL_CHECK_DISASSEMBLER(arm)
   ECL_CHECK_DISASSEMBLER(little_arm)
 fi
+ECL_CHECK_BFD_ARGS
+fi
 if (test "$NO_DISASSEMBLER" = "yes") then
     DIS_LIBS=""
     AC_DEFINE(NO_DISASSEMBLER, 1, [Define if there is no disassembler])
 fi
-ECL_CHECK_BFD_ARGS
 AC_SUBST(DIS_LIBS)
 AC_SUBST(TEST_PERL_FLAGS)
 AC_SUBST(ARCH_FILE)
