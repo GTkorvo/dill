@@ -19727,19 +19727,19 @@ search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/include/dis-
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/dis-asm.h"
+search_list="$tmpdir/dis-asm.h $search_list"
 fi
 if test "$exec_prefix" != "NONE"; then
 tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/lib/dis-asm.h"
+search_list="$tmpdir/lib/dis-asm.h $search_list"
 fi
 if test "$includedir" != '${prefix}/include'; then
 tmpdir=`echo ${includedir} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/dis-asm.h"
+search_list="$tmpdir/dis-asm.h $search_list"
 fi
 if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/include/dis-asm.h"
+search_list="$tmpdir/include/dis-asm.h $search_list"
 fi
 if test "include" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
@@ -19817,19 +19817,19 @@ search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/lib/libopcod
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/libopcodes.la"
+search_list="$tmpdir/libopcodes.la $search_list"
 fi
 if test "$exec_prefix" != "NONE"; then
 tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/lib/libopcodes.la"
+search_list="$tmpdir/lib/libopcodes.la $search_list"
 fi
 if test "$includedir" != '${prefix}/include'; then
 tmpdir=`echo ${includedir} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/libopcodes.la"
+search_list="$tmpdir/libopcodes.la $search_list"
 fi
 if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/lib/libopcodes.la"
+search_list="$tmpdir/lib/libopcodes.la $search_list"
 fi
 if test "lib" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
@@ -20016,19 +20016,19 @@ search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/include/avcall
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/avcall.h"
+search_list="$tmpdir/avcall.h $search_list"
 fi
 if test "$exec_prefix" != "NONE"; then
 tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/lib/avcall.h"
+search_list="$tmpdir/lib/avcall.h $search_list"
 fi
 if test "$includedir" != '${prefix}/include'; then
 tmpdir=`echo ${includedir} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/avcall.h"
+search_list="$tmpdir/avcall.h $search_list"
 fi
 if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/include/avcall.h"
+search_list="$tmpdir/include/avcall.h $search_list"
 fi
 if test "include" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
@@ -20106,19 +20106,19 @@ search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/lib/libavcall.
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/libavcall.la"
+search_list="$tmpdir/libavcall.la $search_list"
 fi
 if test "$exec_prefix" != "NONE"; then
 tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/lib/libavcall.la"
+search_list="$tmpdir/lib/libavcall.la $search_list"
 fi
 if test "$includedir" != '${prefix}/include'; then
 tmpdir=`echo ${includedir} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/libavcall.la"
+search_list="$tmpdir/libavcall.la $search_list"
 fi
 if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'`
-search_list="$search_list $tmpdir/lib/libavcall.la"
+search_list="$tmpdir/lib/libavcall.la $search_list"
 fi
 if test "lib" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
