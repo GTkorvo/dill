@@ -145,19 +145,19 @@ search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/$1/$5/$2 $CHAOS_HOMED
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
 tmpdir=`echo ${libdir} |  sed 's%/$%%'` 
-search_list="$search_list $tmpdir/$2"
+search_list="$tmpdir/$2 $search_list"
 fi
 if test "$exec_prefix" != "NONE"; then
 tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'` 
-search_list="$search_list $tmpdir/lib/$2"
+search_list="$tmpdir/lib/$2 $search_list"
 fi
 if test "$includedir" != '${prefix}/include'; then
 tmpdir=`echo ${includedir} |  sed 's%/$%%'` 
-search_list="$search_list $tmpdir/$2"
+search_list="$tmpdir/$2 $search_list"
 fi
 if test "$prefix" != "NONE"; then
 tmpdir=`echo ${prefix} |  sed 's%/$%%'` 
-search_list="$search_list $tmpdir/$5/$2"
+search_list="$tmpdir/$5/$2 $search_list"
 fi
 if test "$5" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
