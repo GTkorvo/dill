@@ -529,7 +529,7 @@ extern void virtual_jump_to_imm(dill_stream s, void *imm)
     INSN_OUT(s, i);
 }
 
-extern int virtual_calli(dill_stream s, int type, void *xfer_address, char *name)
+extern int virtual_calli(dill_stream s, int type, void *xfer_address, const char *name)
 {
     virtual_insn i;
     i.class_code = iclass_call;

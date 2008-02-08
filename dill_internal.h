@@ -48,7 +48,7 @@ typedef struct branch_table *branch_t;
 struct call_location {
     int loc;
     void *xfer_addr;
-    char *xfer_name;
+    const char *xfer_name;
     void *mach_info;
 };
 
@@ -231,7 +231,7 @@ struct dec {
 extern int dill_mustsave(reg_set *regs, int reg);
 extern int dill_wasused(reg_set *regs, int reg);
 extern void dill_mark_branch_location(dill_stream s, int label);
-extern void dill_mark_call_location(dill_stream s, char *xfer_name,
+extern void dill_mark_call_location(dill_stream s, const char *xfer_name,
 				 void *xfer_address);
 extern void dill_mark_ret_location(dill_stream s);
 extern void dill_end_vararg_push(dill_stream s);
@@ -249,7 +249,7 @@ typedef struct dill_pkg_1 {
 
 typedef struct xfer_rec {
     /*! the textual name of the external entry */
-    char *xfer_name;
+    const char *xfer_name;
     /*! the address of the external entry */
     void *xfer_addr;
 } xfer_entry;

@@ -400,7 +400,7 @@ dill_finalize(dill_stream s)
     (s->j->end)(s);
     s->p->save_param_count = s->p->c_param_count;
     s->p->c_param_count = 0;
-    handle->fp = s->p->fp;
+    handle->fp = (void(*)())s->p->fp;
     return handle;
 }
 
@@ -521,7 +521,7 @@ extern void dill_mark_ret_location(dill_stream s)
     t->ret_count++;
 }
 
-extern void dill_mark_call_location(dill_stream s, char *xfer_name, 
+extern void dill_mark_call_location(dill_stream s, const char *xfer_name, 
 				 void *xfer_address)
 {
     struct call_table *t = &s->p->call_table;

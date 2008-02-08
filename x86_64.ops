@@ -9,8 +9,8 @@ sub upperc {
 
 &arith_insn("add", "i u ul l p", "x86_64_arith3", "0x03", "T");
 &arith_insn("sub", "i u ul l p", "x86_64_arith3", "0x2b", "T");
-&arith_insn("mul", "u ul", "x86_64_mul", "0 /*unsigned*/", "0");
-&arith_insn("mul", "i l", "x86_64_mul", "1 /*signed*/", "0");
+&arith_insn("mul", "u ul", "(arith_op3)x86_64_mul", "0 /*unsigned*/", "0");
+&arith_insn("mul", "i l", "(arith_op3)x86_64_mul", "1 /*signed*/", "0");
 &arith_insn("div", "u ul i l", "x86_64_div_mod", "1", "T");
 &arith_insn("mod", "u ul i l", "x86_64_div_mod", "0", "T");
 &arith_insn("and", "i u ul l", "x86_64_arith3", "0x23", "T");
