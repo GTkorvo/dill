@@ -4162,7 +4162,7 @@ build_label_translation(dill_stream c)
 static int
 virtual_insn_count(dill_stream c)
 {
-    virtual_insn *insn = c->p->code_base;
+    virtual_insn *insn = (virtual_insn*)c->p->code_base;
     int count = 0;
     for (; insn < (virtual_insn *)c->p->cur_ip; insn++) {
 	if (insn->class_code != iclass_nop) count++;

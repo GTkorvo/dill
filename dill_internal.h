@@ -92,15 +92,15 @@ typedef struct saved {
     jmp_table mach_jump;
     mach_reset_func mach_reset;
     void *mach_info;
-    void *code_base;
-    void *cur_ip;
-    void *code_limit;
+    char *code_base;
+    char *cur_ip;
+    char *code_limit;
 } saved_insn_info;
 
 struct dill_private_ctx {
-    void *code_base;
-    void *cur_ip;
-    void *code_limit;
+    char *code_base;
+    char *cur_ip;
+    char *code_limit;
     void *fp;
     void *fpc;
     int ret_type;
