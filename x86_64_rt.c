@@ -1,6 +1,7 @@
 #include "config.h"
 #include "dill.h"
 #include "dill_internal.h"
+#include "sys/mman.h"
 #include "x86.h"
 
 extern long dill_x86_64_hidden_mod(long a, long b)
@@ -54,8 +55,15 @@ x86_64_flush(void *base, void *limit)
 extern char *
 x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
+    char *tmp = code;
     dill_lookup_xfer_addrs(t, &x86_64_xfer_recs[0]);
     x86_64_rt_call_link(code, t);
     x86_64_flush(code, code + 1024);
-    return code;
+#ifdef USE_MMAP_CODE_SEG
+    tmp = (void*)mmap(0, pkg->code_size,
+		      PROT_EXEC | PROT_READ | PROT_WRITE, 
+		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+    memcpy(tmp, code, pkg->code_size);
+#endif
+    return tmp;
 }
