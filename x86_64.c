@@ -134,7 +134,7 @@ BYTE_OUT2R(dill_stream s, int rex, int insn1, int insn2)
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+2;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -153,7 +153,7 @@ BYTE_OUT1R(dill_stream s, int rex, int insn1)
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+1;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -176,7 +176,7 @@ BYTE_OUT2IR(dill_stream s, int rex, int insn1, int insn2, int imm32)
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+6;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -201,7 +201,7 @@ BYTE_OUT3IR(dill_stream s, int rex, int insn1, int insn2, int insn3, int imm32)
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+7;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -222,7 +222,7 @@ BYTE_OUT1IR(dill_stream s, int rex, int insn1, int imm32)
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+5;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -243,7 +243,7 @@ BYTE_OUT1LR(dill_stream s, int rex, int insn1, long imm64)
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+9;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -266,7 +266,7 @@ BYTE_OUT3R(dill_stream s, int rex, int insn1, int insn2, int insn3)
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+3;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -291,7 +291,7 @@ BYTE_OUT4R(dill_stream s, int rex, int insn1, int insn2, int insn3, int insn4)
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+4;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -318,7 +318,7 @@ BYTE_OUT1R3I(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4,
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+8;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -347,7 +347,7 @@ BYTE_OUT1R4I(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4,
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+9;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -372,7 +372,7 @@ BYTE_OUT1R3(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4)
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+4;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -399,7 +399,7 @@ BYTE_OUT1R4(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4, 
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+5;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 static void
@@ -428,7 +428,7 @@ BYTE_OUT1R5(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4, 
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+6;
-    if (rex !=0) ((char*)s->p->cur_ip)++;
+    if (rex !=0) s->p->cur_ip++;
 }
 
 #define x86_64_movi(s, dest, src)  x86_64_pmov(s, DILL_I, dest, src)
