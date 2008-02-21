@@ -58,7 +58,6 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libdill_la_DEPENDENCIES =
 am__libdill_la_SOURCES_DIST = dill_util.c dill_pkg.c dill_cplus.c \
 	dill_virtual.c virtual.c dill.c vm.c version.c \
 	dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c \
@@ -153,6 +152,7 @@ CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DIS_LIBS = @DIS_LIBS@
+DUMMY_LIBOPCODES_TARGET = @DUMMY_LIBOPCODES_TARGET@
 ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -170,6 +170,7 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 KERNEL_VERSION = @KERNEL_VERSION@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
+LIBOPCODES_DIR = @LIBOPCODES_DIR@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
@@ -260,6 +261,7 @@ noinst_HEADERS = config.h dill_internal.h
 @MULTI_TARGET_TRUE@		dill_ia64.c ia64.c virtual.c dill.c vm.c version.c
 
 libdill_la_LIBADD = @DIS_LIBS@ 
+libdill_la_DEPENDENCIES = @DUMMY_LIBOPCODES_TARGET@
 libdill_la_LDFLAGS = 
 CLEANFILES = dill_sparc.c dill.h dill_x86.c dill_x86_64.c dill_arm5.c dill_virtual.c dill.c
 all: $(BUILT_SOURCES) config.h
@@ -809,6 +811,9 @@ dill.h: base.ops
 	$(PERL) $(srcdir)/base.ops
 
 $(libdill_la_OBJECTS) : dill.h
+
+libopcodes.la:
+	./make_dummy_la @LIBOPCODES_DIR@ opcodes
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

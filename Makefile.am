@@ -29,6 +29,7 @@ endif !NATIVE_CG
 endif !MULTI_TARGET
 
 libdill_la_LIBADD =   @DIS_LIBS@ 
+libdill_la_DEPENDENCIES = @DUMMY_LIBOPCODES_TARGET@
 libdill_la_LDFLAGS =
 
 CLEANFILES = dill_sparc.c dill.h dill_x86.c dill_x86_64.c dill_arm5.c dill_virtual.c dill.c
@@ -58,3 +59,5 @@ dill.h: base.ops
 
 $(libdill_la_OBJECTS) : dill.h
 
+libopcodes.la:
+	./make_dummy_la @LIBOPCODES_DIR@ opcodes

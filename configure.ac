@@ -66,17 +66,31 @@ AC_ARG_ENABLE(disassembly,AC_HELP_STRING([--enable-disassembly],
 
 if test x$enable_disassembly = xyes; then
 CERCS_REQUIRE_OTHER_PACKAGE(binutils, dis-asm.h, libopcodes.la)
+if test x$cercs_cv_binutils_link_dir = x; then
+dnl libtool archive not found
+unset cercs_cv_binutils_link_dir
+unset cercs_cv_binutils_link_arg
+CERCS_REQUIRE_OTHER_PACKAGE(binutils,, libopcodes.a)
+if test x$cercs_cv_binutils_link_dir = x; then
+  for tmp_lib_value in $sys_lib_search_path_spec; do
+     tmp=`ls $tmp_lib_value/libopcodes*.so`
+     if test "x$tmp" != "x"; then 
+        cercs_cv_binutils_link_dir = $tmp_lib_value;
+     fi
+  done
+fi
+DUMMY_LIBOPCODES_TARGET=libopcodes.la
+LIBOPCODES_DIR=$cercs_cv_binutils_link_dir
+cercs_cv_binutils_link_dir=.
+cercs_cv_binutils_link_arg="-L."
+AC_SUBST(DUMMY_LIBOPCODES_TARGET)
+AC_SUBST(LIBOPCODES_DIR)
+fi
 else
 NO_DISASSEMBLER="yes"
 fi
 if test x$kernel_build = xtrue; then
    NO_DISASSEMBLER="yes"
-fi
-if test -n "$cercs_cv_binutils_link_dir";  then
-   if test ! -r $cercs_cv_binutils_link_dir/libopcodes.so; then
-      AC_MSG_WARN([REDHAT libopcodes.so oddity.  No disassembler included]);
-      NO_DISASSEMBLER="yes"  
-   fi
 fi
 AC_CHECK_LIB(m,sqrt,[MATH_LIB=-lm])
 AC_SUBST(MATH_LIB)
