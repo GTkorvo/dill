@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  usage:  make_dummy_la  directory_of_libs name_of_lib install_dir
+#  usage:  install_dummy_la  directory_of_libs name_of_lib install_dir
  (test -r "$1/lib$2.a") then STATICLIB=lib$2.a; fi
 DYNAMICFILES=`cd $1 | ls lib$2*so`
 if (test ! -d ".libs") mkdir .libs; fi
