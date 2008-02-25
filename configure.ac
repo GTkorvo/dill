@@ -73,18 +73,22 @@ unset cercs_cv_binutils_link_arg
 CERCS_REQUIRE_OTHER_PACKAGE(binutils,, libopcodes.a)
 if test x$cercs_cv_binutils_link_dir = x; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
-     tmp=`ls $tmp_lib_value/libopcodes*.so`
+     tmp=`ls $tmp_lib_value/libopcodes*.so 2> /dev/null`
      if test "x$tmp" != "x"; then 
-        cercs_cv_binutils_link_dir = $tmp_lib_value;
+        cercs_cv_binutils_link_dir=$tmp_lib_value;
      fi
   done
 fi
+if test "${cercs_cv_binutils_link_dir+set}" = set; then
 DUMMY_LIBOPCODES_TARGET=libopcodes.la
 LIBOPCODES_DIR=$cercs_cv_binutils_link_dir
 cercs_cv_binutils_link_dir=.
 cercs_cv_binutils_link_arg="-L."
 AC_SUBST(DUMMY_LIBOPCODES_TARGET)
 AC_SUBST(LIBOPCODES_DIR)
+else
+NO_DISASSEMBLER="yes"
+fi
 fi
 else
 NO_DISASSEMBLER="yes"
@@ -92,6 +96,7 @@ fi
 if test x$kernel_build = xtrue; then
    NO_DISASSEMBLER="yes"
 fi
+AM_CONDITIONAL(INSTALL_DUMMY_OPCODES, test x$DUMMY_LIBOPCODES_TARGET != x)
 AC_CHECK_LIB(m,sqrt,[MATH_LIB=-lm])
 AC_SUBST(MATH_LIB)
 CERCS_REQUIRE_OTHER_PACKAGE(ffcall, avcall.h, libavcall.la)

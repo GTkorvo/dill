@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+#  usage:  make_dummy_la  directory_of_libs name_of_lib install_dir
+ (test -r "$1/lib$2.a") then STATICLIB=lib$2.a; fi
+DYNAMICFILES=`cd $1 | ls lib$2*so`
+if (test ! -d ".libs") mkdir .libs; fi
+for dll in $DYNAMICFILES
+do
+  (cd $install_dir; ln -s $1/$dll)
+done
+cp .libs/lib$2.la $1

@@ -12,9 +12,15 @@ endif BUILD_LIBRARY
 
 all-local:
 check-local:
-install-exec-local:
+if INSTALL_DUMMY_OPCODES
+install-exec-local: libopcodes.la
+	$(srcdir)/install_dummy_la  @LIBOPCODES_DIR@ opcodes "$(DESTDIR)$(libdir)";
+endif INSTALL_DUMMY_OPCODES
 
 noinst_HEADERS = config.h dill_internal.h
+
+clean-local:
+	rm libopcodes.la
 
 if MULTI_TARGET
 libdill_la_SOURCES = dill_sparc.c dill_util.c dill_cplus.c dill_pkg.c sparc.c dill_x86.c x86.c x86_rt.c \
@@ -60,4 +66,4 @@ dill.h: base.ops
 $(libdill_la_OBJECTS) : dill.h
 
 libopcodes.la:
-	./make_dummy_la @LIBOPCODES_DIR@ opcodes
+	$(srcdir)/make_dummy_la @LIBOPCODES_DIR@ opcodes $(libdir)
