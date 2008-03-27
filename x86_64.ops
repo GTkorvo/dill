@@ -41,10 +41,10 @@ sub upperc {
 &arithi_insn("lsh", "i u ul l", "x86_64_shifti", "0x4", "T");
 &arithi_insn("rsh", "i l", "x86_64_shifti", "0x7", "T");
 &arithi_insn("rsh", "u ul", "x86_64_shifti", "0x5", "T");
-&branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "x86_64_branch");
-&branchi_insn( "eq ge gt le lt ne", "i u ul l p", "x86_64_branchi");
-&compare_insn( "eq ge gt le lt ne", "i u ul l p d f", "x86_64_compare");
-&comparei_insn( "eq ge gt le lt ne", "i u ul l p", "x86_64_comparei");
+&branch_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "x86_64_branch");
+&branchi_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "x86_64_branchi");
+&compare_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "x86_64_compare");
+&comparei_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "x86_64_comparei");
 
 print COUT "jmp_table ${mach}_jump_table;\n";
 print COUT "extern void dill_x86_64_init(dill_stream s)\n{\n";
