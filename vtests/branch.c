@@ -38,10 +38,30 @@ main(int argc, char **argv)
     
     if (verbose) dill_dump(s);
     
-    if (ip() != -3) failure = 1;
-    if (ip() != -1) failure = 2;
-    if (ip() != -2) failure = 3;
-    if (ip() != -3) failure = 4;
+    if (ip() != -3) {
+	if (verbose) {
+	    printf("Failed at point 1\n");
+	}
+	failure = 1;
+    }
+    if (ip() != -1)  {
+	if (verbose) {
+	    printf("Failed at point 2\n");
+	}
+	failure = 2;
+    }
+    if (ip() != -2) {
+	if (verbose) {
+	    printf("Failed at point 3\n");
+	}
+	failure = 3;
+    }
+    if (ip() != -3) {
+	if (verbose) {
+	    printf("Failed at point 4\n");
+	}
+	failure = 4;
+    }
     dill_free_stream(s);
     return failure;
 }
