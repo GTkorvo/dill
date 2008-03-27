@@ -21,13 +21,12 @@ sub upperc {
 
 &arithi_insn("and or xor lsh rsh", "i u ul l", "dill_varith3i", "0x1", "2");
 
-&branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "virtual_branch");
-&branchi_insn( "eq ge gt le lt ne", "i u ul l p", "virtual_branchi");
-&compare_insn( "eq ge gt le lt ne", "i u ul l p d f", "virtual_compare");
+&branch_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "virtual_branch");
+&branchi_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "virtual_branchi");
+&compare_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "virtual_compare");
 
-&convert( "c d f i l s u ul us uc", "i u ul l");
-&convert( "d f i l u ul", "f d");
-&convert( "i l u ul", "c s");
+&convert( "c d f i l s u ul us uc", "c uc s us i u ul l");
+&convert( "c uc s us d f i l u ul", "f d");
 &convert( "p ul", "ul p");
 &load_store("c d f i l s u ul us uc");
 

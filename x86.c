@@ -1213,7 +1213,11 @@ x86_convert(dill_stream s, int from_type, int to_type,
 	break;
     case CONV(DILL_F,DILL_I):
     case CONV(DILL_F,DILL_L):
+    case CONV(DILL_F,DILL_S):
+    case CONV(DILL_F,DILL_C):
     case CONV(DILL_D,DILL_I):
+    case CONV(DILL_D,DILL_S):
+    case CONV(DILL_D,DILL_C):
     case CONV(DILL_D,DILL_L):
 	if (smi->generate_SSE) {
 	    BYTE_OUT4(s, (from_type == DILL_D) ? 0xf2 : 0xf3, 0xf, 0x2c, ModRM(0x3, dest, src));
@@ -1222,8 +1226,12 @@ x86_convert(dill_stream s, int from_type, int to_type,
 	/* fall through */
     case CONV(DILL_F,DILL_U):
     case CONV(DILL_F,DILL_UL):
+    case CONV(DILL_F,DILL_US):
+    case CONV(DILL_F,DILL_UC):
     case CONV(DILL_D,DILL_U):
     case CONV(DILL_D,DILL_UL):
+    case CONV(DILL_D,DILL_US):
+    case CONV(DILL_D,DILL_UC):
 	if (smi->generate_SSE) {
 	    /* NO direct SSE 32-bit unsigned conversion */
 	    /* load operand from mmx to 8087 stack */
@@ -1247,9 +1255,11 @@ x86_convert(dill_stream s, int from_type, int to_type,
 	/* fistpl (do the conversion) */
 	switch(to_type){
 	case DILL_U: case DILL_UL:
+	case DILL_UC: case DILL_US:
 	    BYTE_OUT3(s, 0xdf, ModRM(0x1, 0x7, _frame_reg), smi->conversion_word);
 	    break;
 	case DILL_I: case DILL_L:
+	case DILL_C: case DILL_S:
 	    BYTE_OUT3(s, 0xdb, ModRM(0x1, 0x3, _frame_reg), smi->conversion_word);
 	    break;
 	}
@@ -1261,6 +1271,10 @@ x86_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_L,DILL_D):
     case CONV(DILL_I,DILL_F):
     case CONV(DILL_L,DILL_F):
+    case CONV(DILL_C,DILL_D):
+    case CONV(DILL_C,DILL_F):
+    case CONV(DILL_S,DILL_D):
+    case CONV(DILL_S,DILL_F):
 	x86_pstorei(s, DILL_I, 0, src, _frame_reg, smi->conversion_word);
 	if (smi->generate_SSE) {
 	    	BYTE_OUT4(s, (to_type == DILL_D) ? 0xf2 : 0xf3, 0xf, 0x2a, ModRM(0x3, dest, src));
@@ -1270,6 +1284,10 @@ x86_convert(dill_stream s, int from_type, int to_type,
 	break;
     case CONV(DILL_U,DILL_D):
     case CONV(DILL_UL,DILL_D):
+    case CONV(DILL_UC,DILL_D):
+    case CONV(DILL_US,DILL_D):
+    case CONV(DILL_UC,DILL_F):
+    case CONV(DILL_US,DILL_F):
     case CONV(DILL_U,DILL_F):
     case CONV(DILL_UL,DILL_F):
 	if (smi->generate_SSE) {
@@ -1290,23 +1308,41 @@ x86_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_C,DILL_L):
     case CONV(DILL_C,DILL_U):
     case CONV(DILL_C,DILL_UL):
+    case CONV(DILL_C, DILL_S):
+    case CONV(DILL_S, DILL_C):
+    case CONV(DILL_US, DILL_C):
 	/* signext24 - lsh24, rsha24 */
 	x86_lshi(s, dest, src, 24);
 	x86_rshai(s, dest, dest, 24);
 	break;
+    case CONV(DILL_I, DILL_UC):
+    case CONV(DILL_S, DILL_UC):
+    case CONV(DILL_L, DILL_UC):
     case CONV(DILL_I, DILL_C):
     case CONV(DILL_U, DILL_C):
     case CONV(DILL_L, DILL_C):
     case CONV(DILL_UL, DILL_C):
+    case CONV(DILL_C, DILL_UC):
+    case CONV(DILL_U, DILL_UC):
+    case CONV(DILL_US, DILL_UC):
+    case CONV(DILL_UL, DILL_UC):
 	x86_andi(s, dest, src, 0xff);
 	break;
     case CONV(DILL_S,DILL_I):
     case CONV(DILL_S,DILL_L):
     case CONV(DILL_S,DILL_U):
     case CONV(DILL_S,DILL_UL):
+    case CONV(DILL_S,DILL_US):
+    case CONV(DILL_US,DILL_S):
 	/* signext16 - lsh16, rsha16 */
 	x86_lshi(s, dest, src, 16);
 	x86_rshai(s, dest, dest, 16);
+	break;
+    case CONV(DILL_C, DILL_US):
+	/* signext16 - lsh16, rsha16 */
+	x86_lshi(s, dest, src, 24);
+	x86_rshai(s, dest, dest, 24);
+	x86_andi(s, dest, src, 0xffff);
 	break;
     case CONV(DILL_US,DILL_I):
     case CONV(DILL_US,DILL_L):
@@ -1444,6 +1480,8 @@ x86_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 	dill_mark_branch_location(s, label);
 	BYTE_OUT2I(s, 0x0f, br_fop_conds[op], 0);
 	break;
+    case DILL_US:
+    case DILL_UC:
     case DILL_U:
     case DILL_UL:
 	op += 6; /* second set of codes */
@@ -1612,6 +1650,8 @@ x86_branchi(dill_stream s, int op, int type, int src, long imm, int label)
     case DILL_D:
 	fprintf(stderr, "Shouldn't happen\n");
 	break;
+    case DILL_UC:
+    case DILL_US:
     case DILL_U:
     case DILL_UL:
 /*

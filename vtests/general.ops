@@ -32,13 +32,13 @@ while ($_ = $ARGV[0]) {
 &arithi_insn("add sub mul div mod and or xor lsh rsh", "+ - * / % & | ^ << >>", "i u ul l");
 &arithpi_insn("add sub", "+ -","p");
 
-&branch_insn( "eq ge gt le lt ne", "== >= > <= < !=", "i u ul l p $DT $FT");
-&branchi_insn( "eq ge gt le lt ne", "== >= > <= < !=", "i u ul l p");
+&branch_insn( "eq ge gt le lt ne", "== >= > <= < !=", "c uc s us i u ul l p $DT $FT");
+&branchi_insn( "eq ge gt le lt ne", "== >= > <= < !=", "c uc s us i u ul l p");
 
-&compare_insn( "eq ge gt le lt ne", "== >= > <= < !=", "i u ul l p $DT $FT");
+&compare_insn( "eq ge gt le lt ne", "== >= > <= < !=", "c uc s us i u ul l p $DT $FT");
 
-&convert( "c $DT $FT i l s u ul us", "i u ul l");
-&convert( "$DT $FT i l u ul", "$FT $DT");
+&convert( "c $DT $FT i l s u ul us", "c uc s us i u ul l");
+&convert( "$DT $FT c us s us i l u ul", "$FT $DT");
 &convert( "i l u ul", "c s");
 &convert( "p ul", "ul p");
 

@@ -69,12 +69,12 @@ while ($_ = $ARGV[0]) {
 #
 # 	name		c-equiv operation	types
 
-&branch("beq",		"==",			"i u ul l p $FT $DT");
-&branch("bne",		"!=",			"i u ul l p $FT $DT");
-&branch("blt",		"<",			"i u ul l p $FT $DT");
-&branch("ble",		"<=",			"i u ul l p $FT $DT");
-&branch("bgt",		">",			"i u ul l p $FT $DT");
-&branch("bge",		">=",			"i u ul l p $FT $DT");
+&branch("beq",		"==",			"c uc s us i u ul l p $FT $DT");
+&branch("bne",		"!=",			"c uc s us i u ul l p $FT $DT");
+&branch("blt",		"<",			"c uc s us i u ul l p $FT $DT");
+&branch("ble",		"<=",			"c uc s us i u ul l p $FT $DT");
+&branch("bgt",		">",			"c uc s us i u ul l p $FT $DT");
+&branch("bge",		">=",			"c uc s us i u ul l p $FT $DT");
 
 
 ###########################################################################
@@ -82,12 +82,12 @@ while ($_ = $ARGV[0]) {
 #
 # 	name		c-equiv operation	types
 
-&compare("eq",		"==",			"i u ul l p $FT $DT");
-&compare("ne",		"!=",			"i u ul l p $FT $DT");
-&compare("lt",		"<",			"i u ul l p $FT $DT");
-&compare("le",		"<=",			"i u ul l p $FT $DT");
-&compare("gt",		">",			"i u ul l p $FT $DT");
-&compare("ge",		">=",			"i u ul l p $FT $DT");
+&compare("eq",		"==",			"c uc s us i u ul l p $FT $DT");
+&compare("ne",		"!=",			"c uc s us i u ul l p $FT $DT");
+&compare("lt",		"<",			"c uc s us i u ul l p $FT $DT");
+&compare("le",		"<=",			"c uc s us i u ul l p $FT $DT");
+&compare("gt",		">",			"c uc s us i u ul l p $FT $DT");
+&compare("ge",		">=",			"c uc s us i u ul l p $FT $DT");
 
 
 # TODO: add conditonal move, boolean expressions
@@ -872,8 +872,11 @@ int main(int argc, char *argv[])
     unsigned short	dus, s2us, s1us;
     int 	     	di, s1i, s2i;
     unsigned     	du, s1u, s2u;
-    unsigned long   dul, s1ul, s2ul;
-    long     	s1l, s2l;
+    unsigned long   	dul, s1ul, s2ul;
+    long     		s1l, s2l;
+    char		s2c;
+    short		s2s;
+    unsigned char	s2uc;
     float		df, s1f, s2f;
     double		dd, s1d, s2d;
     void		*dp, *s1p, *s2p;
@@ -922,6 +925,16 @@ loop:
     s2us = rand() - rand();
     if(!(s2us = rand() - rand()))
 	s2us = rand() + 1;
+
+    s2c = rand() - rand();
+    if(!(s2c = rand() - rand()))
+	s2c = rand() + 1;
+    s2uc = rand() - rand();
+    if(!(s2uc = rand() - rand()))
+	s2uc = rand() + 1;
+    s2s = rand() - rand();
+    if(!(s2s = rand() - rand()))
+	s2s = rand() + 1;
 
     s1f = (float)rand() / rand();
     s2f = (float)rand() / (rand()+1) * ((rand()%1) ? 1. : -1.);

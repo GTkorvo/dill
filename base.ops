@@ -26,13 +26,12 @@ EOF
 &arith2( "bswap", "s us i u ul l f d");
 &arith2( "neg", "f d");
     $branch = 0;
-&branch( "eq ge gt le lt ne", "i u ul l p d f");
+&branch( "eq ge gt le lt ne", "c uc s us i u ul l p d f");
     $compare = 0;
-&compare( "eq ge gt le lt ne", "i u ul l p d f");
+&compare( "eq ge gt le lt ne", "c uc s us i u ul l p d f");
     $convert = 0;
-&convert( "c d f i l s u ul us uc", "i u ul l");
-&convert( "d f i l u ul", "f d");
-&convert( "i l u ul", "c s");
+&convert( "c d f i l s u ul us uc", "c uc s us i u ul l");
+&convert( "c uc s us d f i l u ul", "f d");
 &convert( "p ul", "ul p");
 &loadstore("c d f i l p s u uc u ul us");
 &ret("c uc s us i u l ul p d f");
