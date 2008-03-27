@@ -1753,8 +1753,12 @@ x86_64_convert(dill_stream s, int from_type, int to_type,
     }
     case CONV(DILL_F,DILL_U):
     case CONV(DILL_F,DILL_UL):
+    case CONV(DILL_F,DILL_US):
+    case CONV(DILL_F,DILL_UC):
     case CONV(DILL_D,DILL_U):
     case CONV(DILL_D,DILL_UL):
+    case CONV(DILL_D,DILL_US):
+    case CONV(DILL_D,DILL_UC):
     {
 	int return_reg;
 	if (from_type == DILL_F) {
@@ -1772,8 +1776,12 @@ x86_64_convert(dill_stream s, int from_type, int to_type,
     }
     case CONV(DILL_F,DILL_I):
     case CONV(DILL_F,DILL_L):
+    case CONV(DILL_F,DILL_S):
+    case CONV(DILL_F,DILL_C):
     case CONV(DILL_D,DILL_I):
     case CONV(DILL_D,DILL_L):
+    case CONV(DILL_D,DILL_S):
+    case CONV(DILL_D,DILL_C):
     {
 	int rex = 0;
 	/* cvttsd2si */
@@ -1785,6 +1793,10 @@ x86_64_convert(dill_stream s, int from_type, int to_type,
     }
     case CONV(DILL_I,DILL_D):
     case CONV(DILL_I,DILL_F):
+    case CONV(DILL_S,DILL_D):
+    case CONV(DILL_S,DILL_F):
+    case CONV(DILL_C,DILL_D):
+    case CONV(DILL_C,DILL_F):
     {
 	int rex = 0;
 	/* cvtsi2s{s,d} */
@@ -1797,6 +1809,10 @@ x86_64_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_L,DILL_D):
     case CONV(DILL_U,DILL_D):
     case CONV(DILL_U,DILL_F):
+    case CONV(DILL_US,DILL_D):
+    case CONV(DILL_US,DILL_F):
+    case CONV(DILL_UC,DILL_D):
+    case CONV(DILL_UC,DILL_F):
     {
 	int rex = REX_W;
 	/* cvtsi2s{s,d} */
@@ -1819,20 +1835,38 @@ x86_64_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_C,DILL_L):
     case CONV(DILL_C,DILL_U):
     case CONV(DILL_C,DILL_UL):
-	/* signext24 - lsh24, rsha24 */
+    case CONV(DILL_C,DILL_S):
+    case CONV(DILL_S,DILL_C):
+    case CONV(DILL_US,DILL_C):
+	/* signext56 - lsh56, rsha56 */
 	x86_64_lshi(s, dest, src, 56);
 	x86_64_rshai(s, dest, dest, 56);
+	break;
+    case CONV(DILL_C, DILL_US):
+	/* signext56 - lsh56, rsha56 */
+	x86_64_lshi(s, dest, src, 56);
+	x86_64_rshai(s, dest, dest, 56);
+	x86_64_andi(s, dest, dest, 0xffff);
 	break;
     case CONV(DILL_I, DILL_C):
     case CONV(DILL_U, DILL_C):
     case CONV(DILL_L, DILL_C):
     case CONV(DILL_UL, DILL_C):
+    case CONV(DILL_C, DILL_UC):
+    case CONV(DILL_I, DILL_UC):
+    case CONV(DILL_S, DILL_UC):
+    case CONV(DILL_U, DILL_UC):
+    case CONV(DILL_L, DILL_UC):
+    case CONV(DILL_UL, DILL_UC):
+    case CONV(DILL_US, DILL_UC):
 	x86_64_andi(s, dest, src, 0xff);
 	break;
     case CONV(DILL_S,DILL_I):
     case CONV(DILL_S,DILL_L):
     case CONV(DILL_S,DILL_U):
     case CONV(DILL_S,DILL_UL):
+    case CONV(DILL_S,DILL_US):
+    case CONV(DILL_US,DILL_S):
 	/* signext48 - lsh48, rsha48 */
 	x86_64_lshi(s, dest, src, 48);
 	x86_64_rshai(s, dest, dest, 48);
@@ -1892,6 +1926,8 @@ x86_64_branch(dill_stream s, int op, int type, int src1, int src2, int label)
     switch(type) {
     case DILL_U:
     case DILL_UL:
+    case DILL_US:
+    case DILL_UC:
 	op += 6; /* second set of codes */
 	/* fall through */
     default:
@@ -2247,6 +2283,8 @@ x86_64_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 	break;
     case DILL_U:
     case DILL_UL:
+    case DILL_US:
+    case DILL_UC:
 /*
 	switch(op) {
 	case dill_bge_code: {
