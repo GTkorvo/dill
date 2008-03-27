@@ -1203,7 +1203,9 @@ dill_pcompare(dill_stream s, int op_type, int data_type, dill_reg dest, dill_reg
 	printf("Bad op type in dill_pcompare\n");
     }
     switch (data_type) {
+    case DILL_C: case DILL_S:
     case DILL_I: typ = 0; break;
+    case DILL_UC: case DILL_US:
     case DILL_U: typ = 1; break;
     case DILL_L: typ = 2; break;
     case DILL_UL: typ = 3; break;
@@ -1211,7 +1213,7 @@ dill_pcompare(dill_stream s, int op_type, int data_type, dill_reg dest, dill_reg
     case DILL_D: typ = 5; break;
     case DILL_F: typ = 6; break;
     default:
-	dill_error("BAD  data type in dill_pbr\n");
+	dill_error("BAD  data type in dill_pcompare\n");
 	typ = 0;
     }
     index = typ + 7 * op_type;
