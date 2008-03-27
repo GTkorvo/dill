@@ -1339,10 +1339,10 @@ x86_convert(dill_stream s, int from_type, int to_type,
 	x86_rshai(s, dest, dest, 16);
 	break;
     case CONV(DILL_C, DILL_US):
-	/* signext16 - lsh16, rsha16 */
+	/* signext24 - lsh24, rsha24, trunc 16 */
 	x86_lshi(s, dest, src, 24);
 	x86_rshai(s, dest, dest, 24);
-	x86_andi(s, dest, src, 0xffff);
+	x86_andi(s, dest, dest, 0xffff);
 	break;
     case CONV(DILL_US,DILL_I):
     case CONV(DILL_US,DILL_L):
