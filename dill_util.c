@@ -1173,24 +1173,11 @@ extern void
 dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1, dill_reg src2, 
        int label)
 {
-    int typ, index;
+    int index;
     if ((op_type < dill_eq_code ) || (op_type > dill_ne_code)) {
 	printf("Bad op type in dill_pbr\n");
     }
-    switch (data_type) {
-    case DILL_C: case DILL_UC: case DILL_S: case DILL_US:
-    case DILL_I: typ = 0; break;
-    case DILL_U: typ = 1; break;
-    case DILL_L: typ = 2; break;
-    case DILL_UL: typ = 3; break;
-    case DILL_P: typ = 4; break;
-    case DILL_D: typ = 5; break;
-    case DILL_F: typ = 6; break;
-    default:
-	dill_error("BAD  data type in dill_pbr\n");
-	typ = 0;
-    }
-    index = typ + 7 * op_type;
+    index = data_type + 11 * op_type;
     (s->j->jmp_b)[index](s, s->j->b_data[index].data1, 
 			 s->j->b_data[index].data2, src1, src2, label);
 }
@@ -1198,25 +1185,11 @@ dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1, dill_reg src2
 extern void
 dill_pcompare(dill_stream s, int op_type, int data_type, dill_reg dest, dill_reg src1, dill_reg src2)
 {
-    int typ, index;
+    int index;
     if ((op_type < dill_eq_code ) || (op_type > dill_ne_code)) {
 	printf("Bad op type in dill_pcompare\n");
     }
-    switch (data_type) {
-    case DILL_C: case DILL_S:
-    case DILL_I: typ = 0; break;
-    case DILL_UC: case DILL_US:
-    case DILL_U: typ = 1; break;
-    case DILL_L: typ = 2; break;
-    case DILL_UL: typ = 3; break;
-    case DILL_P: typ = 4; break;
-    case DILL_D: typ = 5; break;
-    case DILL_F: typ = 6; break;
-    default:
-	dill_error("BAD  data type in dill_pcompare\n");
-	typ = 0;
-    }
-    index = typ + 7 * op_type;
+    index = data_type + 11 * op_type;
     (s->j->jmp_c)[index](s, s->j->c_data[index].data1, 
 			 s->j->c_data[index].data2, dest, src1, src2);
 }
