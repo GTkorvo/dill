@@ -15,7 +15,7 @@
 #define sparc_sethi(s, r, imm) INSN_OUT(s, HDR(0)|RD(r)|OP2(0x4)|imm)
 #define sparc_ori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP3(0x2)|IM|RD(dest)|RS1(src)|imm)
 #define sparc_xori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP3(0x3)|IM|RD(dest)|RS1(src)|imm)
-#define sparc_andi(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP3(0x1)|IM|RD(dest)|RS1(src)|imm)
+#define sparc_andi(s, dest, src, imm) sparc_FORM3imm_arith(s, 0x1, 0, dest, src, imm)
 #define sparc_or(s, dest, src1, src2) INSN_OUT(s, HDR(0x2)|OP3(0x2)|RD(dest)|RS1(src1)|RS2(src2))
 #define sparc_movi(s, dest, src) sparc_or(s, dest, src, _g0)
 #define sparc_int_mov(s, dest, src) sparc_or(s, dest, _g0, src)
@@ -739,7 +739,7 @@ sparc_convert(dill_stream s, int from_type, int to_type,
     from_type &= 0xf;
     to_type &= 0xf;
     switch(CONV(from_type, to_type)) {
-    case CONV(DILL_I, DILL_L):
+    case CONV(DILL_I,DILL_L):
 	if (word_size == 64) {
 	    /* sign extend */
 	    sparc_xlshi(s, dest, src, 32);
@@ -747,10 +747,11 @@ sparc_convert(dill_stream s, int from_type, int to_type,
 	    return;
 	}
 	/* fall through to mov */
-    case CONV(DILL_UC, DILL_US):
-    case CONV(DILL_C, DILL_US):
-    case CONV(DILL_C, DILL_UC):
-    case CONV(DILL_I, DILL_U):
+    case CONV(DILL_US,DILL_S):
+    case CONV(DILL_UC,DILL_US):
+    case CONV(DILL_C,DILL_US):
+    case CONV(DILL_C,DILL_UC):
+    case CONV(DILL_I,DILL_U):
     case CONV(DILL_I,DILL_UL):
     case CONV(DILL_UL,DILL_I):
     case CONV(DILL_UL,DILL_U):
@@ -839,6 +840,18 @@ sparc_convert(dill_stream s, int from_type, int to_type,
 	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
 	sparc_movf2i(s, dest, src);
 	break;
+    case CONV(DILL_D,DILL_C):
+    case CONV(DILL_D,DILL_UC):
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
+	sparc_movf2i(s, dest, src);
+	sparc_andi(s, dest, dest, 0xff);
+	break;
+    case CONV(DILL_D,DILL_S):
+    case CONV(DILL_D,DILL_US):
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
+	sparc_movf2i(s, dest, src);
+	sparc_andi(s, dest, dest, 0xffff);
+	break;
     case CONV(DILL_D,DILL_U):
         {
 	    int ret;
@@ -918,19 +931,29 @@ sparc_convert(dill_stream s, int from_type, int to_type,
 	}
 	break;
     case CONV(DILL_C,DILL_UL):
+    case CONV(DILL_C,DILL_S):
     case CONV(DILL_C,DILL_L):
     case CONV(DILL_C,DILL_I):
     case CONV(DILL_C,DILL_U):
 	sparc_lshi(s, dest, src, 24);
 	sparc_rshai(s, dest, dest, 24);
 	break;
-    case CONV(DILL_S, DILL_C):
-    case CONV(DILL_US, DILL_C):
-    case CONV(DILL_I, DILL_C):
-    case CONV(DILL_U, DILL_C):
-    case CONV(DILL_L, DILL_C):
-    case CONV(DILL_UL, DILL_C):
+    case CONV(DILL_S,DILL_C):
+    case CONV(DILL_US,DILL_C):
+    case CONV(DILL_I,DILL_C):
+    case CONV(DILL_U,DILL_C):
+    case CONV(DILL_L,DILL_C):
+    case CONV(DILL_UL,DILL_C):
+    case CONV(DILL_L,DILL_UC):
+    case CONV(DILL_US,DILL_UC):
+    case CONV(DILL_UL,DILL_UC):
+    case CONV(DILL_I,DILL_UC):
+    case CONV(DILL_U,DILL_UC):
+    case CONV(DILL_S,DILL_UC):
 	sparc_andi(s, dest, src, 0xff);
+	break;
+    case CONV(DILL_S,DILL_US):
+	sparc_andi(s, dest, src, 0xffff);
 	break;
     case CONV(DILL_S,DILL_L):
     case CONV(DILL_S,DILL_UL):
@@ -943,14 +966,14 @@ sparc_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_US,DILL_L):
     case CONV(DILL_US,DILL_U):
     case CONV(DILL_US,DILL_UL):
-    case CONV(DILL_I, DILL_S):
-    case CONV(DILL_U, DILL_S):
-    case CONV(DILL_L, DILL_S):
-    case CONV(DILL_UL, DILL_S):
-    case CONV(DILL_I, DILL_US):
-    case CONV(DILL_U, DILL_US):
-    case CONV(DILL_L, DILL_US):
-    case CONV(DILL_UL, DILL_US):
+    case CONV(DILL_I,DILL_S):
+    case CONV(DILL_U,DILL_S):
+    case CONV(DILL_L,DILL_S):
+    case CONV(DILL_UL,DILL_S):
+    case CONV(DILL_I,DILL_US):
+    case CONV(DILL_U,DILL_US):
+    case CONV(DILL_L,DILL_US):
+    case CONV(DILL_UL,DILL_US):
 	sparc_lshi(s, dest, src, 16);
 	sparc_rshi(s, dest, dest, 16);
 	break;
