@@ -791,7 +791,7 @@ check-local:
 @INSTALL_DUMMY_OPCODES_TRUE@	$(srcdir)/install_dummy_la  @LIBOPCODES_DIR@ opcodes "$(DESTDIR)$(libdir)";
 
 clean-local:
-	rm libopcodes.la
+	rm -f libopcodes.la
 
 vm.lo: vm_include.c
 

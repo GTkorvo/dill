@@ -20,7 +20,7 @@ endif INSTALL_DUMMY_OPCODES
 noinst_HEADERS = config.h dill_internal.h
 
 clean-local:
-	rm libopcodes.la
+	rm -f libopcodes.la
 
 if MULTI_TARGET
 libdill_la_SOURCES = dill_sparc.c dill_util.c dill_cplus.c dill_pkg.c sparc.c dill_x86.c x86.c x86_rt.c \
