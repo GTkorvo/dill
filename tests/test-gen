@@ -243,39 +243,45 @@ EOF
 #
 sub emit_cvt {
 	local($t, $from_type, $name) = @_;
-	local($insn, $insni);
+	local($insn);
 
 	$insn = "$name$t";
-	$insni = "$insn" . "i";
 
 	$cast1 = ($t eq "p") ? "" : "";
 	$cast2 = ($from_type eq "p") ? "" : "";
 	$upt = "\U$t\E";
+	$upfrom = "\U$from_type\E";
 print<<EOF;
     {
 	$type{$t} expected_result;
 	$type{$t} result;
 	$type{$t}(*func)($type{$from_type});
-	dill_reg	rd$t;
+	dill_reg	rd${t}1, rd${from_type}2;
 	dill_exec_handle h;
+	int reg_set = 0;
 
 	/* reg <- ($type{$t}) reg */
 	if (verbose) printf(" - $insn\\n");
-        dill_start_proc(s, "$insn",  DILL_$upt, "%$from_type");
-		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
-			dill_fatal("out of registers!");
+	while (get_reg_pair(s, DILL_$upt, &rd${t}1, DILL_$upfrom, &rd${from_type}2, reg_set++) != 0) {
+	    dill_start_proc(s, "$insn",  DILL_$upt, "%$from_type");
+	    if (rd${from_type}2 == -1) {
+	        rd${from_type}2 = dill_param_reg(s, 0);
+	    } else {
+	        dill_mov$from_type(s, rd${from_type}2, dill_param_reg(s, 0));
+	    }
 
-        	dill_$insn(s, rd$t, dill_param_reg(s, 0));
-        	dill_ret$t(s, rd$t);
-	h = dill_finalize(s);
-        func = ($type{$t}(*)($type{$from_type})) dill_get_fp(h);
-        expected_result = ($type{$t}) s1$from_type;
-	result = func(s1$from_type);
-	dill_free_handle(h);
-	if (expected_result != result) {
-	    printf("Failed test for $insn, got $c_print_formats{$t}, expected $c_print_formats{$t} for ($type{$t}) $c_print_formats{$from_type}\\n", $cast1 result, $cast1 expected_result, $cast2 s1$from_type);
-	    dill_errors++;
-	    dill_dump(s);
+	    dill_$insn(s, rd${t}1, rd${from_type}2);
+	    dill_ret$t(s, rd${t}1);
+	    h = dill_finalize(s);
+            func = ($type{$t}(*)($type{$from_type})) dill_get_fp(h);
+            expected_result = ($type{$t}) s1$from_type;
+	    result = func(s1$from_type);
+	    dill_free_handle(h);
+	    if (expected_result != result) {
+	        printf("Failed test for $insn, reg pair %d, %d, got $c_print_formats{$t}, expected $c_print_formats{$t} for ($type{$t}) $c_print_formats{$from_type}\\n", rd${t}1, rd${from_type}2, $cast1 result, $cast1 expected_result, $cast2 s1$from_type);
+	        dill_errors++;
+	        dill_dump(s);
+	    }
 	}
     }
 EOF
@@ -849,6 +855,7 @@ sub prologue {
 
 print<<EOF;
 
+#include <../config.h>
 #undef BITSPERBYTE
 #define BITSPERBYTE 8
 
@@ -863,6 +870,9 @@ double c_sqrt(double x) { extern double sqrt(double); 	return sqrt(x);}
 
 #define dill_fatal(str) do {fprintf(stderr, "%s\\n", str); exit(0);} while (0)
 
+static int
+get_reg_pair(dill_stream s, int type1, int *reg1p, int type2, int *reg2p,
+	     int regpairid);
 int main(int argc, char *argv[])
 {
     dill_stream s = dill_create_raw_stream();
@@ -991,6 +1001,52 @@ print<<EOF;
     printf("shifti = %d, shiftu = %d, shiftl = %d, shiftul = %d\\n",
 	   shifti, shiftu, shiftl, shiftul);	
     return 1;
+}
+
+struct regset {
+    int reg1;
+    int reg2;
+};
+
+static int
+get_reg_pair(dill_stream s, int type1, int *reg1p, int type2, int *reg2p,
+	     int regpairid)
+{
+#ifdef HOST_X86_64
+typedef void *arg_info_list;  /* just to get us through the #include below */
+#include "../x86_64.h"
+    struct regset intregs[] = {
+	{-1, EBX},
+	{EBX, EAX},
+	{EAX, EBX},
+	{EBX, R12},
+	{R13, EBX}};
+    struct regset floatregs[] = {
+	{-1, XMM1},
+	{XMM1, XMM5},
+	{XMM2, XMM5},
+	{XMM1, XMM10},
+	{XMM10, XMM1}};
+
+    if (regpairid >= (sizeof(intregs) / sizeof(struct regset)))  return 0;
+    if ((type1 == DILL_F) || (type1 == DILL_D)) {
+    	*reg1p = floatregs[regpairid].reg1;
+    } else {
+    	*reg1p = intregs[regpairid].reg1;
+    }
+    if ((type2 == DILL_F) || (type2 == DILL_D)) {
+    	*reg2p = floatregs[regpairid].reg2;
+    } else {
+    	*reg2p = intregs[regpairid].reg2;
+    }
+    return 1;
+#else
+    if (regpairid != 0) return 0;
+    *reg2p = -1;	/* use param reg */
+    if(!dill_raw_getreg(s, reg1p, type1, DILL_TEMP))
+	dill_fatal("out of registers!");
+    return 1;
+#endif
 }
 
 EOF
