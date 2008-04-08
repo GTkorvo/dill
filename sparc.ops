@@ -62,10 +62,10 @@ sub upperc {
 &arithi_insn("rsh", "l", "sparc_FORM3imm_arith", "0x27", "1");
 &arithi_insn("rsh", "u", "sparc_FORM3imm_arith", "0x26", "0");
 &arithi_insn("rsh", "ul", "sparc_FORM3imm_arith", "0x26", "1");
-&branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "sparc_branch");
-&branchi_insn( "eq ge gt le lt ne", "i u ul l p", "sparc_branchi");
-&compare_insn( "eq ge gt le lt ne", "i u ul l p d f", "sparc_compare");
-&comparei_insn( "eq ge gt le lt ne", "i u ul l p", "sparc_comparei");
+&branch_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "sparc_branch");
+&branchi_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "sparc_branchi");
+&compare_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "sparc_compare");
+&comparei_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "sparc_comparei");
 
 print COUT <<EOF;
 extern void sparc_FORM3_farith(s, op3, fop, dest, src1, src2)

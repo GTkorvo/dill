@@ -747,6 +747,9 @@ sparc_convert(dill_stream s, int from_type, int to_type,
 	    return;
 	}
 	/* fall through to mov */
+    case CONV(DILL_UC, DILL_US):
+    case CONV(DILL_C, DILL_US):
+    case CONV(DILL_C, DILL_UC):
     case CONV(DILL_I, DILL_U):
     case CONV(DILL_I,DILL_UL):
     case CONV(DILL_UL,DILL_I):
@@ -777,6 +780,30 @@ sparc_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_F,DILL_I):
 	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
 	sparc_movf2i(s, dest, src);
+	break;
+    case CONV(DILL_F,DILL_C):
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	sparc_movf2i(s, dest, src);
+	sparc_lshi(s, dest, src, 24);
+	sparc_rshai(s, dest, dest, 24);
+	break;
+    case CONV(DILL_F,DILL_S):
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	sparc_movf2i(s, dest, src);
+	sparc_lshi(s, dest, src, 16);
+	sparc_rshai(s, dest, dest, 16);
+	break;
+    case CONV(DILL_F,DILL_UC):
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	sparc_movf2i(s, dest, src);
+	sparc_lshi(s, dest, src, 24);
+	sparc_rshi(s, dest, dest, 24);
+	break;
+    case CONV(DILL_F,DILL_US):
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	sparc_movf2i(s, dest, src);
+	sparc_lshi(s, dest, src, 16);
+	sparc_rshi(s, dest, dest, 16);
 	break;
     case CONV(DILL_F,DILL_U):
         {
@@ -830,6 +857,8 @@ sparc_convert(dill_stream s, int from_type, int to_type,
 	    sparc_mov(s, DILL_UL, 0, dest, ret);
 	}
 	break;
+    case CONV(DILL_C,DILL_D):
+    case CONV(DILL_S,DILL_D):
     case CONV(DILL_I,DILL_D):
 	sparc_rshi(s, _g1, src, 0);
 	src = _g1;
@@ -838,6 +867,8 @@ sparc_convert(dill_stream s, int from_type, int to_type,
 	sparc_movi2f(s, dest, src);
 	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc8)|RS2(dest));/*fitod*/
 	break;
+    case CONV(DILL_UC,DILL_D):
+    case CONV(DILL_US,DILL_D):
     case CONV(DILL_U,DILL_D):
 	if (smi->stack_align == 8) { 
 	    sparc_rshi(s, _g1, src, 0);
@@ -858,11 +889,15 @@ sparc_convert(dill_stream s, int from_type, int to_type,
 	    sparc_mov(s, DILL_D, 0, dest, ret);
 	}
 	break;
+    case CONV(DILL_C,DILL_F):
+    case CONV(DILL_S,DILL_F):
     case CONV(DILL_I,DILL_F):
     case CONV(DILL_L,DILL_F):
 	sparc_movi2f(s, dest, src);
 	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc4)|RS2(dest));/*fitos*/
 	break;
+    case CONV(DILL_UC,DILL_F):
+    case CONV(DILL_US,DILL_F):
     case CONV(DILL_U,DILL_F):
 	if (smi->stack_align == 8) { 
 	    sparc_rshi(s, _g1, src, 0);
@@ -889,6 +924,8 @@ sparc_convert(dill_stream s, int from_type, int to_type,
 	sparc_lshi(s, dest, src, 24);
 	sparc_rshai(s, dest, dest, 24);
 	break;
+    case CONV(DILL_S, DILL_C):
+    case CONV(DILL_US, DILL_C):
     case CONV(DILL_I, DILL_C):
     case CONV(DILL_U, DILL_C):
     case CONV(DILL_L, DILL_C):

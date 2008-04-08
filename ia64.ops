@@ -42,10 +42,10 @@ sub upperc {
 &arithi_insn("xor", "i u ul l", "ia64_arith3i", "0xb", "3");
 &arithi_insn("lsh", "i u ul l", "ia64_shifti", "1", "DILL_t");
 &arithi_insn("rsh", "i u ul l", "ia64_shifti", "0", "DILL_t");
-&branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "ia64_branch");
-&branchi_insn( "eq ge gt le lt ne", "i u ul l p", "ia64_branchi");
-&compare_insn( "eq ge gt le lt ne", "i u ul l p d f", "ia64_compare");
-&comparei_insn( "eq ge gt le lt ne", "i u ul l p", "ia64_comparei");
+&branch_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "ia64_branch");
+&branchi_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "ia64_branchi");
+&compare_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "ia64_compare");
+&comparei_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "ia64_comparei");
 
 print COUT "jmp_table ${mach}_jump_table;\n";
 print COUT "extern void dill_ia64_init(dill_stream c)\n{\n";
