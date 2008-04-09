@@ -948,12 +948,12 @@ x86_64_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset)
     }
     switch(type){
     case DILL_C:
-	x86_64_lshi(s, dest, tmp_dest, 24);
-	x86_64_rshi(s, dest, dest, 24);
+	x86_64_lshi(s, dest, tmp_dest, 56);
+	x86_64_rshi(s, dest, dest, 56);
 	break;
     case DILL_S:
-	x86_64_lshi(s, dest, tmp_dest, 16);
-	x86_64_rshi(s, dest, dest, 16);
+	x86_64_lshi(s, dest, tmp_dest, 48);
+	x86_64_rshi(s, dest, dest, 48);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -1040,12 +1040,12 @@ x86_64_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
     }
     switch(type){
     case DILL_C:
-	x86_64_lshi(s, dest, tmp_dest, 24);
-	x86_64_rshi(s, dest, dest, 24);
+	x86_64_lshi(s, dest, tmp_dest, 56);
+	x86_64_rshi(s, dest, dest, 56);
 	break;
     case DILL_S:
-	x86_64_lshi(s, dest, tmp_dest, 16);
-	x86_64_rshi(s, dest, dest, 16);
+	x86_64_lshi(s, dest, tmp_dest, 48);
+	x86_64_rshi(s, dest, dest, 48);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest) {
@@ -2614,7 +2614,7 @@ x86_64_init_disassembly_info(dill_stream s, void * ptr)
 #else
     INIT_DISASSEMBLE_INFO(*i, stdout);
 #endif
-    i->mach = bfd_mach_i386_i386;
+    i->mach = bfd_mach_x86_64;
     i->disassembler_options = "x86-64";
     if (s->p->code_base != NULL) {
 	i->buffer = (bfd_byte *)s->p->code_base;
