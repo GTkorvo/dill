@@ -1049,12 +1049,12 @@ ia64_convert(dill_stream s, int from_type, int to_type,
 	      int dest, int src)
 {
     switch(CONV(from_type, to_type)) {
-    case CONV(DILL_U, DILL_UL):
-    case CONV(DILL_U, DILL_L):
+    case CONV(DILL_U,DILL_UL):
+    case CONV(DILL_U,DILL_L):
 	MIIs(s, nop_m, I_Zext32(src, dest), nop_i);
 	break;
-    case CONV(DILL_I, DILL_U):
-    case CONV(DILL_U, DILL_I):
+    case CONV(DILL_I,DILL_U):
+    case CONV(DILL_U,DILL_I):
     case CONV(DILL_UL,DILL_I):
     case CONV(DILL_UL,DILL_U):
     case CONV(DILL_UL,DILL_L):
@@ -1067,7 +1067,7 @@ ia64_convert(dill_stream s, int from_type, int to_type,
 	ia64_movl(s, dest,src);
 	break;
     case CONV(DILL_I,DILL_UL):
-    case CONV(DILL_I, DILL_L):
+    case CONV(DILL_I,DILL_L):
 	MIIs(s, nop_m, I_Sext32(src, dest), nop_i);
 	break;
     case CONV(DILL_D,DILL_F):
@@ -1080,12 +1080,30 @@ ia64_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_F,DILL_UL):
     case CONV(DILL_D,DILL_U):
     case CONV(DILL_D,DILL_UL):
+    case CONV(DILL_F,DILL_UC):
+    case CONV(DILL_F,DILL_US):
+    case CONV(DILL_D,DILL_UC):
+    case CONV(DILL_D,DILL_US):
+    case CONV(DILL_F,DILL_C):
+    case CONV(DILL_F,DILL_S):
+    case CONV(DILL_D,DILL_C):
+    case CONV(DILL_D,DILL_S):
     {
 	int ftmp = F6;
 	/* fcvt.xuf.d */
 	MFIs(s, nop_m, FORMAT_F10(0, 0, 0, 0x1b, src, ftmp, 0), nop_i);
 	MMIs(s, FORMAT_M19(/*m*/0, /*x6*/0x1c, /*x*/1, ftmp, dest, 0),
 	     nop_m, nop_i);
+	if(to_type == DILL_UC) {
+	    MIIs(s, nop_m, I_Zext8(dest, dest), nop_i);
+	} else if (to_type == DILL_US) {
+	    MIIs(s, nop_m, I_Zext16(dest, dest), nop_i);
+	} else if(to_type == DILL_C) {
+	    MIIs(s, nop_m, I_Sext8(dest, dest), nop_i);
+	} else if (to_type == DILL_S) {
+	    MIIs(s, nop_m, I_Sext16(dest, dest), nop_i);
+	}
+
 	break;
     }
     case CONV(DILL_F,DILL_I):
@@ -1100,9 +1118,23 @@ ia64_convert(dill_stream s, int from_type, int to_type,
 	     nop_m, nop_i);
 	break;
     }
+    case CONV(DILL_C,DILL_D):
+    case CONV(DILL_C,DILL_F):
+    case CONV(DILL_S,DILL_D):
+    case CONV(DILL_S,DILL_F):
     case CONV(DILL_I,DILL_D):
     case CONV(DILL_I,DILL_F):
-	MIIs(s, nop_m, I_Sext32(src, src), nop_i);
+	switch(from_type) {
+	case DILL_C:
+	    MIIs(s, nop_m, I_Sext8(src, src), nop_i);
+	    break;
+	case DILL_S:
+	    MIIs(s, nop_m, I_Sext16(src, src), nop_i);
+	    break;
+	case DILL_I:
+	    MIIs(s, nop_m, I_Sext32(src, src), nop_i);
+	    break;
+	}
     case CONV(DILL_L,DILL_D):
 	MMIs(s, FORMAT_M18(/*m*/0, /*x6*/0x1c, /*x*/1, src, dest, 0),
 	     nop_m, nop_i);
@@ -1117,12 +1149,16 @@ ia64_convert(dill_stream s, int from_type, int to_type,
 	/* fnorm.s */
 	MFIs(s, nop_m, FORMAT_F1(0x8, /*x*/1, /*sf*/0, dest, F1, F0, dest, 0), nop_i);
 	break;
+    case CONV(DILL_UC,DILL_D):
+    case CONV(DILL_US,DILL_D):
     case CONV(DILL_U,DILL_D):
     case CONV(DILL_UL,DILL_D):
 	MMIs(s, FORMAT_M18(/*m*/0, /*x6*/0x1c, /*x*/1, src, dest, 0),
 	     nop_m, nop_i);
 	MFIs(s, nop_m, FORMAT_F1(0x9, 0, /*sf*/0, dest, F1, F0, dest, 0), nop_i);
 	break;
+    case CONV(DILL_UC,DILL_F):
+    case CONV(DILL_US,DILL_F):
     case CONV(DILL_U,DILL_F):
     case CONV(DILL_UL,DILL_F):
 	MMIs(s, FORMAT_M18(/*m*/0, /*x6*/0x1c, /*x*/1, src, dest, 0),
@@ -1147,8 +1183,34 @@ ia64_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_S,DILL_L):
     case CONV(DILL_S,DILL_U):
     case CONV(DILL_S,DILL_UL):
+    case CONV(DILL_US,DILL_S):
 	/* signext16 - lsh16, rsha16 */
 	MIIs(s, nop_m, I_Sext16(src, dest), nop_i);
+	break;
+    case CONV(DILL_C,DILL_US):
+	/* signext16 - lsh16, rsha16 */
+	MIIs(s, nop_m, I_Sext8(src, dest), nop_i);
+	MIIs(s, nop_m, I_Zext16(dest, dest), nop_i);
+	break;
+    case CONV(DILL_S,DILL_US):
+	/* signext16 - lsh16, rsha16 */
+	MIIs(s, nop_m, I_Zext16(src, dest), nop_i);
+	break;
+    case CONV(DILL_S,DILL_UC):
+    case CONV(DILL_US,DILL_UC):
+    case CONV(DILL_UL,DILL_UC):
+    case CONV(DILL_U,DILL_UC):
+    case CONV(DILL_L,DILL_UC):
+    case CONV(DILL_I,DILL_UC):
+    case CONV(DILL_C,DILL_UC):
+	/* signext16 - lsh16, rsha16 */
+	MIIs(s, nop_m, I_Zext8(src, dest), nop_i);
+	break;
+    case CONV(DILL_US,DILL_C):
+    case CONV(DILL_S,DILL_C):
+    case CONV(DILL_C,DILL_S):
+	/* signext16 - lsh16, rsha16 */
+	MIIs(s, nop_m, I_Sext8(src, dest), nop_i);
 	break;
     case CONV(DILL_US,DILL_I):
     case CONV(DILL_US,DILL_L):
@@ -1220,12 +1282,20 @@ ia64_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 	case dill_le_code:
 	case dill_lt_code:
 	    opcode = 0xc;
-	    if ((type == DILL_U) || (type == DILL_UL)) opcode = 0xd;
+	    if ((type == DILL_U) || (type == DILL_UL) ||
+		(type == DILL_UC) || (type == DILL_US)) opcode = 0xd;
 	    break;
 	case dill_ne_code:
 	    break;
 	}
-	if ((type == DILL_U) || (type == DILL_I)) {
+	if (type == DILL_C) {
+	    MIIs(s, nop_m, I_Sext8(src1, src1), I_Sext8(src2, src2));
+	} else if (type == DILL_S) {
+	    MIIs(s, nop_m, I_Sext16(src1, src1), I_Sext16(src2, src2));
+	}
+	switch(type) {
+	case DILL_U: case DILL_I: case DILL_UC: case DILL_C:
+	case DILL_US: case DILL_S:
 	    x2 = 1;
 	}
 	MIIs(s, nop_m, FORMAT_A6(opcode,0, x2, 0, p2, src2, src1, 0, p1, 0), nop_i);
