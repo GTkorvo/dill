@@ -245,6 +245,7 @@ typedef struct dill_pkg_1 {
     short entry_offset;
     short symbol_count;
     int code_size;
+    short code_offset;
 } *dill_pkg;
 
 typedef struct xfer_rec {

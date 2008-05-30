@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
 	dill_free_stream(s);
 
-	h = dill_package_stitch(pkg);
+	h = dill_package_stitch(pkg, NULL);
 	func = (int(*)()) dill_get_fp(h);
 
 	result = func();
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
         pkg = dill_finalize_package(s, &pkg_len);
 	dill_free_stream(s);
 
-	h = dill_package_stitch(pkg);
+	h = dill_package_stitch(pkg, NULL);
 	func = (unsigned (*)(unsigned, unsigned)) dill_get_fp(h);
 	result = func(s1u, s2u);
         expected_result = (s1u % s2u);

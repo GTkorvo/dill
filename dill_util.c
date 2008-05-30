@@ -432,6 +432,7 @@ dill_build_package(dill_stream s, int *pkg_len)
     }
     pkg = realloc(pkg, pkg_size + dill_code_size(s));
     ((struct dill_pkg_1 *)pkg)->code_size = dill_code_size(s);
+    ((struct dill_pkg_1 *)pkg)->code_offset = pkg_size;
     memcpy(pkg + pkg_size, s->p->code_base, dill_code_size(s));
     pkg_size += dill_code_size(s);
     *pkg_len = pkg_size;

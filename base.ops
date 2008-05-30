@@ -395,7 +395,7 @@ typedef void (*dill_mach_init_routine)(dill_stream s);
 typedef void (*dill_mach_proc_start)(dill_stream s, char *name, int param_count, void *params, dill_reg *arg_reg_list);
 typedef void (*dill_mach_end)(dill_stream s);
 typedef void (*dill_mach_package_end)(dill_stream s);
-typedef void (*dill_mach_package_stitch)(void *package);
+typedef void (*dill_mach_package_stitch)(void *package, void *externs);
 typedef void *(*dill_mach_clone_code)(dill_stream s, void *new_base, int size);
 typedef void (*arith_op3)(dill_stream s, int data1, int data2, int dest, int src1, int src2);
 typedef void (*arith_op3i)(dill_stream s, int data1, int data2, int dest, int src1, long imm);
@@ -572,7 +572,15 @@ EXTERN void dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_s
 EXTERN void dill_dump(dill_stream s);
 EXTERN dill_exec_handle dill_finalize(dill_stream s);
 EXTERN char *dill_finalize_package(dill_stream s, int *pkg_len);
-EXTERN dill_exec_handle dill_package_stitch(char *package);
+typedef struct _dill_extern_entry {
+    /*! the textual name of the external entry */
+    char *extern_name;
+    /*! the address of the external entry */
+    void *extern_value;
+} dill_extern_entry;
+
+EXTERN dill_exec_handle dill_package_stitch(char *package, dill_extern_entry* externs);
+EXTERN void *dill_package_entry(char* package);
 EXTERN void dill_free_handle(dill_exec_handle h);
 EXTERN void *dill_get_fp(dill_exec_handle h);
 EXTERN void *dill_clone_code(dill_stream s, void *new_base, int size);
