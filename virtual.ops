@@ -63,6 +63,7 @@ print COUT $jmp_b_assigns;
 print COUT $jmp_c_assigns;
 print COUT "\t  ${mach}_jump_table->proc_start = (dill_mach_proc_start) virtual_proc_start;\n";
 print COUT "\t  ${mach}_jump_table->end = (dill_mach_end)virtual_end;\n";
+print COUT "\t  ${mach}_jump_table->package_end = (dill_mach_end)virtual_package_end;\n";
 print COUT "\t  ${mach}_jump_table->type_align = s->p->native.mach_jump->type_align;\n";
 print COUT "\t  ${mach}_jump_table->type_size = s->p->native.mach_jump->type_size;\n";
 print COUT "\t  ${mach}_jump_table->ret = virtual_ret;\n";

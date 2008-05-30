@@ -4170,8 +4170,8 @@ virtual_insn_count(dill_stream c)
     return count;
 }
 	    
-extern void
-virtual_end(dill_stream c)
+static void
+virtual_do_end(dill_stream c, int package)
 {
     static int no_optimize = -1;
     static int dill_verbose = -1;
@@ -4255,18 +4255,35 @@ virtual_end(dill_stream c)
 	}
 	free_bbs(vmi);
 	free(ltable);
-	dill_finalize(c);
+	if (package) {
+	    c->j->package_end(c);
+	} else {
+	    dill_finalize(c);
+	}
 	c->j = c->p->native.mach_jump;
 	c->p->native.mach_reset = c->p->mach_reset;
 	c->p->native.mach_info = c->p->mach_info;
 	c->p->native.code_base = c->p->code_base;
 	c->p->native.cur_ip = c->p->cur_ip;
 	c->p->native.code_limit = c->p->code_limit;
-	c->p->code_base = NULL;
+	if (!package) c->p->code_base = NULL;
 	c->p->mach_info = NULL;
 	c->p->mach_reset = dill_virtual_init;
     }
 }
+
+EXTERN void
+virtual_end(dill_stream c)
+{
+    virtual_do_end(c, 0 /* package */);
+}
+
+EXTERN void
+virtual_package_end(dill_stream c)
+{
+    virtual_do_end(c, 1 /* package */);
+}
+
 
 EXTERN dill_exec_ctx
 dill_get_exec_context(dill_stream c)

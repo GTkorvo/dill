@@ -108,4 +108,5 @@ extern void
 virtual_proc_start(dill_stream c, char *subr_name, int arg_count,
 		   arg_info_list args, dill_reg *arglist);
 extern void virtual_end(dill_stream c);
+extern void virtual_package_end(dill_stream c);
 extern int virtual_print_insn(dill_stream c, void *info_ptr, void *i);
