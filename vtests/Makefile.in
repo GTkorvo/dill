@@ -33,9 +33,9 @@ build_triplet = @build@
 host_triplet = @host@
 @BUILD_LIBRARY_TRUE@EXTRA_PROGRAMS = basic_call$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	general$(EXEEXT) t1$(EXEEXT) \
-@BUILD_LIBRARY_TRUE@	branch$(EXEEXT)
+@BUILD_LIBRARY_TRUE@	branch$(EXEEXT) pkg_test$(EXEEXT)
 @BUILD_LIBRARY_TRUE@TESTS = general$(EXEEXT) t1$(EXEEXT) \
-@BUILD_LIBRARY_TRUE@	branch$(EXEEXT)
+@BUILD_LIBRARY_TRUE@	branch$(EXEEXT) pkg_test$(EXEEXT)
 subdir = vtests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -58,6 +58,10 @@ general_SOURCES = general.c
 general_OBJECTS = general.$(OBJEXT)
 am__DEPENDENCIES_1 =
 general_DEPENDENCIES = ../libdill.la $(am__DEPENDENCIES_1)
+pkg_test_SOURCES = pkg_test.c
+pkg_test_OBJECTS = pkg_test.$(OBJEXT)
+pkg_test_LDADD = $(LDADD)
+pkg_test_DEPENDENCIES = ../libdill.la
 t1_SOURCES = t1.c
 t1_OBJECTS = t1.$(OBJEXT)
 t1_LDADD = $(LDADD)
@@ -74,8 +78,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = basic_call.c branch.c general.c t1.c
-DIST_SOURCES = basic_call.c branch.c general.c t1.c
+SOURCES = basic_call.c branch.c general.c pkg_test.c t1.c
+DIST_SOURCES = basic_call.c branch.c general.c pkg_test.c t1.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -246,6 +250,9 @@ branch$(EXEEXT): $(branch_OBJECTS) $(branch_DEPENDENCIES)
 general$(EXEEXT): $(general_OBJECTS) $(general_DEPENDENCIES) 
 	@rm -f general$(EXEEXT)
 	$(LINK) $(general_OBJECTS) $(general_LDADD) $(LIBS)
+pkg_test$(EXEEXT): $(pkg_test_OBJECTS) $(pkg_test_DEPENDENCIES) 
+	@rm -f pkg_test$(EXEEXT)
+	$(LINK) $(pkg_test_OBJECTS) $(pkg_test_LDADD) $(LIBS)
 t1$(EXEEXT): $(t1_OBJECTS) $(t1_DEPENDENCIES) 
 	@rm -f t1$(EXEEXT)
 	$(LINK) $(t1_OBJECTS) $(t1_LDADD) $(LIBS)
