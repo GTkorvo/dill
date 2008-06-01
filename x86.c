@@ -585,7 +585,8 @@ x86_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 	BYTE_OUT2(s, 0x0f, 0xc8 + dest);   /* byteswap dest */
 	break;
     case DILL_S: case DILL_US:
-	BYTE_OUT2(s, 0x86, (0xc0 | (dest << 3)) | (dest+4)); /* xchange dest */
+	x86_bswap(s, 0, DILL_S, dest, dest);
+/*	BYTE_OUT2(s, 0x86, (0xc0 | (dest << 3)) | (dest+4));*/ /* xchange dest */
 	break;
     case DILL_C: case DILL_UC:
 	break;
