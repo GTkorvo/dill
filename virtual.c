@@ -4293,8 +4293,13 @@ dill_get_exec_context(dill_stream c)
     int j;
     memset(ec, 0, sizeof(struct dec));
     ec->dc = c;
+    if (vreg_count < 1) vreg_count = 1;
     ec->r = malloc(sizeof(ec->r[0]) * vreg_count);
-    ec->p = malloc(sizeof(ec->p[0]) * c->p->save_param_count);
+    if (c->p->save_param_count >= 0) {
+	ec->p = malloc(sizeof(ec->p[0]) * c->p->save_param_count);
+    } else {
+	ec->p = malloc(1);
+    }
     ec->client_data_count = 0;
     ec->out_param_count = 0;
     ec->out_params = NULL;
