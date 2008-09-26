@@ -4306,7 +4306,10 @@ dill_get_exec_context(dill_stream c)
     for (j=0; j < c->p->vreg_count; j++) {
 	if (dill_type_of(c, 100 + j) == DILL_B) {
 	    /* offset is really size, fix that */
-	    ec->r[j].u.p.p = malloc(c->p->vregs[j].offset);
+	    if (c->p->vregs[j].offset > 0) {
+		/* this is only used for interpretation */
+		ec->r[j].u.p.p = malloc(c->p->vregs[j].offset);
+	    }
 	    /* GSE  this is leaked!!!!  must fix... !!!! */
 	}
     }
