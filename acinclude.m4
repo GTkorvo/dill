@@ -47,7 +47,7 @@ dnl      AC_COMPILE_CHECK_SIZEOF(ptrdiff_t, $headers)
 dnl      AC_COMPILE_CHECK_SIZEOF(off_t, $headers)
 dnl
 dnl @author Kaveh Ghazi <ghazi@caip.rutgers.edu>
-dnl @version $Id: acinclude.m4,v 1.1.1.1 2007-04-18 15:15:10 eisen Exp $
+dnl @version $Id: acinclude.m4,v 1.2 2008-11-18 21:36:49 eisen Exp $
 dnl
 AC_DEFUN([AC_COMPILE_CHECK_SIZEOF],
 [changequote(<<, >>)dnl
@@ -131,6 +131,17 @@ AS_IF([test AS_VAR_GET(ecl_dis) = no],
 	int (*f) PARAMS ((bfd_vma, disassemble_info*));],[f = print_insn_$1;],
 		[AS_VAR_SET(ecl_dis,yes)
 		ecl_cv_disassembly_libs="-lopcodes -lbfd"],
+		[AS_VAR_SET(ecl_dis,no)]))
+AS_IF([test AS_VAR_GET(ecl_dis) = no],
+	LIBS="$LIBS -lopcodes -lbfd -lintl";
+	AC_TRY_LINK([
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_$1	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));],[f = print_insn_$1;],
+		[AS_VAR_SET(ecl_dis,yes)
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"],
 		[AS_VAR_SET(ecl_dis,no)]))
 AS_IF([test AS_VAR_GET(ecl_dis) = no], AC_DEFINE(NO_DISASSEMBLER, 1, [Define if there is no disassembler]))
 AS_VAR_POPDEF([ecl_dis])dnl
