@@ -57,7 +57,7 @@
 
 #define x86_push_reg(s, src) BYTE_OUT1(s, 0x50+src)
 #define x86_pop_reg(s, src) BYTE_OUT1(s, 0x58+src)
-#define x86_simple_ret(c) do {x86_pop_reg(s, EBX);x86_pop_reg(s, ESI);x86_pop_reg(s, EDI);x86_movi(s, ESP, EBP);x86_pop_reg(s, EBP); BYTE_OUT1(s, 0xc3);} while(0)
+#define x86_simple_ret(c) do {x86_pop_reg(s, EBX);x86_pop_reg(s, EBX);x86_pop_reg(s, ESI);x86_pop_reg(s, EDI);x86_movi(s, ESP, EBP);x86_pop_reg(s, EBP); BYTE_OUT1(s, 0xc3);} while(0)
 #define x86_nop(c) BYTE_OUT1(s, 0x90)
 
 #define IREG 0
@@ -215,8 +215,10 @@ x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args
     /* use the nop op code so that if we don't use all of it we get nops */
     dill_subii(s, ESP, ESP, 0x90909090);
 
+    dill_andii(s, ESP, ESP, -16); /* make sure it's multiple of 16 */
     x86_push_reg(s, EDI);   /* callee is supposed to save these */
     x86_push_reg(s, ESI);
+    x86_push_reg(s, EBX);
     x86_push_reg(s, EBX);
 
     /* leave some space */ x86_local(s, DILL_D);
@@ -1856,7 +1858,7 @@ x86_emit_save(dill_stream s)
     s->p->cur_ip = (char*)s->p->code_base + smi->backpatch_offset;
 
     /* do local space reservation */
-    dill_subii(s, ESP, ESP, ar_size + 12);
+    dill_subii(s, ESP, ESP, ar_size);
 
     s->p->fp = (char*)s->p->code_base;
     s->p->cur_ip = save_ip;
