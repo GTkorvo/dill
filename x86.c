@@ -670,10 +670,18 @@ x86_pstorei(dill_stream s, int type, int force_8087, int dest, int src, long off
 	    opcode = 0xf2;
 	    break;
 	}
-	if (((long)offset <= 127) && ((long)offset > -128)) {
-	    BYTE_OUT5(s, opcode, 0x0f, 0x11, ModRM(0x1, dest, src), offset & 0xff);
+	if (src != ESP) {
+	    if (((long)offset <= 127) && ((long)offset > -128)) {
+	        BYTE_OUT5(s, opcode, 0x0f, 0x11, ModRM(0x1, dest, src), offset & 0xff);
+	    } else {
+	        BYTE_OUT4I(s, opcode, 0x0f, 0x11, ModRM(0x2, dest, src), offset);
+	    }
 	} else {
-	    BYTE_OUT4I(s, opcode, 0x0f, 0x11, ModRM(0x2, dest, src), offset);
+	    if (((long)offset <= 127) && ((long)offset > -128)) {
+	        BYTE_OUT6(s, opcode, 0x0f, 0x11, ModRM(0x1, dest, 0x4), 0x24, offset & 0xff);
+	    } else {
+	        BYTE_OUT5I(s, opcode, 0x0f, 0x11, ModRM(0x2, dest, 0x4), 0x24, offset);
+	    }
 	}
 	return;
     }
@@ -702,10 +710,19 @@ x86_pstorei(dill_stream s, int type, int force_8087, int dest, int src, long off
         BYTE_OUT1(s, smi->pending_prefix);
 	smi->pending_prefix = 0;
     }
-    if (((long)offset <= 127) && ((long)offset > -128)) {
-	BYTE_OUT3(s, st_opcodes[type], ModRM(0x1, dest, src), offset & 0xff);
+    if (src != ESP) {
+        if (((long)offset <= 127) && ((long)offset > -128)) {
+	    BYTE_OUT3(s, st_opcodes[type], ModRM(0x1, dest, src), offset & 0xff);
+        } else {
+	    BYTE_OUT2I(s, st_opcodes[type], ModRM(0x2, dest, src), offset);
+        }
     } else {
-	BYTE_OUT2I(s, st_opcodes[type], ModRM(0x2, dest, src), offset);
+        /* can't use ModRM straight for SP */
+        if (((long)offset <= 127) && ((long)offset > -128)) {
+	    BYTE_OUT4(s, st_opcodes[type], ModRM(0x1, dest, 0x4), 0x24, offset &0xff);
+	} else {
+	    BYTE_OUT3I(s, st_opcodes[type], ModRM(0x2, dest, 0x4), 0x24, offset &0xff);
+	}
     }
 }
 
@@ -1568,6 +1585,9 @@ static void push_init(dill_stream s)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     smi->cur_arg_offset = 0;
+    smi->call_stack_adjust_point = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
+    /* reserve space.  This sub will be overwritten */
+    dill_subii(s, ESP, ESP, 60);
 }
 
 extern void x86_push(dill_stream s, int type, int reg)
@@ -1576,12 +1596,10 @@ extern void x86_push(dill_stream s, int type, int reg)
     if ((type == DILL_V) && (reg == -1)) {
 	push_init(s);
     } else if ((type == DILL_F) || (type == DILL_D)) {
-	x86_pstorei(s, DILL_D, 0, reg, _frame_reg, smi->conversion_word);
-	BYTE_OUT3(s, 0xff, ModRM(0x1, 0x6, _frame_reg), smi->conversion_word+4);
-	BYTE_OUT3(s, 0xff, ModRM(0x1, 0x6, _frame_reg), smi->conversion_word);
+        x86_pstorei(s, DILL_D, 0, reg, ESP, smi->cur_arg_offset);
 	smi->cur_arg_offset += 8;
     } else {
-	internal_push(s, type, 0, &reg);
+	x86_pstorei(s, DILL_I, 0, reg, ESP, smi->cur_arg_offset);
 	smi->cur_arg_offset += 4;
     }
 }
@@ -1589,7 +1607,8 @@ extern void x86_push(dill_stream s, int type, int reg)
 extern void x86_pushi(dill_stream s, int type, long value)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
-    internal_push(s, type, 1, &value);
+    x86_seti(s, EAX, value);
+    x86_pstorei(s, DILL_I, 0, EAX, ESP, smi->cur_arg_offset);
     smi->cur_arg_offset += 4;
 }
 
@@ -1603,7 +1622,8 @@ extern void x86_pushfi(dill_stream s, int type, double value)
 extern void x86_pushpi(dill_stream s, int type, void *value)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
-    internal_push(s, type, 1, &value);
+    x86_seti(s, EAX, value);
+    x86_pstorei(s, DILL_I, 0, EAX, ESP, smi->cur_arg_offset);
     smi->cur_arg_offset += 4;
 }
 
@@ -1623,6 +1643,16 @@ extern int x86_calli(dill_stream s, int type, void *xfer_address, char *name)
 	    caller_side_ret_reg = XMM0;
 	}
     }
+    /* make stack adjust be multiple of 16 */
+    smi->cur_arg_offset = ((smi->cur_arg_offset + 15) & -16);
+    int tmp = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
+    
+    s->p->cur_ip = (char*)s->p->code_base + smi->call_stack_adjust_point;
+    /* backpatch in stack adjust at front end of arg load */
+    dill_subii(s, ESP, ESP, smi->cur_arg_offset);
+    /* restore IP */
+    s->p->cur_ip = (char*)s->p->code_base + tmp;
+    
     dill_addii(s, ESP, ESP, smi->cur_arg_offset);
     return caller_side_ret_reg;
 }
@@ -1639,6 +1669,16 @@ extern int x86_callr(dill_stream s, int type, int src)
     if ((type == DILL_D) || (type == DILL_F)) {
 /*	caller_side_ret_reg = _f0;*/
     }
+    /* make stack adjust be multiple of 16 */
+    smi->cur_arg_offset = ((smi->cur_arg_offset + 15) & -16);
+    int tmp = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
+    
+    s->p->cur_ip = (char*)s->p->code_base + smi->call_stack_adjust_point;
+    /* backpatch in stack adjust at front end of arg load */
+    dill_subii(s, ESP, ESP, smi->cur_arg_offset);
+    /* restore IP */
+    s->p->cur_ip = (char*)s->p->code_base + tmp;
+    
     dill_addii(s, ESP, ESP, smi->cur_arg_offset);
     return caller_side_ret_reg;
 }
@@ -1816,7 +1856,7 @@ x86_emit_save(dill_stream s)
     s->p->cur_ip = (char*)s->p->code_base + smi->backpatch_offset;
 
     /* do local space reservation */
-    dill_subii(s, ESP, ESP, ar_size);
+    dill_subii(s, ESP, ESP, ar_size + 12);
 
     s->p->fp = (char*)s->p->code_base;
     s->p->cur_ip = save_ip;

@@ -98,7 +98,7 @@ print COUT "\t  ${mach}_jump_table->init_disassembly = x86_init_disassembly_info
 print COUT "\t  ${mach}_jump_table->print_insn = x86_print_insn;\n";
 print COUT "\t  ${mach}_jump_table->print_reg = x86_print_reg;\n";
 print COUT "\t  ${mach}_jump_table->count_insn = x86_count_insn;\n";
-print COUT "\t  ${mach}_jump_table->do_reverse_push = 1;\n";
+print COUT "\t  ${mach}_jump_table->do_reverse_push = 0;\n";
 print COUT "\t  ${mach}_jump_table->target_byte_order = 2;  /* Format_Integer_littleendian */\n";
 print COUT "\t  ${mach}_jump_table->target_float_format = 2;  /* Format_IEEE_754_littleendian */ \n";
 print COUT "\t}\n";

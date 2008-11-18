@@ -181,6 +181,7 @@ typedef struct x86_mach_info {
     int save_base;
     int cur_arg_offset;
     int backpatch_offset;
+    int call_stack_adjust_point;
     char pending_prefix;
     int generate_SSE;
 } *x86_mach_info;
