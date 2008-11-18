@@ -672,8 +672,10 @@ free_code_blocks(dill_stream s)
     }
 #else
     if (s->p->code_base) free(s->p->code_base);
-    if (s->p->virtual.code_base) free(s->p->virtual.code_base);
-    if (s->p->native.code_base) free(s->p->native.code_base);
+    if (s->p->virtual.code_base && (s->p->native.code_base != s->p->code_base) ) 
+      free(s->p->virtual.code_base);
+    if (s->p->native.code_base && (s->p->native.code_base != s->p->code_base) ) 
+      free(s->p->native.code_base);
 #endif
 }
 
