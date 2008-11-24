@@ -1629,7 +1629,7 @@ extern void x86_pushpi(dill_stream s, int type, void *value)
     smi->cur_arg_offset += 4;
 }
 
-extern int x86_calli(dill_stream s, int type, void *xfer_address, char *name)
+extern int x86_calli(dill_stream s, int type, void *xfer_address, const char *name)
 {
     int caller_side_ret_reg = EAX;
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
