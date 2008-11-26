@@ -4168,7 +4168,7 @@ fi
 
 
 case "${host_os}" in
-linux-gnu*)
+linux-gnu*|darwin*)
 
 cat >>confdefs.h <<\_ACEOF
 #define USE_MMAP_CODE_SEG 1
@@ -16853,15 +16853,26 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 	ARCH_FILE=sparc
 	;;
      i*86 )
-	NATIVE_ARCH=x86
-	DIS_ROUTINE=i386
+        if test x$ac_cv_sizeof_long == x8 ; then
+	  NATIVE_ARCH=x86_64
+
+cat >>confdefs.h <<\_ACEOF
+#define HOST_X86_64 1
+_ACEOF
+
+	  TEST_PERL_FLAGS="-max_arg=4"
+	  ARCH_FILE=x86_64
+	else
+	  NATIVE_ARCH=x86
 
 cat >>confdefs.h <<\_ACEOF
 #define HOST_X86 1
 _ACEOF
 
-	TEST_PERL_FLAGS="-no_float -max_arg=2"
-	ARCH_FILE=x86
+	  TEST_PERL_FLAGS="-no_float -max_arg=2"
+	  ARCH_FILE=x86
+	fi
+	DIS_ROUTINE=i386
 	;;
      x86_64 )
 	NATIVE_ARCH=x86_64
@@ -17182,6 +17193,59 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 fi
 
 if test `eval echo '${'$as_ecl_dis'}'` = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_$DIS_ROUTINE	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_$DIS_ROUTINE;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  eval "$as_ecl_dis=yes"
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	eval "$as_ecl_dis=no"
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test `eval echo '${'$as_ecl_dis'}'` = no; then
 
 cat >>confdefs.h <<\_ACEOF
 #define NO_DISASSEMBLER 1
@@ -17315,6 +17379,59 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 fi
 
 if test `eval echo '${'$as_ecl_dis'}'` = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_$DIS_ROUTINE	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_$DIS_ROUTINE;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  eval "$as_ecl_dis=yes"
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	eval "$as_ecl_dis=no"
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test `eval echo '${'$as_ecl_dis'}'` = no; then
 
 cat >>confdefs.h <<\_ACEOF
 #define NO_DISASSEMBLER 1
@@ -17433,6 +17550,59 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
        $as_test_x conftest$ac_exeext; then
   ecl_cv_print_insn_sparc=yes
 		ecl_cv_disassembly_libs="-lopcodes -lbfd"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_sparc=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_sparc = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_sparc	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_sparc;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_sparc=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -17576,6 +17746,59 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 fi
 
 if test $ecl_cv_print_insn_sparc = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_sparc	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_sparc;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_sparc=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_sparc=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_sparc = no; then
 
 cat >>confdefs.h <<\_ACEOF
 #define NO_DISASSEMBLER 1
@@ -17693,6 +17916,59 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
        $as_test_x conftest$ac_exeext; then
   ecl_cv_print_insn_ia64=yes
 		ecl_cv_disassembly_libs="-lopcodes -lbfd"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_ia64=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_ia64 = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_ia64	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_ia64;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_ia64=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -17836,6 +18112,59 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 fi
 
 if test $ecl_cv_print_insn_ia64 = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_ia64	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_ia64;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_ia64=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_ia64=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_ia64 = no; then
 
 cat >>confdefs.h <<\_ACEOF
 #define NO_DISASSEMBLER 1
@@ -17953,6 +18282,59 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
        $as_test_x conftest$ac_exeext; then
   ecl_cv_print_insn_i386=yes
 		ecl_cv_disassembly_libs="-lopcodes -lbfd"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_i386=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_i386 = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_i386	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_i386;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_i386=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -18096,6 +18478,59 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 fi
 
 if test $ecl_cv_print_insn_i386 = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_i386	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_i386;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_i386=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_i386=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_i386 = no; then
 
 cat >>confdefs.h <<\_ACEOF
 #define NO_DISASSEMBLER 1
@@ -18213,6 +18648,59 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
        $as_test_x conftest$ac_exeext; then
   ecl_cv_print_insn_arm=yes
 		ecl_cv_disassembly_libs="-lopcodes -lbfd"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_arm=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_arm = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_arm	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_arm;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_arm=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -18356,6 +18844,59 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 fi
 
 if test $ecl_cv_print_insn_arm = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_arm	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_arm;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_arm=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_arm=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_arm = no; then
 
 cat >>confdefs.h <<\_ACEOF
 #define NO_DISASSEMBLER 1
@@ -18473,6 +19014,59 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
        $as_test_x conftest$ac_exeext; then
   ecl_cv_print_insn_little_arm=yes
 		ecl_cv_disassembly_libs="-lopcodes -lbfd"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_little_arm=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_little_arm = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_little_arm	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_little_arm;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_little_arm=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -18604,6 +19198,59 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
        $as_test_x conftest$ac_exeext; then
   ecl_cv_print_insn_little_arm=yes
 		ecl_cv_disassembly_libs="-lopcodes -lbfd"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ecl_cv_print_insn_little_arm=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+
+if test $ecl_cv_print_insn_little_arm = no; then
+  LIBS="$LIBS -lopcodes -lbfd -lintl";
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include "dis-asm.h"
+	char xmalloc(){};
+	char xstrdup(){};
+	extern int print_insn_little_arm	PARAMS ((bfd_vma, disassemble_info*));
+	int (*f) PARAMS ((bfd_vma, disassemble_info*));
+int
+main ()
+{
+f = print_insn_little_arm;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ecl_cv_print_insn_little_arm=yes
+		ecl_cv_disassembly_libs="-lopcodes -lbfd -lintl"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5

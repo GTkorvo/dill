@@ -54,6 +54,9 @@ void a () {
      ip = (int(*)())dill_get_fp(handle);
 
 #ifdef USE_MMAP_CODE_SEG
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
      {
 	 int size = dill_code_size(s);
 	 static unsigned long ps = -1;

@@ -639,6 +639,9 @@ init_code_block(dill_stream s)
 {
     static unsigned long size = INIT_CODE_SIZE;
 #ifdef USE_MMAP_CODE_SEG
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
     static unsigned long ps = -1;
     if (ps == -1) {
         ps = (getpagesize ());

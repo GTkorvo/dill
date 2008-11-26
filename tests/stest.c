@@ -115,6 +115,9 @@ int main() {
 		printf("failure at point %d (second)\n", ret);
 	}
 #ifdef USE_MMAP_CODE_SEG
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
 	{
 	    int size = dill_code_size(s);
 	    static unsigned long ps = -1;

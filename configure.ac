@@ -49,7 +49,7 @@ AM_CONDITIONAL(KERNEL, test x$kernel_build = xtrue)
 AC_SUBST(KERNEL_VERSION)
 
 case "${host_os}" in
-linux-gnu*)
+linux-gnu*|darwin*)
     AC_DEFINE(USE_MMAP_CODE_SEG, 1, [Define this is mmap should be used instead of malloc() for code memory])
     ;;
 esac
@@ -152,11 +152,18 @@ case $host_cpu in
 	ARCH_FILE=sparc
 	;;
      i*86 )
-	NATIVE_ARCH=x86
+        if test x$ac_cv_sizeof_long == x8 ; then
+	  NATIVE_ARCH=x86_64
+	  AC_DEFINE(HOST_X86_64, 1, [Define if the host processor is an x86_64])
+	  TEST_PERL_FLAGS="-max_arg=4"
+	  ARCH_FILE=x86_64
+	else
+	  NATIVE_ARCH=x86
+	  AC_DEFINE(HOST_X86, 1, [Define if the host processor is an x86])
+	  TEST_PERL_FLAGS="-no_float -max_arg=2"
+	  ARCH_FILE=x86
+	fi
 	DIS_ROUTINE=i386
-	AC_DEFINE(HOST_X86, 1, [Define if the host processor is an x86])
-	TEST_PERL_FLAGS="-no_float -max_arg=2"
-	ARCH_FILE=x86
 	;;
      x86_64 )
 	NATIVE_ARCH=x86_64
