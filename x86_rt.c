@@ -37,6 +37,9 @@ x86_package_stitch(char *code, call_t *t, dill_pkg pkg)
     dill_lookup_xfer_addrs(t, &x86_xfer_recs[0]);
     x86_rt_call_link(code, t);
 #ifdef USE_MMAP_CODE_SEG
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
     tmp = (void*)mmap(0, pkg->code_size,
 		      PROT_EXEC | PROT_READ | PROT_WRITE, 
 		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
