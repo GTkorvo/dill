@@ -2741,6 +2741,20 @@ get_last_use(reg_state *s, int vreg)
     return 0;
 }
 
+static int
+get_use_metric(reg_state *s, int vreg)
+{
+    vreg_info *vregs = s->c->p->vregs;
+    if (vreg >= 100) {
+	return vregs[vreg - 100].use_metric;
+    } else {
+	if (!s->c->p->c_param_args[vreg].is_register) {
+	    return s->param_info[vreg].use_metric;
+	}
+    }
+    return 0;
+}
+
 static void
 spill_current_pregs(reg_state *state)
 {
@@ -2878,8 +2892,8 @@ select_reg(reg_state *state, int vreg, int loc, int src)
 		tentative_assign = preg;
 		if (reg_debug) 
 		    printf("preg %d is new tentative assign\n", preg);
-	    } else if (vregs[pregs[tentative_assign].holds-100].use_metric >
-		       vregs[used_vreg-100].use_metric) {
+	    } else if (get_use_metric(state, pregs[tentative_assign].holds) >
+		       get_use_metric(state, used_vreg)) {
 		if (reg_debug) 
 		    printf("preg %d is better tentative assign\n", preg);
 		tentative_assign = preg;
@@ -2973,6 +2987,10 @@ update_vreg_info(reg_state *s, basic_block bb, virtual_insn *ip, int loc)
 	}
 	if (used[i] >= 100) {
 	    s->c->p->vregs[used[i]-100].use_metric++;
+	} else {
+	    if (!s->c->p->c_param_args[used[i]].is_register) {
+	      s->param_info[used[i]].use_metric++;
+	    }
 	}
     }
 }
