@@ -3807,6 +3807,20 @@ do_const_prop(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	    virtual_insn *ip = &((virtual_insn *)insns)[k];
 	    found = const_prop_ip(c, bb, ip, set_ip);
 	}
+    } else if (set_ip->class_code == iclass_set) {
+	int k;
+	int vdest = insn_defines(set_ip);
+	if (c->dill_debug) {
+	    printf(" Forward propagating const    ");
+	    virtual_print_insn(c, NULL, set_ip);
+	    printf("\n");
+	}
+	for (k = loc + 1; vdest != insn_defines(&((virtual_insn *)insns)[k]); k++) {
+	    virtual_insn *ip = &((virtual_insn *)insns)[k];
+	    const_prop_ip(c, bb, ip, set_ip);
+	}
+	/* one more */
+	const_prop_ip(c, bb, &((virtual_insn *)insns)[k], set_ip);
     } else if (((set_ip->class_code == iclass_mov) ||
 		((set_ip->class_code == iclass_convert) &&
 		 is_convert_noop(set_ip->insn_code))) && 
