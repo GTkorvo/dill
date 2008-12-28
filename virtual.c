@@ -3815,7 +3815,7 @@ do_const_prop(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	    virtual_print_insn(c, NULL, set_ip);
 	    printf("\n");
 	}
-	for (k = loc + 1; vdest != insn_defines(&((virtual_insn *)insns)[k]); k++) {
+	for (k = loc + 1; ((k <= bb->end)  && (vdest != insn_defines(&((virtual_insn *)insns)[k]))); k++) {
 	    virtual_insn *ip = &((virtual_insn *)insns)[k];
 	    const_prop_ip(c, bb, ip, set_ip);
 	}
