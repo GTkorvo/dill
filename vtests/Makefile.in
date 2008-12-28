@@ -32,9 +32,9 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @BUILD_LIBRARY_TRUE@EXTRA_PROGRAMS = basic_call$(EXEEXT) \
-@BUILD_LIBRARY_TRUE@	general$(EXEEXT) t1$(EXEEXT) \
+@BUILD_LIBRARY_TRUE@	general$(EXEEXT) t1$(EXEEXT) opt$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	branch$(EXEEXT) pkg_test$(EXEEXT)
-@BUILD_LIBRARY_TRUE@TESTS = general$(EXEEXT) t1$(EXEEXT) \
+@BUILD_LIBRARY_TRUE@TESTS = general$(EXEEXT) t1$(EXEEXT) opt$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	branch$(EXEEXT) pkg_test$(EXEEXT)
 subdir = vtests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -63,6 +63,10 @@ general_SOURCES = general.c
 general_OBJECTS = general.$(OBJEXT)
 am__DEPENDENCIES_1 =
 general_DEPENDENCIES = ../libdill.la $(am__DEPENDENCIES_1)
+opt_SOURCES = opt.c
+opt_OBJECTS = opt.$(OBJEXT)
+opt_LDADD = $(LDADD)
+opt_DEPENDENCIES = ../libdill.la
 pkg_test_SOURCES = pkg_test.c
 pkg_test_OBJECTS = pkg_test.$(OBJEXT)
 pkg_test_LDADD = $(LDADD)
@@ -83,8 +87,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = basic_call.c branch.c general.c pkg_test.c t1.c
-DIST_SOURCES = basic_call.c branch.c general.c pkg_test.c t1.c
+SOURCES = basic_call.c branch.c general.c opt.c pkg_test.c t1.c
+DIST_SOURCES = basic_call.c branch.c general.c opt.c pkg_test.c t1.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -263,6 +267,9 @@ branch$(EXEEXT): $(branch_OBJECTS) $(branch_DEPENDENCIES)
 general$(EXEEXT): $(general_OBJECTS) $(general_DEPENDENCIES) 
 	@rm -f general$(EXEEXT)
 	$(LINK) $(general_OBJECTS) $(general_LDADD) $(LIBS)
+opt$(EXEEXT): $(opt_OBJECTS) $(opt_DEPENDENCIES) 
+	@rm -f opt$(EXEEXT)
+	$(LINK) $(opt_OBJECTS) $(opt_LDADD) $(LIBS)
 pkg_test$(EXEEXT): $(pkg_test_OBJECTS) $(pkg_test_DEPENDENCIES) 
 	@rm -f pkg_test$(EXEEXT)
 	$(LINK) $(pkg_test_OBJECTS) $(pkg_test_LDADD) $(LIBS)
