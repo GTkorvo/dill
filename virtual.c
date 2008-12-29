@@ -4161,6 +4161,7 @@ kill_dead(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
     int def_vreg = insn_defines(root_insn);
     int k;
     int stop = 0;
+    if (root_insn->class_code == iclass_call) return;
     if (def_vreg >= 100) {
 	if (c->p->vregs[def_vreg-100].use_info.use_count == 0) {
 	    root_insn->class_code = iclass_nop;
