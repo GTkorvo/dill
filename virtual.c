@@ -1359,11 +1359,18 @@ do_use_def_count(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	break;
     case iclass_special:
 	break;
-    case iclass_call:
+    case iclass_call: {
+	int reg = insn->insn_code & 0x10;
 	if ((insn->insn_code & 0xf) != DILL_V) {
 	    set_defined(c, insn->opnds.bri.src);
 	}
+	if (reg != 0) {
+	    long imm = insn->opnds.bri.imm_l;
+	    int src1_vreg = imm;
+	    set_used(c, src1_vreg);
+	}
 	break;
+    }
     case iclass_push:
 	if (insn->opnds.a1.src != 0xffff) 
 	    set_used(c, insn->opnds.a1.src);
@@ -3364,7 +3371,7 @@ apply_to_each(dill_stream c, void *insns, virtual_mach_info vmi,
 }
 
 static int 
-const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set_ip)
+const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set_ip, int one_only)
 {
     int set_vreg = set_ip->opnds.a3i.dest;
     int set_typ = set_ip->insn_code & 0xf;
@@ -3407,8 +3414,6 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf("\n");
 	    }
-	    set_ip->class_code = iclass_nop;
-	    set_unused(c, bb, set_vreg);
 	    found++;
 	}
     }
@@ -3454,8 +3459,6 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf("\n");
 	    }
-	    set_ip->class_code = iclass_nop;
-	    set_unused(c, bb, set_vreg);
 	    found++;
 	}
 	break;
@@ -3486,6 +3489,7 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		break;
 	    case dill_jmp_addp:
 		set.imm_a = set.imm_a + u.imm;
+		typ = DILL_P;
 		break;
 	    case dill_jmp_subi:    case dill_jmp_subu:
 	    case dill_jmp_subul:    case dill_jmp_subl:
@@ -3493,6 +3497,7 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		break;
 	    case dill_jmp_subp:
 		set.imm_a = set.imm_a - u.imm;
+		typ = DILL_P;
 		break;
 	    case dill_jmp_muli:    case dill_jmp_mulu:
 	    case dill_jmp_mulul:    case dill_jmp_mull:
@@ -3529,6 +3534,7 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 	    default:
 		assert(0);
 	    }
+	    ip->insn_code = typ;
 	    ip->class_code = iclass_set;
 	    ip->opnds.a3i.dest = dest_vreg;
 	    if (typ != DILL_P) {
@@ -3540,8 +3546,6 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf("\n");
 	    }
-	    set_ip->class_code = iclass_nop;
-	    set_unused(c, bb, set_vreg);
 	    found++;
 	}
     }
@@ -3568,8 +3572,6 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf("\n");
 	    }
-	    set_ip->class_code = iclass_nop;
-	    set_unused(c, bb, set_vreg);
 	    found++;
 	}
     }
@@ -3596,6 +3598,12 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		ip->opnds.a3i.u.imm = set.imm;
 		ip->opnds.a3i.dest = dest_vreg;
 		break;
+	    case DILL_P:
+		ip->class_code = iclass_set;
+		ip->insn_code = DILL_P;
+		ip->opnds.a3i.u.imm_a = (void*)set.imm;
+		ip->opnds.a3i.dest = dest_vreg;
+		break;
 	    case DILL_F: case DILL_D:
 		ip->class_code = iclass_setf;
 		ip->insn_code = to_type;
@@ -3615,8 +3623,6 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf("\n");
 	    }
-	    set_ip->class_code = iclass_nop;
-	    set_unused(c, bb, set_vreg);
 	    found++;
 	}
     }
@@ -3647,8 +3653,6 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf("\n");
 	    }
-	    set_ip->class_code = iclass_nop;
-	    set_unused(c, bb, set_vreg);
 	    found++;
 	}
     }
@@ -3678,8 +3682,6 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf("\n");
 	    }
-	    set_ip->class_code = iclass_nop;
-	    set_unused(c, bb, set_vreg);
 	    found++;
 	}
     }
@@ -3714,8 +3716,6 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf("\n");
 	    }
-	    set_ip->class_code = iclass_nop;
-	    set_unused(c, bb, set_vreg);
 	    found++;
 	}
     }
@@ -3752,8 +3752,6 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf("\n");
 	    }
-	    set_ip->class_code = iclass_nop;
-	    set_unused(c, bb, set_vreg);
 	    found++;
 	}
     }
@@ -3764,6 +3762,15 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 	break;
     case iclass_nop:
 	break;
+    }
+    if (found) {
+	if (set_vreg >= 100) {
+	    c->p->vregs[set_vreg-100].use_info.use_count--;
+	}
+	if (c->p->vregs[set_vreg-100].use_info.use_count == 0) {
+	    set_ip->class_code = iclass_nop;
+	    set_unused(c, bb, set_vreg);
+	}
     }
     return found;
 }
@@ -3805,7 +3812,7 @@ do_const_prop(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	}
 	for (k = loc + 1; ((k <= bb->end) && (!found)); k++) {
 	    virtual_insn *ip = &((virtual_insn *)insns)[k];
-	    found = const_prop_ip(c, bb, ip, set_ip);
+	    found = const_prop_ip(c, bb, ip, set_ip, 1);
 	}
     } else if (set_ip->class_code == iclass_set) {
 	int k;
@@ -3817,10 +3824,12 @@ do_const_prop(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	}
 	for (k = loc + 1; ((k <= bb->end)  && (vdest != insn_defines(&((virtual_insn *)insns)[k]))); k++) {
 	    virtual_insn *ip = &((virtual_insn *)insns)[k];
-	    const_prop_ip(c, bb, ip, set_ip);
+	    const_prop_ip(c, bb, ip, set_ip, 0);
 	}
-	/* one more */
-	const_prop_ip(c, bb, &((virtual_insn *)insns)[k], set_ip);
+	if (k <= bb->end) {
+	    /* if we ended in insn_defines, substitute the one that defines it */
+	    const_prop_ip(c, bb, &((virtual_insn *)insns)[k], set_ip, 0);
+	}
     } else if (((set_ip->class_code == iclass_mov) ||
 		((set_ip->class_code == iclass_convert) &&
 		 is_convert_noop(set_ip->insn_code))) && 
@@ -4145,6 +4154,43 @@ CSE_elimination(dill_stream c, void *insns, virtual_mach_info vmi)
     apply_to_each(c, insns, vmi, do_com_sub_exp);
 }
 
+static void
+kill_dead(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
+{
+    virtual_insn *root_insn = &((virtual_insn *)insns)[loc];
+    int def_vreg = insn_defines(root_insn);
+    int k;
+    int stop = 0;
+    if (def_vreg >= 100) {
+	if (c->p->vregs[def_vreg-100].use_info.use_count == 0) {
+	    root_insn->class_code = iclass_nop;
+	    set_unused(c, bb, def_vreg);
+	}
+    }
+    for (k = loc + 1; ((k <= bb->end) && (!stop)); k++) {
+	virtual_insn *ip = &((virtual_insn *)insns)[k];
+	int used_vregs[3];
+	insn_uses(ip, &used_vregs[0]);
+	if ((def_vreg == used_vregs[0]) || (def_vreg == used_vregs[1]) 
+	    ||(def_vreg == used_vregs[2])) {
+	    stop++;
+	} else {
+	    if (insn_defines(ip) == def_vreg) {
+		/* got another define before a use, kill the first */
+		root_insn->class_code = iclass_nop;
+		stop++;
+	    }
+	}
+    }
+		
+}
+
+static void
+kill_dead_regs(dill_stream c, void *insns, virtual_mach_info vmi)
+{
+    apply_to_each(c, insns, vmi, kill_dead);
+}
+
 extern void
 virtual_proc_start(dill_stream c, char *subr_name, int arg_count,
 		   arg_info_list args, dill_reg *arglist)
@@ -4247,6 +4293,7 @@ virtual_do_end(dill_stream c, int package)
 		   virtual_insn_count(c));
 	}
 	reset_use_def_count(c, insns, vmi);
+	kill_dead_regs(c, insns, vmi);
     }
 
     if (dill_verbose) {
