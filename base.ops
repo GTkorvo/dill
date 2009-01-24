@@ -60,7 +60,7 @@ print COUT "\n/* This file is generated from base.ops.  Do not edit directly. */
 print COUT "#include <dill.h>\n";
 print COUT "\nchar *arith3_name[] = \{".substr($enum_a3,2). "\};\n";
 print COUT "\nchar *arith2_name[] = \{".substr($enum_a2,2). "\};\n";
-foreach $key (keys %poly_array) {
+foreach $key (sort (keys %poly_array)) {
    $poly_array{$key} .= " ";
    print COUT "int dill_${key}_poly_map[] = {\n";
    print HOUT "extern int dill_${key}_poly_map[];\n";
