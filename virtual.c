@@ -4248,6 +4248,8 @@ virtual_insn_count(dill_stream c)
     }
     return count;
 }
+
+void init_code_block(dill_stream s);
 	    
 static void
 virtual_do_end(dill_stream c, int package)
@@ -4320,6 +4322,11 @@ virtual_do_end(dill_stream c, int package)
 	c->p->code_base = c->p->native.code_base;
 	c->p->native.code_base = NULL;
 	c->p->native.mach_info = NULL;
+	if (c->p->code_base == NULL) {
+	    init_code_block(c);
+	    c->p->native.code_base = c->p->code_base;
+	    c->p->native.code_limit = c->p->code_limit;
+	}
 	c->p->cur_ip = c->p->code_base;
 	c->p->code_limit = c->p->native.code_limit;
 
@@ -4338,7 +4345,9 @@ virtual_do_end(dill_stream c, int package)
 	if (package) {
 	    c->j->package_end(c);
 	} else {
-	    dill_finalize(c);
+	    dill_exec_handle h;
+	    h = dill_finalize(c);
+	    dill_free_handle(h);
 	}
 	c->j = c->p->native.mach_jump;
 	c->p->native.mach_reset = c->p->mach_reset;

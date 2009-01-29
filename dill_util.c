@@ -44,10 +44,10 @@
 extern char *getenv(const char *name);
 #endif
 
-static void init_code_block(dill_stream s);
+extern void init_code_block(dill_stream s);
 static void free_code_blocks(dill_stream s);
 
-dill_stream static_ctx = (dill_stream)0;
+#define END_OF_CODE_BUFFER 60
 
 static void
 reset_regset(reg_set* regs)
@@ -387,11 +387,6 @@ dill_get_fp(dill_exec_handle h)
     return (void *) h->fp;
 }
 
-EXTERN void 
-dill_free_handle(dill_exec_handle h)
-{
-    free(h);
-}
 
 EXTERN dill_exec_handle
 dill_finalize(dill_stream s)
@@ -401,7 +396,53 @@ dill_finalize(dill_stream s)
     s->p->save_param_count = s->p->c_param_count;
     s->p->c_param_count = 0;
     handle->fp = (void(*)())s->p->fp;
+    handle->ref_count = 1;
+    handle->size = 0;
     return handle;
+}
+
+EXTERN dill_exec_handle
+dill_get_handle(dill_stream s)
+{
+    char* native_base = s->p->native.code_base;
+    dill_exec_handle handle = malloc(sizeof(*handle));
+    int size = (long)s->p->native.code_limit - (long)s->p->native.code_base + END_OF_CODE_BUFFER;
+    s->p->native.code_base = NULL;
+    if (native_base == 0) {
+        native_base = s->p->code_base;
+	size = (long)s->p->code_limit - (long)s->p->code_base + END_OF_CODE_BUFFER;
+	s->p->code_base = NULL;
+    }
+    handle->fp = (void(*)())s->p->fp;
+    handle->ref_count = 1;
+    handle->size = size;
+    handle->code_base = native_base;
+    return handle;
+}
+
+EXTERN void
+dill_free_handle(dill_exec_handle handle)
+{
+    handle->ref_count--;
+    if (handle->ref_count > 0) return;
+    if (handle->size != 0) {
+	if (handle->code_base) {
+#ifdef USE_MMAP_CODE_SEG
+	    if (munmap(handle->code_base, handle->size) == -1) perror("unmap 1");
+#else
+	    free(handle->code_base);
+#endif
+	}
+    }
+    handle->code_base = NULL;
+    handle->size = 0;
+    free(handle);
+}
+
+EXTERN void
+dill_ref_handle(dill_exec_handle handle)
+{
+    handle->ref_count++;
 }
 
 static char *
@@ -633,8 +674,7 @@ dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str)
     (s->j->proc_start)(s, name, arg_count, args, NULL);
 }
 
-#define END_OF_CODE_BUFFER 60
-static void
+void
 init_code_block(dill_stream s)
 {
     static unsigned long size = INIT_CODE_SIZE;
@@ -665,17 +705,17 @@ free_code_blocks(dill_stream s)
 	int size = (long)s->p->code_limit - (long)s->p->code_base + END_OF_CODE_BUFFER;
         if (munmap(s->p->code_base, size) == -1) perror("unmap 1");
     }
-    if (s->p->virtual.code_base) {
+    if (s->p->virtual.code_base && (s->p->virtual.code_base != s->p->code_base) ) {
 	int vsize = (long)s->p->virtual.code_limit - (long)s->p->virtual.code_base + END_OF_CODE_BUFFER;
         if (munmap(s->p->code_base, vsize) == -1) perror("unmap v");
     }
-    if (s->p->native.code_base) {
+    if (s->p->native.code_base && (s->p->native.code_base != s->p->code_base) ) {
 	int nsize = (long)s->p->native.code_limit - (long)s->p->native.code_base + END_OF_CODE_BUFFER;
         if (munmap(s->p->code_base, nsize) == -1) perror("unmap n");
     }
 #else
     if (s->p->code_base) free(s->p->code_base);
-    if (s->p->virtual.code_base && (s->p->native.code_base != s->p->code_base) ) 
+    if (s->p->virtual.code_base && (s->p->virtual.code_base != s->p->code_base) ) 
       free(s->p->virtual.code_base);
     if (s->p->native.code_base && (s->p->native.code_base != s->p->code_base) ) 
       free(s->p->native.code_base);
@@ -1206,6 +1246,12 @@ dill_dump_reg(dill_stream s, int typ, int reg)
     s->j->print_reg(s, typ, reg);
 }
 
+#if !defined (HAVE_DIS_ASM_H)
+struct disassemble_info {
+    void *junk;
+};
+#endif
+
 #if defined(HAVE_DIS_ASM_H) && !defined(NO_DISASSEMBLER)
 /* GENERIC BINUTILS DISASSEMBLER */
 /* include some things from libbfd so we don't have to have it all */
@@ -1338,22 +1384,59 @@ dump_cur_dill_insn(dill_stream s)
     dump_dill_insn(s, s->p->cur_ip);
 }
 
+#else
+extern void
+dump_cur_dill_insn(dill_stream s)
+{
+}
+#endif
+
 EXTERN void
 dill_dump(dill_stream s)
 {
     struct disassemble_info info;
     void *base = s->p->code_base;
+    int native_missing = 0;
 
+
+    if ((base != s->p->virtual.code_base) &&
+	(s->p->virtual.code_base != NULL) && (s->p->virtual.mach_jump != NULL)){
+	/* Section to dump virtual code base *after* dcg completion */
+	/* only do this if we're not currently in the middle of virtual generation */
+	void *code_limit =  s->p->virtual.cur_ip;
+	base = s->p->virtual.code_base;
+	s->p->virtual.mach_jump->init_disassembly(s, &info);
+	void *p;
+	int l;
+	int insn_count = 0;
+	printf("\nDILL virtual instruction stream\n\n");
+	for (p =base; p < code_limit;) {
+	    /* can't insert branch locs, that information is gone */
+
+	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
+	    l = s->p->virtual.mach_jump->print_insn(s, &info, (void *)p);
+	    printf("\n");
+	    if (l == -1) return;
+	    p = (char*)p + l;
+	    insn_count++;
+	}
+	printf("\nDumped %d virtual instructions\n\n", insn_count);
+    }
+#if defined(NO_DISASSEMBLER)
+    native_missing = 1;
+#endif
+    base = s->p->code_base;
     if (base == NULL) {
 	base = s->p->native.code_base;
     }
-    if (s->j->init_disassembly(s, &info) == 0) {
-	printf("No disassembler provided 1\n");
+    if ((s->j->init_disassembly(s, &info) == 0) || 
+	(native_missing)) {
+	printf("No native disassembler available\n");
     } else {
 	void *p;
 	int l;
 	int insn_count = 0;
-	for (p =base; p < s->p->cur_ip;) {
+	for (p =base; (char*) p < s->p->cur_ip;) {
 	    int i;
 	    struct branch_table *t = &s->p->branch_table;
 	    for (i=0; i < t->next_label; i++) {
@@ -1373,15 +1456,3 @@ dill_dump(dill_stream s)
     }
 }
 
-#else
-extern void
-dump_cur_dill_insn(dill_stream s)
-{
-}
-EXTERN void 
-dill_dump(dill_stream s)
-{
-    printf("No disassembler provided\n");
-}
-
-#endif
