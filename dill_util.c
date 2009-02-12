@@ -1429,8 +1429,11 @@ dill_dump(dill_stream s)
     if (base == NULL) {
 	base = s->p->native.code_base;
     }
-    if ((s->j->init_disassembly(s, &info) == 0) || 
-	(native_missing)) {
+    if ((s->j != s->p->virtual.mach_jump) && native_missing) {
+	printf("No native disassembler available\n");
+	return 0;
+    }
+    if (s->j->init_disassembly(s, &info) == 0) {
 	printf("No native disassembler available\n");
     } else {
 	void *p;
