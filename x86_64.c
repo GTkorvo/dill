@@ -123,7 +123,7 @@ BYTE_OUT2R(dill_stream s, int rex, int insn1, int insn2)
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
@@ -144,7 +144,7 @@ BYTE_OUT1R(dill_stream s, int rex, int insn1)
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
@@ -163,7 +163,7 @@ BYTE_OUT2IR(dill_stream s, int rex, int insn1, int insn2, int imm32)
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
@@ -186,7 +186,7 @@ BYTE_OUT3IR(dill_stream s, int rex, int insn1, int insn2, int insn3, int imm32)
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
@@ -211,7 +211,7 @@ BYTE_OUT1IR(dill_stream s, int rex, int insn1, int imm32)
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
@@ -232,7 +232,7 @@ BYTE_OUT1LR(dill_stream s, int rex, int insn1, long imm64)
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
@@ -253,7 +253,7 @@ BYTE_OUT3R(dill_stream s, int rex, int insn1, int insn2, int insn3)
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
@@ -276,7 +276,7 @@ BYTE_OUT4R(dill_stream s, int rex, int insn1, int insn2, int insn3, int insn4)
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
@@ -301,7 +301,7 @@ BYTE_OUT1R3I(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4,
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*(tmp_ip + 0) = (unsigned char)insn1;
 	*(tmp_ip + 1) = (unsigned char)rex|0x40;
@@ -328,7 +328,7 @@ BYTE_OUT1R4I(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4,
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*(tmp_ip + 0) = (unsigned char)insn1;
 	*(tmp_ip + 1) = (unsigned char)rex|0x40;
@@ -357,7 +357,7 @@ BYTE_OUT1R3(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4)
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*(tmp_ip + 0) = (unsigned char)insn1;
 	*(tmp_ip + 1)= (unsigned char)rex|0x40;
@@ -382,7 +382,7 @@ BYTE_OUT1R4(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4, 
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*(tmp_ip + 0) = (unsigned char)insn1;
 	*(tmp_ip + 1)= (unsigned char)rex|0x40;
@@ -409,7 +409,7 @@ BYTE_OUT1R5(dill_stream s, int insn1, int rex, int insn2, int insn3, int insn4, 
     if (s->p->cur_ip >= s->p->code_limit) {
 	extend_dill_stream(s);
     }
-    tmp_ip = s->p->cur_ip;
+    tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
 	*(tmp_ip + 0) = (unsigned char)insn1;
 	*(tmp_ip + 1)= (unsigned char)rex|0x40;
