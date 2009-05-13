@@ -503,6 +503,30 @@ x86_64_pmov(dill_stream s, int typ, int dest, int src)
     }
 }
 
+static void
+x86_64_sxmov(dill_stream s, int typ, int src, int dest)
+{
+    int rex = REX_W;
+    if (src > RDI) rex |= REX_R;
+    if (dest > RDI) rex |= REX_B;
+    if (src != dest) {
+        switch (typ) {
+	case DILL_C:
+	    BYTE_OUT3R(s, rex, 0x0f, 0xbe, ModRM(0x3, src, dest));
+	    break;
+	case DILL_UC:
+	    BYTE_OUT3R(s, rex, 0x0f, 0xb6, ModRM(0x3, src, dest));
+	    break;
+	case DILL_S:
+	    BYTE_OUT3R(s, rex, 0x0f, 0xbf, ModRM(0x3, src, dest));
+	    break;
+	case DILL_US:
+	    BYTE_OUT3R(s, rex, 0x0f, 0xb7, ModRM(0x3, src, dest));
+	    break;
+	}
+    }
+}
+
 extern void x86_64_farith2(s, b1, typ, dest, src)
 dill_stream s;
 int b1;
@@ -783,10 +807,16 @@ x86_64_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list a
 		continue;
 	    }
 	    if (args[i].is_register) {
-		if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
-		    x86_64_movl(s, tmp_reg, args[i].in_reg);
-		} else {	    /* must be float */
+	        switch(args[i].type) {
+		case DILL_D: case DILL_F:
 		    x86_64_movd(s, tmp_reg, args[i].in_reg);
+		    break;
+		case DILL_UC: case DILL_C: case DILL_US: case DILL_S:
+		    x86_64_sxmov(s, args[i].type, tmp_reg, args[i].in_reg);
+		    break;
+		default:
+		    x86_64_movl(s, tmp_reg, args[i].in_reg);
+		    break;
 		}
 	    } else {
 		/* general offset from fp*/
