@@ -57,7 +57,6 @@
 
 #define x86_push_reg(s, src) BYTE_OUT1(s, 0x50+src)
 #define x86_pop_reg(s, src) BYTE_OUT1(s, 0x58+src)
-#define x86_simple_ret(c) do {x86_pop_reg(s, EBX);x86_pop_reg(s, EBX);x86_pop_reg(s, ESI);x86_pop_reg(s, EDI);x86_movi(s, ESP, EBP);x86_pop_reg(s, EBP); BYTE_OUT1(s, 0xc3);} while(0)
 #define x86_nop(c) BYTE_OUT1(s, 0x90)
 
 #define IREG 0
@@ -154,6 +153,7 @@ x86_local(dill_stream s, int type)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
 
+    s->p->used_frame++;
     smi->act_rec_size += roundup(type_info[type].size, smi->stack_align);
     return (-smi->act_rec_size) + smi->stack_constant_offset;
 }
@@ -162,6 +162,7 @@ extern int
 x86_localb(dill_stream s, int size)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+    s->p->used_frame++;
     smi->act_rec_size = roundup(smi->act_rec_size, size);
 
     smi->act_rec_size += roundup(size, smi->stack_align);
@@ -196,7 +197,70 @@ x86_save_restore_op(dill_stream s, int save_restore, int type, int reg)
     } else {  /* restore */
 	x86_ploadi(s, type, 0, reg, _frame_reg, smi->save_base + offset + smi->stack_constant_offset);
     }
+    s->p->used_frame++;
 }	
+
+static void
+save_required_regs(dill_stream s, int force)
+{
+    if (s->p->call_table.call_count != 0) force++;
+
+    if (force) {
+	dill_andii(s, ESP, ESP, -16); /* make sure it's multiple of 16 */
+    }
+    /* callee is supposed to save these */
+    if (force || dill_wasused(&s->p->var_i, EDI) || dill_wasused(&s->p->tmp_i, EDI)) {
+	x86_push_reg(s, EDI);
+    }
+    if (force || dill_wasused(&s->p->var_i, ESI) || dill_wasused(&s->p->tmp_i, ESI)) {
+	x86_push_reg(s, ESI);
+    }
+    if (force || dill_wasused(&s->p->var_i, EBX) || dill_wasused(&s->p->tmp_i, EBX)) {
+	x86_push_reg(s, EBX);
+    }
+    if (force) {
+	x86_push_reg(s, EBX);
+    }
+}
+
+static int 
+generate_prefix_code(dill_stream s, int force, int ar_size )
+{
+    int end, start = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
+    int i;
+    arg_info_list args = s->p->c_param_args;
+    x86_mach_info smi = (x86_mach_info) s->p->mach_info;
+
+    if ((s->p->c_param_count > 0) || s->p->used_frame || (s->p->call_table.call_count != 0) || force) {
+	x86_push_reg(s, EBP);
+	x86_movi(s, EBP, ESP);
+    }
+
+    if (force || s->p->used_frame) {
+	/* do local space reservation */
+	dill_subii(s, ESP, ESP, ar_size);
+    }
+
+    save_required_regs(s, force);
+
+    for (i = 0; i < s->p->c_param_count; i++) {
+	if (args[i].is_register) {
+	    if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
+		x86_ploadi(s, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
+	    } else {
+		if (smi->generate_SSE) {
+		    x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
+		    dill_dealloc_specific(s, args[i].in_reg, args[i].type, DILL_TEMP);
+		}
+	    }
+	}
+    }
+
+    end = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
+    return end - start;
+}
+
+static void *last_proc_ret_end = 0;
 
 extern void
 x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args,
@@ -207,24 +271,12 @@ x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args
 
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     smi->pending_prefix = 0;
-    x86_push_reg(s, EBP);
-    x86_movi(s, EBP, ESP);
-    smi->backpatch_offset = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
-
-    /* make local space reservation constant big so we have a word to patch */
-    /* use the nop op code so that if we don't use all of it we get nops */
-    dill_subii(s, ESP, ESP, 0x90909090);
-
-    dill_andii(s, ESP, ESP, -16); /* make sure it's multiple of 16 */
-    x86_push_reg(s, EDI);   /* callee is supposed to save these */
-    x86_push_reg(s, ESI);
-    x86_push_reg(s, EBX);
-    x86_push_reg(s, EBX);
 
     /* leave some space */ x86_local(s, DILL_D);
     smi->conversion_word = x86_local(s, DILL_D);
     smi->fcu_word = x86_local(s, DILL_I);
     smi->save_base = x86_localb(s, 8 * 4 + /* floats */ 8 * 8);
+    s->p->used_frame = 0;  /* don't count our own use of the frame */
 
     cur_arg_offset = 8;
     fp_arg_count = 0;
@@ -249,23 +301,50 @@ x86_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args
 	} else {
 	    args[i].is_register = 0;
 	}
+	if ((args[i].is_register)  && (arglist != NULL)) 
+	    arglist[i] = args[i].in_reg;
+
 	args[i].offset = cur_arg_offset;
 	cur_arg_offset += roundup(type_info[(int)args[i].type].size, smi->stack_align);
     }
 
-    for (i = 0; i < arg_count; i++) {
-	if (args[i].is_register) {
-	    if (arglist != NULL) arglist[i] = args[i].in_reg;
-	    if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
-		x86_ploadi(s, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
-	    } else {
-		if (smi->generate_SSE) {
-		    x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
-		    dill_dealloc_specific(s, args[i].in_reg, args[i].type, DILL_TEMP);
-		}
-	    }
-	}
+    /* make local space reservation constant big so we have a word to patch */
+    /* use the nop op code so that if we don't use all of it we get nops */
+    (void) generate_prefix_code(s, 1 /* force */, 0x90909090);
+
+    smi->backpatch_offset = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
+
+    last_proc_ret_end = 0;
+}
+
+static void
+x86_proc_ret(dill_stream s) 
+{
+    int force = 0;
+    if (s->p->call_table.call_count != 0) force++;
+
+    /* last thing was a ret and there's not a label here, we don't need another ret */
+    if ((last_proc_ret_end == s->p->cur_ip) && !dill_is_label_mark(s))
+	return;
+
+    if (force) {
+	x86_pop_reg(s, EBX);
     }
+    if (force || dill_wasused(&s->p->var_i, EBX) || dill_wasused(&s->p->tmp_i, EBX)) {
+	x86_pop_reg(s, EBX);
+    }
+    if (force || dill_wasused(&s->p->var_i, ESI) || dill_wasused(&s->p->tmp_i, ESI)) {
+	x86_pop_reg(s, ESI);
+    }
+    if (force || dill_wasused(&s->p->var_i, EDI) || dill_wasused(&s->p->tmp_i, EDI)) {
+	x86_pop_reg(s, EDI);
+    }
+    if ((s->p->c_param_count > 0) || s->p->used_frame || (s->p->call_table.call_count != 0)) {
+	x86_movi(s, ESP, EBP);
+	x86_pop_reg(s, EBP);
+    }
+    BYTE_OUT1(s, 0xc3);
+    last_proc_ret_end = s->p->cur_ip;
 }
 
 static unsigned char ld_opcodes[] = {
@@ -361,10 +440,18 @@ x86_ploadi(dill_stream s, int type, int force_8087, int dest, int src, long offs
         BYTE_OUT1(s, smi->pending_prefix);
 	smi->pending_prefix = 0;
     }
-    if (((long)offset <= 127) && ((long)offset > -128)) {
-	BYTE_OUT3(s, opcode, ModRM(0x1, tmp_dest, src), offset & 0xff);
+    if (src == ESP) {
+	if (((long)offset <= 127) && ((long)offset > -128)) {
+	    BYTE_OUT4(s, opcode, ModRM(0x1, tmp_dest, ESP), SIB(0, 4, ESP), offset & 0xff);
+	} else {
+	    BYTE_OUT3I(s, opcode, ModRM(0x2, tmp_dest, src), SIB(0, 4, ESP), offset);
+	}
     } else {
-	BYTE_OUT2I(s, opcode, ModRM(0x2, tmp_dest, src), offset);
+	if (((long)offset <= 127) && ((long)offset > -128)) {
+	    BYTE_OUT3(s, opcode, ModRM(0x1, tmp_dest, src), offset & 0xff);
+	} else {
+	    BYTE_OUT2I(s, opcode, ModRM(0x2, tmp_dest, src), offset);
+	}
     }
     switch(type){
     case DILL_C:
@@ -574,6 +661,7 @@ x86_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 	x86_bswap(s, 0, DILL_I, EAX, EAX);
 	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
 	x86_ploadi(s, DILL_F, 0, 0, _frame_reg, smi->conversion_word);
+	s->p->used_frame++;
 	break;
     case DILL_D:
 	x86_bswap(s, 0, DILL_I, EAX, EAX);
@@ -582,6 +670,7 @@ x86_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 	x86_bswap(s, 0, DILL_I, EAX, EAX);
 	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
 	x86_ploadi(s, DILL_D, 0, 0, _frame_reg, smi->conversion_word);
+	s->p->used_frame++;
 	break;
     case DILL_L: case DILL_UL: case DILL_P: case DILL_I: case DILL_U:
 	BYTE_OUT2(s, 0x0f, 0xc8 + dest);   /* byteswap dest */
@@ -620,6 +709,7 @@ x86_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 	x86_bswap(s, 0, DILL_I, EAX, EAX);
 	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
 	x86_ploadi(s, DILL_F, 0, 0, _frame_reg, smi->conversion_word);
+	s->p->used_frame++;
 	break;
     case DILL_D:
 	x86_bswap(s, 0, DILL_I, EAX, EAX);
@@ -629,6 +719,7 @@ x86_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 	x86_bswap(s, 0, DILL_I, EAX, EAX);
 	x86_pstorei(s, DILL_I, 0, EAX, _frame_reg, smi->conversion_word);
 	x86_ploadi(s, DILL_D, 0, 0, _frame_reg, smi->conversion_word);
+	s->p->used_frame++;
 	break;
     case DILL_L: case DILL_UL: case DILL_P: case DILL_I: case DILL_U:
 	BYTE_OUT2(s, 0x0f, 0xc8 + dest);   /* byteswap dest */
@@ -994,6 +1085,7 @@ int src;
 	x86_pbsloadi(s, DILL_I, 0, EAX,  _frame_reg, smi->conversion_word + 4);
 	x86_pstorei(s, DILL_I, 0, EAX,  _frame_reg, smi->conversion_word + 4);
 	x86_ploadi(s, DILL_D, 0, dest, _frame_reg, smi->conversion_word);
+	s->p->used_frame++;
 	break;
     case DILL_L: case DILL_UL: case DILL_P: 
     case DILL_I: case DILL_U:
@@ -1286,6 +1378,7 @@ x86_convert(dill_stream s, int from_type, int to_type,
 	/* fldcw (restore original) */
 	BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x5, _frame_reg), smi->fcu_word);
 	x86_ploadi(s, DILL_I, 0, dest, _frame_reg, smi->conversion_word);
+	s->p->used_frame++;
 	break;
     case CONV(DILL_I,DILL_D):
     case CONV(DILL_L,DILL_D):
@@ -1296,6 +1389,7 @@ x86_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_S,DILL_D):
     case CONV(DILL_S,DILL_F):
 	x86_pstorei(s, DILL_I, 0, src, _frame_reg, smi->conversion_word);
+	s->p->used_frame++;
 	if (smi->generate_SSE) {
 	    	BYTE_OUT4(s, (to_type == DILL_D) ? 0xf2 : 0xf3, 0xf, 0x2a, ModRM(0x3, dest, src));
 	} else {
@@ -1317,11 +1411,13 @@ x86_convert(dill_stream s, int from_type, int to_type,
 	    BYTE_OUT3(s, 0xdf, ModRM(0x1, 0x5, _frame_reg), smi->conversion_word);
 	    x86_pstorei(s, to_type, 1 /* force 8087 */, 0,  _frame_reg, smi->conversion_word);
 	    x86_ploadi(s, to_type, 0, dest, _frame_reg, smi->conversion_word);
+	    s->p->used_frame++;
 	} else {
 	    x86_pstorei(s, DILL_I, 0, src, _frame_reg, smi->conversion_word);
 	    BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
 		       smi->conversion_word + 4, 0);
 	    BYTE_OUT3(s, 0xdf, ModRM(0x1, 0x5, _frame_reg), smi->conversion_word);
+	    s->p->used_frame++;
 	}
 	break;
     case CONV(DILL_C,DILL_I):
@@ -1643,6 +1739,7 @@ extern int x86_calli(dill_stream s, int type, void *xfer_address, const char *na
 	    x86_pstorei(s, type, 1 /* force 8087 */, 0,  _frame_reg, smi->conversion_word);
 	    x86_ploadi(s, type, 0, XMM0, _frame_reg, smi->conversion_word);
 	    caller_side_ret_reg = XMM0;
+	    s->p->used_frame++;
 	}
     }
     /* make stack adjust be multiple of 16 */
@@ -1742,6 +1839,7 @@ extern void x86_ret(dill_stream s, int data1, int data2, int src)
 	    x86_pstorei(s, DILL_F, 0, src, _frame_reg, smi->conversion_word);
 	    x86_ploadi(s, DILL_F, 1 /* force 8087*/, src, 
 		       _frame_reg, smi->conversion_word);
+	    s->p->used_frame++;
 	}
 	break;
     case DILL_D:
@@ -1750,10 +1848,11 @@ extern void x86_ret(dill_stream s, int data1, int data2, int src)
 	    x86_pstorei(s, DILL_D, 0, src, _frame_reg, smi->conversion_word);
 	    x86_ploadi(s, DILL_D, 1 /* force 8087*/, src, 
 		       _frame_reg, smi->conversion_word);
+	    s->p->used_frame++;
 	}
 	break;
     }
-    x86_simple_ret(c);
+    x86_proc_ret(s);
 }
 
 extern void x86_retf(dill_stream s, int data1, int data2, double imm)
@@ -1767,6 +1866,7 @@ extern void x86_retf(dill_stream s, int data1, int data2, double imm)
 		x86_pstorei(s, DILL_F, 0, XMM0, _frame_reg, smi->conversion_word);
 		x86_ploadi(s, DILL_F, 1 /* force 8087*/, 0, 
 			   _frame_reg, smi->conversion_word);
+		s->p->used_frame++;
 	    }
 	    break;
 	case DILL_D:
@@ -1775,11 +1875,12 @@ extern void x86_retf(dill_stream s, int data1, int data2, double imm)
 		x86_pstorei(s, DILL_D, 0, XMM0, _frame_reg, smi->conversion_word);
 		x86_ploadi(s, DILL_D, 1 /* force 8087*/, 0, 
 			   _frame_reg, smi->conversion_word);
+		s->p->used_frame++;
 	    }
 	    break;
 	}
     }
-    x86_simple_ret(c);
+    x86_proc_ret(s);
 }
 
 extern void x86_reti(dill_stream s, int data1, int data2, long imm)
@@ -1801,7 +1902,7 @@ extern void x86_reti(dill_stream s, int data1, int data2, long imm)
     case DILL_D:
     x86_setd(s, _f0, imm);*/
     }
-    x86_simple_ret(c);
+    x86_proc_ret(s);
 }
 
 extern void x86_rt_call_link(char *code, call_t *t);
@@ -1853,14 +1954,19 @@ x86_emit_save(dill_stream s)
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
     void *save_ip = s->p->cur_ip;
     int ar_size = smi->act_rec_size;
+    int prefix_size;
     ar_size = roundup(ar_size, 8) + 16;
 
-    s->p->cur_ip = (char*)s->p->code_base + smi->backpatch_offset;
+    s->p->cur_ip = (char*)s->p->code_base;
 
-    /* do local space reservation */
-    dill_subii(s, ESP, ESP, ar_size);
+    prefix_size = generate_prefix_code(s, 0, ar_size);
 
-    s->p->fp = (char*)s->p->code_base;
+    s->p->cur_ip = (char*)s->p->code_base - prefix_size + smi->backpatch_offset;
+    s->p->fp = (char*)s->p->cur_ip;
+
+    /* re-generate in the right place */
+    prefix_size = generate_prefix_code(s, 0, ar_size);
+
     s->p->cur_ip = save_ip;
 }
     
@@ -1868,7 +1974,7 @@ extern void
 x86_end(s)
 dill_stream s;
 {
-    x86_simple_ret(s);
+    x86_proc_ret(s);
     x86_branch_link(s);
     x86_call_link(s);
     x86_data_link(s);
@@ -1878,7 +1984,7 @@ dill_stream s;
 extern void
 x86_package_end(dill_stream s)
 {
-    x86_simple_ret(s);
+    x86_proc_ret(s);
     x86_branch_link(s);
     x86_emit_save(s);
     /* at this point, code segment is finalized */
@@ -1950,6 +2056,7 @@ x86_setf(dill_stream s, int type, int junk, int dest, double imm)
 
 	    x86_ploadi(s, DILL_D, 0, dest, 
 		       _frame_reg, smi->conversion_word);
+	    s->p->used_frame++;
 	}
     } else {
 	if (type == DILL_F) {
@@ -1958,6 +2065,7 @@ x86_setf(dill_stream s, int type, int junk, int dest, double imm)
 		       smi->conversion_word, a.i);
 	    /* flds */
 	    BYTE_OUT3(s, 0xd9, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
+	    s->p->used_frame++;
 	} else {
 	    b.d = imm;
 	    BYTE_OUT3I(s, 0xc7, ModRM(0x1, 0x0, _frame_reg), 
@@ -1966,6 +2074,7 @@ x86_setf(dill_stream s, int type, int junk, int dest, double imm)
 		       smi->conversion_word + 4, b.i[1]);
 	    /* fldd */
 	    BYTE_OUT3(s, 0xdd, ModRM(0x1, 0x0, _frame_reg), smi->conversion_word);
+	    s->p->used_frame++;
 	}
     }
 
