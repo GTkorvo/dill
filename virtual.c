@@ -428,6 +428,8 @@ set_used(dill_stream c, int vreg)
 {
     if (vreg >= 100) {
 	c->p->vregs[vreg-100].use_info.use_count++;
+    } else {
+	c->p->c_param_args[vreg].used++;
     }
 }
 
@@ -1392,6 +1394,9 @@ reset_use_def_count(dill_stream c, virtual_insn *insns, virtual_mach_info vmi)
     for(i=0; i< c->p->vreg_count; i++) {
 	c->p->vregs[i].use_info.use_count = 0;
 	c->p->vregs[i].use_info.def_count = 0;
+    }
+    for(i=0; i < c->p->c_param_count; i++) {
+	c->p->c_param_args[i].used = 0;
     }
     apply_to_each(c, insns, vmi, do_use_def_count);
 }
@@ -4190,6 +4195,10 @@ static void
 kill_dead_regs(dill_stream c, void *insns, virtual_mach_info vmi)
 {
     apply_to_each(c, insns, vmi, kill_dead);
+    /* kill unused arguments */
+    while ((c->p->c_param_count>0) && (c->p->c_param_args[c->p->c_param_count-1].used == 0)) {
+	c->p->c_param_count--;
+    }
 }
 
 extern void

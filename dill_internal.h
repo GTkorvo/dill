@@ -11,6 +11,7 @@ typedef struct arg_info {
     unsigned in_reg;		/* callee register it's in */
     unsigned out_reg;		/* caller register it's in */
     int offset;			/* otherwise at this offset from v_pp */
+    int used;
 } *arg_info_list;
 
 typedef struct reg_set {
@@ -128,6 +129,7 @@ struct dill_private_ctx {
     int vreg_count;
     vreg_info *vregs;
     int v_tmps[DILL_B][3];
+    int used_frame;
 };
 
 struct reg_type {
