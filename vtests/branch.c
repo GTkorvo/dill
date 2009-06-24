@@ -8,7 +8,6 @@ int p() {
     return a++;
 }
 
-
 int 
 main(int argc, char **argv)
 {
