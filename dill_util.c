@@ -535,6 +535,17 @@ EXTERN void dill_mark_label(dill_stream s, int label)
     t->label_locs[label] = label_loc;
 }
 
+EXTERN int dill_is_label_mark(dill_stream s)
+{
+    struct branch_table *t = &s->p->branch_table;
+    int i;
+    int current_loc = (int) ((char*)s->p->cur_ip - (char*)s->p->code_base);
+    for (i = 0; i < t->max_alloc; i++) {
+	if (t->label_locs[0] == current_loc) return 1;
+    }
+    return 0;
+}
+
 extern void dill_mark_branch_location(dill_stream s, int label)
 {
     struct branch_table *t = &s->p->branch_table;
@@ -957,6 +968,8 @@ dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int class)
 		    SET_BIT(reg, s->p->tmp_i.mustsave);
 		    SET_BIT(reg, s->p->tmp_i.used);
 		}
+	    } else {
+		    SET_BIT(reg, s->p->var_i.used);
 	    }
 	    *reg_p = reg;
 	    return (reg != -1);
@@ -1212,7 +1225,7 @@ int dill_scalld(dill_stream s, void *ptr, const char *name, const char *arg_str,
 extern void
 dill_error(char *msg)
 {
-    printf(msg);
+    printf("%s", msg);
 }
 
 extern void
@@ -1429,6 +1442,10 @@ dill_dump(dill_stream s)
     if (base == NULL) {
 	base = s->p->native.code_base;
     }
+    if (base == NULL) {
+	printf("No code to dump\n");
+	return;
+    }
     if ((s->j != s->p->virtual.mach_jump) && native_missing) {
 	printf("No native disassembler available\n");
 	return;
@@ -1439,6 +1456,8 @@ dill_dump(dill_stream s)
 	void *p;
 	int l;
 	int insn_count = 0;
+	if ((s->j != s->p->virtual.mach_jump) && (s->p->fp != NULL) )
+	    base = s->p->fp;
 	for (p =base; (char*) p < s->p->cur_ip;) {
 	    int i;
 	    struct branch_table *t = &s->p->branch_table;

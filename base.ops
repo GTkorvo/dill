@@ -60,7 +60,7 @@ print COUT "\n/* This file is generated from base.ops.  Do not edit directly. */
 print COUT "#include <dill.h>\n";
 print COUT "\nchar *arith3_name[] = \{".substr($enum_a3,2). "\};\n";
 print COUT "\nchar *arith2_name[] = \{".substr($enum_a2,2). "\};\n";
-foreach $key (sort (keys %poly_array)) {
+foreach $key (sort keys %poly_array) {
    $poly_array{$key} .= " ";
    print COUT "int dill_${key}_poly_map[] = {\n";
    print HOUT "extern int dill_${key}_poly_map[];\n";
@@ -112,6 +112,10 @@ sub loadstore {
     print HOUT "#define dill_Ploadi(s, typ, dest, src, imm) (s->j->loadi)(s, typ, 0, dest, src, imm)\n";
     print HOUT "#define dill_Pstore(s, typ, dest, src1, src2) (s->j->store)(s, typ, 0, dest, src1, src2)\n";
     print HOUT "#define dill_Pstorei(s, typ, dest, src, imm) (s->j->storei)(s, typ, 0, dest, src, imm)\n";
+    print HOUT "#define dill_Pbne(s, type, src1, src2, label) (s->j->jmp_b)[dill_jmp_bnec+type](s, s->j->b_data[dill_jmp_bnec+type].data1, s->j->b_data[dill_jmp_bnec+type].data2, src1, src2, label)\n";
+    print HOUT "#define dill_Pbgt(s, type, src1, src2, label) (s->j->jmp_b)[dill_jmp_bgtc+type](s, s->j->b_data[dill_jmp_bgtc+type].data1, s->j->b_data[dill_jmp_bgtc+type].data2, src1, src2, label)\n";
+    print HOUT "#define dill_Pbeq(s, type, src1, src2, label) (s->j->jmp_b)[dill_jmp_beqc+type](s, s->j->b_data[dill_jmp_beqc+type].data1, s->j->b_data[dill_jmp_beqc+type].data2, src1, src2, label)\n";
+
     foreach (split(' ', $types)) {
 	print HOUT "#define dill_ld${_}(s, dest, src1, src2) (s->j->load)(s, DILL_" . &upperc($_) . ", 0, dest, src1, src2)\n";
 	print HOUT "#define dill_ld${_}i(s, dest, src, imm) (s->j->loadi)(s, DILL_" . &upperc($_) . ", 0, dest, src, imm)\n";
@@ -545,6 +549,7 @@ EXTERN dill_stream dill_create_raw_stream(void);
  * no available memory.
  */
 EXTERN dill_stream dill_create_stream(void);
+EXTERN dill_stream dill_dup_stream(dill_stream s);
 
 EXTERN dill_exec_ctx dill_get_exec_context(dill_stream x);
 EXTERN void dill_free_stream(dill_stream s);
@@ -554,6 +559,7 @@ EXTERN long dill_get_client_data(dill_exec_ctx ec, int key);
 EXTERN void* dill_take_code(dill_stream s);
 EXTERN int dill_alloc_label(dill_stream s);
 EXTERN void dill_mark_label(dill_stream s, int label);
+EXTERN int dill_is_label_mark(dill_stream s);
 EXTERN int dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int reg_class);
 EXTERN int dill_getreg(dill_stream s, int typ);
 EXTERN void dill_raw_putreg(dill_stream s, dill_reg reg_p, int type);
