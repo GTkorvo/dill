@@ -255,6 +255,6 @@ test "$CC" = "gcc" && CFLAGS="-Wall $CFLAGS"
 NOOPT_CFLAGS=`echo $CFLAGS | sed 's/-O[[^ ]]//g'`
 AC_SUBST(NOOPT_CFLAGS)
 
-AC_CONFIG_FILES([./Makefile vtests/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile vtests/Makefile tests/Makefile])
 AM_CONFIG_HEADER([config.h])
 AC_OUTPUT
