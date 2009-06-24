@@ -68,5 +68,5 @@ x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg)
 		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
     memcpy(tmp, code, pkg->code_size);
 #endif
-    return tmp;
+    return tmp + pkg->entry_offset;
 }
