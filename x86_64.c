@@ -49,7 +49,6 @@
 
 static void x86_64_push_reg(dill_stream s, int src);
 static void x86_64_pop_reg(dill_stream s, int src);
-#define x86_64_simple_ret(s) do {x86_64_pop_reg(s, R15);x86_64_pop_reg(s, R14); x86_64_pop_reg(s,R13); x86_64_pop_reg(s, R12);x86_64_pop_reg(s, EBX);x86_64_movl(s, ESP, EBP);x86_64_pop_reg(s, EBP); BYTE_OUT1(s, 0xc3);} while(0)
 #define x86_64_nop(s) BYTE_OUT1(s, 0x90)
 
 #define IREG 0
@@ -607,6 +606,7 @@ x86_64_local(dill_stream s, int type)
 {
     x86_64_mach_info smi = (x86_64_mach_info) s->p->mach_info;
 
+    s->p->used_frame++;
     smi->act_rec_size += roundup(type_info[type].size, smi->stack_align);
     return (-smi->act_rec_size) + smi->stack_constant_offset;
 }
@@ -615,6 +615,7 @@ extern int
 x86_64_localb(dill_stream s, int size)
 {
     x86_64_mach_info smi = (x86_64_mach_info) s->p->mach_info;
+    s->p->used_frame++;
     smi->act_rec_size = roundup(smi->act_rec_size, size);
 
     smi->act_rec_size += roundup(size, smi->stack_align);
@@ -680,7 +681,8 @@ x86_64_save_restore_op(dill_stream s, int save_restore, int type, int reg)
     } else {  /* restore */
 	x86_64_ploadi(s, type, 0, reg, _frame_reg, smi->save_base + offset);
     }
-}	
+    s->p->used_frame++;
+}
 
 /*
  * register   use  			       preserved across function calls
@@ -733,6 +735,97 @@ Register Offset
 */
 static int arg_regs[] = {RDI, RSI, RDX, RCX, R8, R9};
 
+static void
+save_required_regs(dill_stream s, int force)
+{
+    if (s->p->call_table.call_count != 0) force++;
+
+#ifdef OSX
+    if (force) {
+	dill_andii(s, ESP, ESP, -16); /* make sure it's multiple of 16 */
+    }
+#endif
+
+    /* callee is supposed to save these */
+    if (force || dill_wasused(&s->p->var_i, EBX) || dill_wasused(&s->p->tmp_i, EBX)) {
+	x86_64_push_reg(s, EBX);
+    }
+    if (force || dill_wasused(&s->p->var_i, R12) || dill_wasused(&s->p->tmp_i, R12)) {
+	x86_64_push_reg(s, R12);
+    }
+    if (force || dill_wasused(&s->p->var_i, R13) || dill_wasused(&s->p->tmp_i, R13)) {
+	x86_64_push_reg(s, R13);
+    }
+    if (force || dill_wasused(&s->p->var_i, R14) || dill_wasused(&s->p->tmp_i, R14)) {
+	x86_64_push_reg(s, R14);
+    }
+    if (force || dill_wasused(&s->p->var_i, R15) || dill_wasused(&s->p->tmp_i, R15)) {
+	x86_64_push_reg(s, R15);
+    }
+}
+
+static int 
+generate_prefix_code(dill_stream s, int force, int ar_size, dill_reg *arglist)
+{
+    int end, start = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
+    int i, int_arg_count, float_arg_count;
+    arg_info_list args = s->p->c_param_args;
+
+    if ((s->p->c_param_count > 0) || s->p->used_frame || (s->p->call_table.call_count != 0) || force) {
+	x86_64_push_reg(s, EBP);
+	x86_64_movl(s, EBP, ESP);
+    }
+
+    if (force || s->p->used_frame || (s->p->call_table.call_count != 0)) {
+	/* do local space reservation */
+	dill_subli(s, ESP, ESP, ar_size);
+    }
+
+    save_required_regs(s, force);
+
+    int_arg_count = float_arg_count = 0;   /* reset */
+    for (i = 0; i < s->p->c_param_count; i++) {
+	int came_in_a_reg = 0;
+	switch (args[i].type) {
+	case DILL_D: case DILL_F:
+	    came_in_a_reg = (float_arg_count++ < 8);
+	    break;
+	default:
+	    came_in_a_reg = (int_arg_count++ < 6);
+	    break;
+	}
+	if (came_in_a_reg && (args[i].in_reg == -1)) {
+	    /* not enough regs for this, store it to the stack */
+	    int real_offset = args[i].offset;
+	    x86_64_pstorei(s, args[i].type, 0, arg_regs[int_arg_count-1], EBP, 
+			   real_offset);
+	    continue;
+	}
+	if (came_in_a_reg && args[i].is_register) {
+	    switch(args[i].type) {
+	    case DILL_D: case DILL_F:
+	        x86_64_movd(s, args[i].in_reg, float_arg_count-1);
+		break;
+	    case DILL_UC: case DILL_C: case DILL_US: case DILL_S:
+	      x86_64_sxmov(s, args[i].type, args[i].in_reg, arg_regs[int_arg_count-1]);
+	      break;
+	    default:
+	      x86_64_movl(s, args[i].in_reg, arg_regs[int_arg_count-1]);
+	      break;
+	    }
+	    continue;
+	}
+	if (args[i].is_register) {
+	    /* general offset from fp*/
+	    int real_offset = args[i].offset; 
+	    x86_64_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, real_offset);
+	}
+
+    }
+
+    end = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
+    return end - start;
+}
 
 extern void
 x86_64_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args,
@@ -743,102 +836,95 @@ x86_64_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list a
 
     x86_64_mach_info smi = (x86_64_mach_info) s->p->mach_info;
     smi->pending_prefix = 0;
-    x86_64_push_reg(s, EBP);
-    x86_64_movl(s, EBP, ESP);
-    smi->backpatch_offset = (char*)s->p->cur_ip - (char*)s->p->code_base;
-
-    /* make local space reservation constant big so we have a word to patch */
-    /* use the nop op code so that if we don't use all of it we get nops */
-    dill_subli(s, ESP, ESP, 0x70909090);
-
-    x86_64_push_reg(s, EBX);   /* callee is supposed to save these */
-    x86_64_push_reg(s, R12);
-    x86_64_push_reg(s, R13);
-    x86_64_push_reg(s, R14);
-    x86_64_push_reg(s, R15);
+    smi->last_proc_ret_end = 0;
 
     /* leave some space */ x86_64_local(s, DILL_D);
     smi->conversion_word = x86_64_local(s, DILL_D);
     smi->fcu_word = x86_64_local(s, DILL_I);
     smi->save_base = x86_64_localb(s, BEGIN_FLOAT_SAVE + 16*16);
+    s->p->used_frame = 0;
 
     cur_arg_offset = 16;
     int_arg_count = 0;
     float_arg_count = 0;
     for (i = 0; i < arg_count; i++) {
+        args[i].in_reg = -1;
+	args[i].out_reg = -1;
+	args[i].is_register = 0;
+	if (arglist != NULL) arglist[i] = -1;
 	if ((args[i].type != DILL_F) && (args[i].type != DILL_D) && (int_arg_count < 6)) {
-	    args[i].is_register = 1;
 	    args[i].offset = smi->save_base + int_arg_count*8;
-	    args[i].in_reg = arg_regs[int_arg_count++];
-	    args[i].out_reg = -1;
+	    int_arg_count++;
+	    if (int_arg_count <= 4) {
+	        dill_reg tmp_reg;
+	        if (dill_raw_getreg(s, &tmp_reg, args[i].type, DILL_VAR)) {
+		    args[i].in_reg = tmp_reg;
+		    if (arglist != NULL) arglist[i] = tmp_reg;
+		    args[i].is_register = 1;
+		}
+	    } else {
+	        if (int_arg_count <= (sizeof(arg_regs) / sizeof(arg_regs[0]))) {
+		  args[i].is_register = 1;
+		  args[i].in_reg = arg_regs[int_arg_count-1];
+		}
+	    }
 	} else if (((args[i].type == DILL_F) || (args[i].type == DILL_D)) && (float_arg_count < 8)) {
-	    args[i].is_register = 1;
 	    args[i].offset = smi->save_base + BEGIN_FLOAT_SAVE + float_arg_count*8;
-	    args[i].in_reg = float_arg_count++;
-	    args[i].out_reg = -1;
+	    float_arg_count++;
+	    if (float_arg_count <= 4) {
+	        dill_reg tmp_reg;
+	        if (dill_raw_getreg(s, &tmp_reg, args[i].type, DILL_VAR)) {
+		    args[i].in_reg = tmp_reg;
+		    if (arglist != NULL) arglist[i] = tmp_reg;
+		    args[i].is_register = 1;
+		}
+	    }
 	} else {
-	    args[i].is_register = 0;
 	    args[i].offset = cur_arg_offset;
 	    cur_arg_offset += roundup(type_info[(int)args[i].type].size, smi->stack_align);
 	}
     }
-    int_arg_count = float_arg_count = 0;   /* reset */
-    for (i = 0; i < arg_count; i++) {
-	int tmp_reg;
-	int try_to_get_a_reg = 0;
-	switch (args[i].type) {
-	case DILL_D: case DILL_F:
-	    try_to_get_a_reg = (float_arg_count++ < 4);
-	    break;
-	default:
-	    try_to_get_a_reg = (int_arg_count++ < 4);
-	    break;
-	}
-	if (try_to_get_a_reg) {
-	    if (!dill_raw_getreg(s, &tmp_reg, args[i].type, DILL_VAR)) {
-		/* not enough regs for this, store it to the stack */
-		int real_offset = args[i].offset;
-		if (arglist != NULL) arglist[i] = -1;
-		x86_64_pstorei(s, args[i].type, 0, args[i].in_reg, EBP, 
-				    real_offset);
-		args[i].in_reg = -1;
-		args[i].out_reg = -1;
-		args[i].is_register = 0;
-		continue;
-	    }
-	    if (args[i].is_register) {
-	        switch(args[i].type) {
-		case DILL_D: case DILL_F:
-		    x86_64_movd(s, tmp_reg, args[i].in_reg);
-		    break;
-		case DILL_UC: case DILL_C: case DILL_US: case DILL_S:
-		    x86_64_sxmov(s, args[i].type, tmp_reg, args[i].in_reg);
-		    break;
-		default:
-		    x86_64_movl(s, tmp_reg, args[i].in_reg);
-		    break;
-		}
-	    } else {
-		/* general offset from fp*/
-		int real_offset = args[i].offset; 
-		x86_64_ploadi(s, args[i].type, 0, tmp_reg, EBP, real_offset);
-	    }
-	    if (arglist != NULL) arglist[i] = tmp_reg;
-	    args[i].in_reg = tmp_reg;
-	    args[i].is_register = 1;
-	} else {
-	    if (args[i].is_register) {
-		/* store it to the stack */
-	    } else {
-		/* leave it on the stack */
-		if (arglist != NULL) arglist[i] = -1;
-		args[i].in_reg = -1;
-		args[i].out_reg = -1;
-	    }
-	}
-    }
+     /* make local space reservation constant big so we have a word to patch */
+     /* use the nop op code so that if we don't use all of it we get nops */
+    (void) generate_prefix_code(s, 1 /* force */, 0x909090, arglist);
+
+     smi->backpatch_offset = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
 }
 
+static void
+x86_64_proc_ret(dill_stream s) 
+{
+    x86_64_mach_info smi = (x86_64_mach_info) s->p->mach_info;
+    int force = 0;
+    if (s->p->call_table.call_count != 0) force++;
+
+    /* last thing was a ret and there's not a label here, we don't need another ret */
+    if ((smi->last_proc_ret_end == s->p->cur_ip) && !dill_is_label_mark(s))
+	return;
+
+    if (force || dill_wasused(&s->p->var_i, R15) || dill_wasused(&s->p->tmp_i, R15)) {
+	x86_64_pop_reg(s, R15);
+    }
+    if (force || dill_wasused(&s->p->var_i, R14) || dill_wasused(&s->p->tmp_i, R14)) {
+	x86_64_pop_reg(s, R14);
+    }
+    if (force || dill_wasused(&s->p->var_i, R13) || dill_wasused(&s->p->tmp_i, R13)) {
+	x86_64_pop_reg(s, R13);
+    }
+    if (force || dill_wasused(&s->p->var_i, R12) || dill_wasused(&s->p->tmp_i, R12)) {
+	x86_64_pop_reg(s, R12);
+    }
+    if (force || dill_wasused(&s->p->var_i, EBX) || dill_wasused(&s->p->tmp_i, EBX)) {
+	x86_64_pop_reg(s, EBX);
+    }
+    if ((s->p->c_param_count > 0) || s->p->used_frame || (s->p->call_table.call_count != 0)) {
+        x86_64_movl(s, ESP, EBP);
+	x86_64_pop_reg(s, EBP);
+    }
+    BYTE_OUT1(s, 0xc3);
+    smi->last_proc_ret_end = s->p->cur_ip;
+}
+  
 static unsigned char ld_opcodes[] = {
     0x8a, /* DILL_C */
     0x8a, /* DILL_UC */
@@ -2366,7 +2452,7 @@ extern void x86_64_ret(dill_stream s, int data1, int data2, int src)
 	if (src != XMM0) x86_64_movd(s, XMM0, src);
 	break;
     }
-    x86_64_simple_ret(s);
+    x86_64_proc_ret(s);
 }
 
 extern void x86_64_retf(dill_stream s, int data1, int data2, double imm)
@@ -2398,7 +2484,7 @@ extern void x86_64_reti(dill_stream s, int data1, int data2, long imm)
 	x86_64_setl(s, EAX, imm);
 	break;
     }
-    x86_64_simple_ret(s);
+    x86_64_proc_ret(s);
 }
 
 static void
@@ -2453,14 +2539,21 @@ x86_64_emit_save(dill_stream s)
     x86_64_mach_info smi = (x86_64_mach_info) s->p->mach_info;
     void *save_ip = s->p->cur_ip;
     int ar_size = smi->act_rec_size;
+    int prefix_size;
     ar_size = roundup(ar_size, 16) + 8;
 
-    s->p->cur_ip = (char*)s->p->code_base + smi->backpatch_offset;
+    s->p->cur_ip = (char*)s->p->code_base;
 
-    /* do local space reservation */
-    dill_subli(s, ESP, ESP, ar_size);
+    prefix_size = generate_prefix_code(s, 0, ar_size, NULL);
 
-    s->p->fp = (char*)s->p->code_base;
+    s->p->cur_ip = (char*)s->p->code_base - prefix_size + smi->backpatch_offset;
+    s->p->fp = (char*)s->p->cur_ip;
+
+    /* re-generate in the right place */
+    if (prefix_size != generate_prefix_code(s, 0, ar_size, NULL)) {
+      printf("2nd generation different than first\n");
+    }
+
     s->p->cur_ip = save_ip;
 }
     
@@ -2488,7 +2581,7 @@ extern void
 x86_64_end(s)
 dill_stream s;
 {
-    x86_64_simple_ret(s);
+    x86_64_proc_ret(s);
     x86_64_branch_link(s);
     x86_64_call_link(s);
     x86_64_data_link(s);
@@ -2500,7 +2593,7 @@ extern void
 x86_64_package_end(s)
 dill_stream s;
 {
-    x86_64_simple_ret(s);
+    x86_64_proc_ret(s);
     x86_64_branch_link(s);
     x86_64_emit_save(s);
     x86_64_flush(s->p->code_base, s->p->code_limit);
@@ -2543,6 +2636,7 @@ x86_64_pset(dill_stream s, int type, int junk, int dest, long imm)
 	x86_64_seti(s, dest, imm);
 	break;
     }
+    s->p->used_frame++;
 }	
 
 extern void
