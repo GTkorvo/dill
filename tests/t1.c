@@ -9,6 +9,8 @@ int main(int argc, char **argv)
     int (*func)();
     int verbose = 0;
 
+    if (argc > 1) verbose++;
+
     {
 	int result;
 	dill_exec_handle h;
