@@ -598,6 +598,7 @@ EXTERN int dill_getvblock(dill_stream s, int size);
 EXTERN void dill_virtual_lea(dill_stream s, int dest, int src);
 EXTERN void dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1, 
 		   dill_reg src2, int label);
+EXTERN void dill_markused(dill_stream s, int type, int reg);
 EXTERN void dill_pcompare(dill_stream s, int op_type, int data_type, 
 			  dill_reg dest, dill_reg src1, 
 			  dill_reg src2);

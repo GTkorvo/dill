@@ -262,8 +262,10 @@ print<<EOF;
 
 	/* reg <- ($type{$t}) reg */
 	if (verbose) printf(" - $insn\\n");
-	while (get_reg_pair(s, DILL_$upt, &rd${t}1, DILL_$upfrom, &rd${from_type}2, reg_set++) != 0) {
+	while (get_reg_pair(s, DILL_$upt, &rd${t}1, DILL_$upfrom, &rd${from_type}2, reg_set) != 0) {
 	    dill_start_proc(s, "$insn",  DILL_$upt, "%$from_type");
+	    /* once more, with feeling (after dill_start_proc) */
+	    get_reg_pair(s, DILL_$upt, &rd${t}1, DILL_$upfrom, &rd${from_type}2, reg_set++);
 	    if (rd${from_type}2 == -1) {
 	        rd${from_type}2 = dill_param_reg(s, 0);
 	    } else {
@@ -1034,11 +1036,13 @@ typedef void *arg_info_list;  /* just to get us through the #include below */
     } else {
     	*reg1p = intregs[regpairid].reg1;
     }
+    if (*reg1p != -1) dill_markused(s, type1, *reg1p);
     if ((type2 == DILL_F) || (type2 == DILL_D)) {
     	*reg2p = floatregs[regpairid].reg2;
     } else {
     	*reg2p = intregs[regpairid].reg2;
     }
+    if (*reg2p != -1) dill_markused(s, type2, *reg2p);
     return 1;
 #else
     if (regpairid != 0) return 0;

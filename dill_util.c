@@ -792,6 +792,21 @@ extern jmp_table alloc_dill_jump_table()
 #define SET_BIT(i, bitvec) (bitvec[0] |= (((long)1)<<reg))
 #define RESET_BIT(i, bitvec) (bitvec[0] &= (~(((long)1)<<reg)))
 
+void
+dill_markused(dill_stream s, int type, int reg)
+{
+    switch(type) {
+    case DILL_D: case DILL_F:
+        SET_BIT(reg, s->p->var_f.used);
+	SET_BIT(reg, s->p->tmp_f.used);
+	break;
+    default:
+        SET_BIT(reg, s->p->var_i.used);
+	SET_BIT(reg, s->p->tmp_i.used);
+	break;
+    }
+}
+
 int 
 dill_mustsave(reg_set *regs, int reg)
 {
