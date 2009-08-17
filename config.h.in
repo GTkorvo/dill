@@ -66,6 +66,12 @@
 /* Define if the host processor is an ia64 */
 #undef HOST_IA64
 
+/* Define if the host processor is a powerpc */
+#undef HOST_POWERPC
+
+/* Define if the host processor is a powerpc64 */
+#undef HOST_POWERPC64
+
 /* Define if the host processor is a sparc */
 #undef HOST_SPARC
 
