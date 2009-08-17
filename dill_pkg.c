@@ -50,6 +50,7 @@ extern char * x86_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * arm_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * ia64_package_stitch(char *code, call_t *t, dill_pkg pkg);
+extern char * powerpc_package_stitch(char *code, call_t *t, dill_pkg pkg);
 
 extern void
 dill_lookup_xfer_addrs(call_t *t, xfer_entry *x)
@@ -93,6 +94,9 @@ dill_package_stitch(char *pkg, dill_extern_entry* extra_externs)
 #endif
 #if defined(HOST_ARM5)
     char *p = arm5_package_stitch(code, &t, (dill_pkg) pkg);
+#endif
+#if defined(HOST_POWERPC)
+    char *p = powerpc_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
     free(t.call_locs);
     handle->fp = (void(*)()) p;

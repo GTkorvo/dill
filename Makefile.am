@@ -46,6 +46,9 @@ vm.lo: vm_include.c
 dill_sparc.c: sparc.ops
 	$(PERL) $(srcdir)/sparc.ops
 
+dill_powerpc.c: powerpc.ops
+	$(PERL) $(srcdir)/powerpc.ops
+
 dill_virtual.c: virtual.ops
 	$(PERL) $(srcdir)/virtual.ops
 

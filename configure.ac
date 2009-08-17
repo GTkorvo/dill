@@ -151,6 +151,17 @@ case $host_cpu in
 	AC_TRY_COMPILE([],[asm("membar #Sync");],AC_DEFINE(USE_MEMBAR,1,[Define if the membar instruction should be used to sync Icache and Dcache]))
 	ARCH_FILE=sparc
 	;;
+     powerpc* )
+        if test x$ac_cv_sizeof_long == x8 ; then
+          AC_DEFINE(HOST_POWERPC64, 1, [Define if the host processor is a powerpc64])
+          NATIVE_ARCH=powerpc64
+        else 
+          AC_DEFINE(HOST_POWERPC, 1, [Define if the host processor is a powerpc])
+          NATIVE_ARCH=powerpc
+        fi
+	DIS_ROUTINE=powerpc
+	ARCH_FILE=powerpc
+	;;
      i*86 )
         if test x$ac_cv_sizeof_long == x8 ; then
 	  NATIVE_ARCH=x86_64
