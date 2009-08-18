@@ -802,6 +802,8 @@ INSTALL_DUMMY_OPCODES_FALSE
 INSTALL_DUMMY_OPCODES_TRUE
 LIBOPCODES_DIR
 DUMMY_LIBOPCODES_TARGET
+PATHPROG
+CSH
 CXXCPP
 CPP
 OTOOL64
@@ -934,6 +936,10 @@ enable_fast_install
 with_gnu_ld
 enable_libtool_lock
 enable_disassembly
+with_installed
+with_local
+with_binutils
+with_ffcall
 enable_multitarget
 '
       ac_precious_vars='build_alias
@@ -1597,6 +1603,10 @@ Optional Packages:
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
+  --with-installed        Don't use local copies of CERCS packages
+  --with-local            Use only local copies of CERCS packages
+  --with-binutils=DIR	Where to find binutils package
+  --with-ffcall=DIR	Where to find ffcall package
 
 Some influential environment variables:
   CC          C compiler command
@@ -5070,13 +5080,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:5073: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:5083: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5076: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:5086: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:5079: output\"" >&5)
+  (eval echo "\"\$as_me:5089: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -6271,7 +6281,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6274 "configure"' > conftest.$ac_ext
+  echo '#line 6284 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -8818,6 +8828,10 @@ _lt_linker_boilerplate=`cat conftest.err`
 $RM -r conftest*
 
 
+## CAVEAT EMPTOR:
+## There is no encapsulation within the following macros, do not change
+## the running order or otherwise move them around unless you know exactly
+## what you are doing...
 if test -n "$compiler"; then
 
 lt_prog_compiler_no_builtin_flag=
@@ -8843,11 +8857,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8846: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8860: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8850: \$? = $ac_status" >&5
+   echo "$as_me:8864: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9182,11 +9196,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9185: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9199: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9189: \$? = $ac_status" >&5
+   echo "$as_me:9203: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9287,11 +9301,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9290: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9304: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9294: \$? = $ac_status" >&5
+   echo "$as_me:9308: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9342,11 +9356,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9345: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9359: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9349: \$? = $ac_status" >&5
+   echo "$as_me:9363: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12142,7 +12156,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12145 "configure"
+#line 12159 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12238,7 +12252,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12241 "configure"
+#line 12255 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14258,11 +14272,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14261: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14275: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14265: \$? = $ac_status" >&5
+   echo "$as_me:14279: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14357,11 +14371,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14360: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14374: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14364: \$? = $ac_status" >&5
+   echo "$as_me:14378: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14409,11 +14423,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14412: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:14426: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14416: \$? = $ac_status" >&5
+   echo "$as_me:14430: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15403,11 +15417,453 @@ fi
 
 
 if test x$enable_disassembly = xyes; then
-CERCS_REQUIRE_OTHER_PACKAGE(binutils, dis-asm.h, libopcodes.la)
+
+# Check whether --with-installed was given.
+if test "${with_installed+set}" = set; then
+  withval=$with_installed; with_installed_specified=1
+fi
+
+
+# Check whether --with-local was given.
+if test "${with_local+set}" = set; then
+  withval=$with_local; with_local_specified=1
+fi
+
+# Extract the first word of "csh", so it can be a program name with args.
+set dummy csh; ac_word=$2
+{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_CSH+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  case $CSH in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_CSH="$CSH" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_CSH="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+CSH=$ac_cv_path_CSH
+if test -n "$CSH"; then
+  { $as_echo "$as_me:$LINENO: result: $CSH" >&5
+$as_echo "$CSH" >&6; }
+else
+  { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+
+
+
+CHAOS_HOMEDIR=""
+if test -n "$CSH"; then
+CHAOS_HOMEDIR=`echo "echo ~chaos" | csh -sf  2>/dev/null | sed 's%/$%%'` || CHAOS_HOMEDIR=""
+fi
+if test "$cross_compiling" = yes ; then
+  cpu=$host_cpu
+  vendor=$host_vendot
+  os=$host_os
+else
+  cpu=
+  vendor=
+  os=
+fi
+if test -x $CHAOS_HOMEDIR/bin/cercs_arch; then
+cercs_cv_archive=`$CHAOS_HOMEDIR/bin/cercs_arch "$cpu" "$vendor" "$os"`
+else
+cercs_cv_archive=${cercs_cv_archive-`cercs_arch 2>/dev/null`} || cercs_cv_archive=""
+fi
+
+# Extract the first word of "cygpath", so it can be a program name with args.
+set dummy cygpath; ac_word=$2
+{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_PATHPROG+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$PATHPROG"; then
+  ac_cv_prog_PATHPROG="$PATHPROG" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_PATHPROG="cygpath -w"
+    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_PATHPROG" && ac_cv_prog_PATHPROG="echo"
+fi
+fi
+PATHPROG=$ac_cv_prog_PATHPROG
+if test -n "$PATHPROG"; then
+  { $as_echo "$as_me:$LINENO: result: $PATHPROG" >&5
+$as_echo "$PATHPROG" >&6; }
+else
+  { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+
+
+
+# Check whether --with-binutils was given.
+if test "${with_binutils+set}" = set; then
+  withval=$with_binutils;
+fi
+
+
+if test -n "$with_binutils"; then
+unset cercs_cv_binutils_include_arg
+unset cercs_cv_binutils_link_arg
+if test `echo $with_binutils | sed 's/\(.\).*/\1/g'` != "/"; then
+with_binutils=`pwd`/$with_binutils
+fi
+fi
+{ $as_echo "$as_me:$LINENO: checking needed include args for binutils package" >&5
+$as_echo_n "checking needed include args for binutils package... " >&6; }
+if test "${cercs_cv_binutils_include_arg+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+
+
+
+
+cercs_tmp=""
+search_list="./dis-asm.h"
+CHAOS_HOMEDIR=""
+if test -n "$CSH"; then
+CHAOS_HOMEDIR=`echo "echo ~chaos" | csh -sf  2>/dev/null | sed 's%/$%%'` || CHAOS_HOMEDIR=""
+fi
+if test -n "$with_binutils"; then
+if test `echo $with_binutils | cut -c1` = "~"; then
+EXPANDED=`echo "echo $with_binutils" | csh -sf 2>/dev/null` || EXPANDED=""
+else
+EXPANDED=$with_binutils
+fi
+
+search_list="$search_list $EXPANDED/dis-asm.h $EXPANDED/include/dis-asm.h $EXPANDED/share/dis-asm.h $EXPANDED/$cercs_cv_archive/dis-asm.h $EXPANDED/$cercs_cv_archive/include/dis-asm.h $EXPANDED/binutils/dis-asm.h $EXPANDED/binutils/$cercs_cv_archive/dis-asm.h $EXPANDED/binutils/include/dis-asm.h $EXPANDED/binutils/include/$cercs_cv_archive/dis-asm.h"
+fi
+if test -z "$with_installed_specified"; then
+search_list="$search_list `pwd`/../binutils/dis-asm.h `pwd`/../include/dis-asm.h `pwd`/../share/dis-asm.h"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/binutils/dis-asm.h $HOME/$cercs_cv_archive/include/dis-asm.h $HOME/include/dis-asm.h"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/include/dis-asm.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/include/dis-asm.h $CHAOS_HOMEDIR/binutils/include/dis-asm.h $CHAOS_HOMEDIR/include/dis-asm.h"
+fi
+if test "$libdir" != '${exec_prefix}/lib'; then
+tmpdir=`echo ${libdir} |  sed 's%/$%%'`
+search_list="$tmpdir/dis-asm.h $search_list"
+fi
+if test "$exec_prefix" != "NONE"; then
+tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/lib/dis-asm.h $search_list"
+fi
+if test "$includedir" != '${prefix}/include'; then
+tmpdir=`echo ${includedir} |  sed 's%/$%%'`
+search_list="$tmpdir/dis-asm.h $search_list"
+fi
+if test "$prefix" != "NONE"; then
+tmpdir=`echo ${prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/include/dis-asm.h $search_list"
+fi
+if test "include" == "lib"; then
+  for tmp_lib_value in $sys_lib_search_path_spec; do
+     search_list="$search_list $tmp_lib_value/dis-asm.h"
+  done
+fi
+
+search_list="$search_list /usr/include/dis-asm.h /usr/local/include/dis-asm.h /opt/binutils/include/dis-asm.h /opt/misc/include/dis-asm.h /opt/misc/include/$cercs_cv_archive/dis-asm.h"
+tmp_search_results=""
+echo "configure:15607: searching for $search_list " >&5
+for tmp_search_value in $search_list; do
+   if test -r $tmp_search_value; then
+	tmp_search_results=$tmp_search_value
+	echo "configure:15611: first found $tmp_search_results " >&5
+	break
+   fi
+done
+
+if test -n "$tmp_search_results"; then
+cercs_tmp=$tmp_search_results
+fi
+
+if test -n "$cercs_tmp" -a "$cercs_tmp" != "/usr/include/dis-asm.h"; then
+cercs_cv_binutils_include_arg=-I`$PATHPROG $cercs_tmp | sed 's#\\\\#/#g' | sed "s#.dis-asm.h##g"`
+fi
+
+fi
+
+{ $as_echo "$as_me:$LINENO: result: $cercs_cv_binutils_include_arg" >&5
+$as_echo "$cercs_cv_binutils_include_arg" >&6; }
+if test -n "$cercs_cv_binutils_include_arg"; then
+arg="$cercs_cv_binutils_include_arg"
+no_dash_arg=`echo $arg | sed 's/^-//g'`
+if test `echo $CPPFLAGS | grep -c "$no_dash_arg"` -eq 0; then
+if test `echo $arg | grep -c "binutils"` -eq 0; then
+CPPFLAGS="$CPPFLAGS $arg";
+else
+CPPFLAGS="$arg $CPPFLAGS"
+fi
+fi
+fi
+
+{ $as_echo "$as_me:$LINENO: checking needed link args for binutils package" >&5
+$as_echo_n "checking needed link args for binutils package... " >&6; }
+if test "${cercs_cv_binutils_link_dir+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+
+
+
+
+cercs_tmp=""
+search_list="./libopcodes.la"
+CHAOS_HOMEDIR=""
+if test -n "$CSH"; then
+CHAOS_HOMEDIR=`echo "echo ~chaos" | csh -sf  2>/dev/null | sed 's%/$%%'` || CHAOS_HOMEDIR=""
+fi
+if test -n "$with_binutils"; then
+if test `echo $with_binutils | cut -c1` = "~"; then
+EXPANDED=`echo "echo $with_binutils" | csh -sf 2>/dev/null` || EXPANDED=""
+else
+EXPANDED=$with_binutils
+fi
+
+search_list="$search_list $EXPANDED/libopcodes.la $EXPANDED/lib/libopcodes.la $EXPANDED/share/libopcodes.la $EXPANDED/$cercs_cv_archive/libopcodes.la $EXPANDED/$cercs_cv_archive/lib/libopcodes.la $EXPANDED/binutils/libopcodes.la $EXPANDED/binutils/$cercs_cv_archive/libopcodes.la $EXPANDED/binutils/lib/libopcodes.la $EXPANDED/binutils/lib/$cercs_cv_archive/libopcodes.la"
+fi
+if test -z "$with_installed_specified"; then
+search_list="$search_list `pwd`/../binutils/libopcodes.la `pwd`/../lib/libopcodes.la `pwd`/../share/libopcodes.la"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/binutils/libopcodes.la $HOME/$cercs_cv_archive/lib/libopcodes.la $HOME/lib/libopcodes.la"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/lib/libopcodes.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/lib/libopcodes.la $CHAOS_HOMEDIR/binutils/lib/libopcodes.la $CHAOS_HOMEDIR/lib/libopcodes.la"
+fi
+if test "$libdir" != '${exec_prefix}/lib'; then
+tmpdir=`echo ${libdir} |  sed 's%/$%%'`
+search_list="$tmpdir/libopcodes.la $search_list"
+fi
+if test "$exec_prefix" != "NONE"; then
+tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/lib/libopcodes.la $search_list"
+fi
+if test "$includedir" != '${prefix}/include'; then
+tmpdir=`echo ${includedir} |  sed 's%/$%%'`
+search_list="$tmpdir/libopcodes.la $search_list"
+fi
+if test "$prefix" != "NONE"; then
+tmpdir=`echo ${prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/lib/libopcodes.la $search_list"
+fi
+if test "lib" == "lib"; then
+  for tmp_lib_value in $sys_lib_search_path_spec; do
+     search_list="$search_list $tmp_lib_value/libopcodes.la"
+  done
+fi
+
+search_list="$search_list /usr/lib/libopcodes.la /usr/local/lib/libopcodes.la /opt/binutils/lib/libopcodes.la /opt/misc/lib/libopcodes.la /opt/misc/lib/$cercs_cv_archive/libopcodes.la"
+tmp_search_results=""
+echo "configure:15697: searching for $search_list " >&5
+for tmp_search_value in $search_list; do
+   if test -r $tmp_search_value; then
+	tmp_search_results=$tmp_search_value
+	echo "configure:15701: first found $tmp_search_results " >&5
+	break
+   fi
+done
+
+if test -n "$tmp_search_results"; then
+cercs_tmp=$tmp_search_results
+fi
+
+if test -n "$cercs_tmp" -a "$cercs_tmp" != "libopcodes.la"; then
+cercs_cv_binutils_link_dir=`$PATHPROG $cercs_tmp | sed 's#\\\\#/#g' | sed "s/.libopcodes.la//g"`
+else
+cercs_cv_binutils_link_dir=""
+fi
+
+fi
+
+{ $as_echo "$as_me:$LINENO: result: $cercs_cv_binutils_link_dir" >&5
+$as_echo "$cercs_cv_binutils_link_dir" >&6; }
+ld_arg="-L"
+new_flags=$LDFLAGS
+cercs_cv_binutils_link_arg=`echo $cercs_cv_binutils_link_dir | sed "/./ s/^/$ld_arg/1"`
+if test -n "$cercs_cv_binutils_link_arg"; then
+arg=$cercs_cv_binutils_link_arg
+no_dash_arg=`echo $arg | sed 's/^-//g'`
+if test `echo $new_flags | grep -c "$no_dash_arg"` -eq 0; then
+root=`echo libopcodes.la | sed 's/\..*//'`
+if test ! -r $cercs_cv_binutils_link_dir/$root.la; then
+if eval "test \"\${LIBTOOL+set}\" = set"; then
+arg="$cercs_cv_binutils_link_arg "`echo $cercs_cv_binutils_link_dir | sed "/./ s/^/-R/1"`
+fi
+fi
+if test `echo $arg | grep -c "binutils"` -eq 0; then
+new_flags="$new_flags $arg"
+else
+new_flags="$arg $new_flags"
+fi
+fi
+LDFLAGS=$new_flags
+fi
+
+
 if test x$cercs_cv_binutils_link_dir = x; then
 unset cercs_cv_binutils_link_dir
 unset cercs_cv_binutils_link_arg
-CERCS_REQUIRE_OTHER_PACKAGE(binutils,, libopcodes.a)
+
+
+
+
+# Check whether --with-binutils was given.
+if test "${with_binutils+set}" = set; then
+  withval=$with_binutils;
+fi
+
+
+if test -n "$with_binutils"; then
+unset cercs_cv_binutils_include_arg
+unset cercs_cv_binutils_link_arg
+if test `echo $with_binutils | sed 's/\(.\).*/\1/g'` != "/"; then
+with_binutils=`pwd`/$with_binutils
+fi
+fi
+
+{ $as_echo "$as_me:$LINENO: checking needed link args for binutils package" >&5
+$as_echo_n "checking needed link args for binutils package... " >&6; }
+if test "${cercs_cv_binutils_link_dir+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+
+
+
+
+cercs_tmp=""
+search_list="./libopcodes.a"
+CHAOS_HOMEDIR=""
+if test -n "$CSH"; then
+CHAOS_HOMEDIR=`echo "echo ~chaos" | csh -sf  2>/dev/null | sed 's%/$%%'` || CHAOS_HOMEDIR=""
+fi
+if test -n "$with_binutils"; then
+if test `echo $with_binutils | cut -c1` = "~"; then
+EXPANDED=`echo "echo $with_binutils" | csh -sf 2>/dev/null` || EXPANDED=""
+else
+EXPANDED=$with_binutils
+fi
+
+search_list="$search_list $EXPANDED/libopcodes.a $EXPANDED/lib/libopcodes.a $EXPANDED/share/libopcodes.a $EXPANDED/$cercs_cv_archive/libopcodes.a $EXPANDED/$cercs_cv_archive/lib/libopcodes.a $EXPANDED/binutils/libopcodes.a $EXPANDED/binutils/$cercs_cv_archive/libopcodes.a $EXPANDED/binutils/lib/libopcodes.a $EXPANDED/binutils/lib/$cercs_cv_archive/libopcodes.a"
+fi
+if test -z "$with_installed_specified"; then
+search_list="$search_list `pwd`/../binutils/libopcodes.a `pwd`/../lib/libopcodes.a `pwd`/../share/libopcodes.a"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/binutils/libopcodes.a $HOME/$cercs_cv_archive/lib/libopcodes.a $HOME/lib/libopcodes.a"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/binutils/lib/libopcodes.a $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libopcodes.a $CHAOS_HOMEDIR/binutils/$cercs_cv_archive/lib/libopcodes.a $CHAOS_HOMEDIR/binutils/lib/libopcodes.a $CHAOS_HOMEDIR/lib/libopcodes.a"
+fi
+if test "$libdir" != '${exec_prefix}/lib'; then
+tmpdir=`echo ${libdir} |  sed 's%/$%%'`
+search_list="$tmpdir/libopcodes.a $search_list"
+fi
+if test "$exec_prefix" != "NONE"; then
+tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/lib/libopcodes.a $search_list"
+fi
+if test "$includedir" != '${prefix}/include'; then
+tmpdir=`echo ${includedir} |  sed 's%/$%%'`
+search_list="$tmpdir/libopcodes.a $search_list"
+fi
+if test "$prefix" != "NONE"; then
+tmpdir=`echo ${prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/lib/libopcodes.a $search_list"
+fi
+if test "lib" == "lib"; then
+  for tmp_lib_value in $sys_lib_search_path_spec; do
+     search_list="$search_list $tmp_lib_value/libopcodes.a"
+  done
+fi
+
+search_list="$search_list /usr/lib/libopcodes.a /usr/local/lib/libopcodes.a /opt/binutils/lib/libopcodes.a /opt/misc/lib/libopcodes.a /opt/misc/lib/$cercs_cv_archive/libopcodes.a"
+tmp_search_results=""
+echo "configure:15821: searching for $search_list " >&5
+for tmp_search_value in $search_list; do
+   if test -r $tmp_search_value; then
+	tmp_search_results=$tmp_search_value
+	echo "configure:15825: first found $tmp_search_results " >&5
+	break
+   fi
+done
+
+if test -n "$tmp_search_results"; then
+cercs_tmp=$tmp_search_results
+fi
+
+if test -n "$cercs_tmp" -a "$cercs_tmp" != "libopcodes.a"; then
+cercs_cv_binutils_link_dir=`$PATHPROG $cercs_tmp | sed 's#\\\\#/#g' | sed "s/.libopcodes.a//g"`
+else
+cercs_cv_binutils_link_dir=""
+fi
+
+fi
+
+{ $as_echo "$as_me:$LINENO: result: $cercs_cv_binutils_link_dir" >&5
+$as_echo "$cercs_cv_binutils_link_dir" >&6; }
+ld_arg="-L"
+new_flags=$LDFLAGS
+cercs_cv_binutils_link_arg=`echo $cercs_cv_binutils_link_dir | sed "/./ s/^/$ld_arg/1"`
+if test -n "$cercs_cv_binutils_link_arg"; then
+arg=$cercs_cv_binutils_link_arg
+no_dash_arg=`echo $arg | sed 's/^-//g'`
+if test `echo $new_flags | grep -c "$no_dash_arg"` -eq 0; then
+root=`echo libopcodes.a | sed 's/\..*//'`
+if test ! -r $cercs_cv_binutils_link_dir/$root.la; then
+if eval "test \"\${LIBTOOL+set}\" = set"; then
+arg="$cercs_cv_binutils_link_arg "`echo $cercs_cv_binutils_link_dir | sed "/./ s/^/-R/1"`
+fi
+fi
+if test `echo $arg | grep -c "binutils"` -eq 0; then
+new_flags="$new_flags $arg"
+else
+new_flags="$arg $new_flags"
+fi
+fi
+LDFLAGS=$new_flags
+fi
+
+
 if test x$cercs_cv_binutils_link_dir = x; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
      tmp=`ls $tmp_lib_value/libopcodes*.so 2> /dev/null`
@@ -15511,7 +15967,216 @@ if test "x$ac_cv_lib_m_sqrt" = x""yes; then
 fi
 
 
-CERCS_REQUIRE_OTHER_PACKAGE(ffcall, avcall.h, libavcall.la)
+
+
+
+
+# Check whether --with-ffcall was given.
+if test "${with_ffcall+set}" = set; then
+  withval=$with_ffcall;
+fi
+
+
+if test -n "$with_ffcall"; then
+unset cercs_cv_ffcall_include_arg
+unset cercs_cv_ffcall_link_arg
+if test `echo $with_ffcall | sed 's/\(.\).*/\1/g'` != "/"; then
+with_ffcall=`pwd`/$with_ffcall
+fi
+fi
+{ $as_echo "$as_me:$LINENO: checking needed include args for ffcall package" >&5
+$as_echo_n "checking needed include args for ffcall package... " >&6; }
+if test "${cercs_cv_ffcall_include_arg+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+
+
+
+
+cercs_tmp=""
+search_list="./avcall.h"
+CHAOS_HOMEDIR=""
+if test -n "$CSH"; then
+CHAOS_HOMEDIR=`echo "echo ~chaos" | csh -sf  2>/dev/null | sed 's%/$%%'` || CHAOS_HOMEDIR=""
+fi
+if test -n "$with_ffcall"; then
+if test `echo $with_ffcall | cut -c1` = "~"; then
+EXPANDED=`echo "echo $with_ffcall" | csh -sf 2>/dev/null` || EXPANDED=""
+else
+EXPANDED=$with_ffcall
+fi
+
+search_list="$search_list $EXPANDED/avcall.h $EXPANDED/include/avcall.h $EXPANDED/share/avcall.h $EXPANDED/$cercs_cv_archive/avcall.h $EXPANDED/$cercs_cv_archive/include/avcall.h $EXPANDED/ffcall/avcall.h $EXPANDED/ffcall/$cercs_cv_archive/avcall.h $EXPANDED/ffcall/include/avcall.h $EXPANDED/ffcall/include/$cercs_cv_archive/avcall.h"
+fi
+if test -z "$with_installed_specified"; then
+search_list="$search_list `pwd`/../ffcall/avcall.h `pwd`/../include/avcall.h `pwd`/../share/avcall.h"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/ffcall/avcall.h $HOME/$cercs_cv_archive/include/avcall.h $HOME/include/avcall.h"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/include/avcall.h $CHAOS_HOMEDIR/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/include/avcall.h $CHAOS_HOMEDIR/ffcall/include/avcall.h $CHAOS_HOMEDIR/include/avcall.h"
+fi
+if test "$libdir" != '${exec_prefix}/lib'; then
+tmpdir=`echo ${libdir} |  sed 's%/$%%'`
+search_list="$tmpdir/avcall.h $search_list"
+fi
+if test "$exec_prefix" != "NONE"; then
+tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/lib/avcall.h $search_list"
+fi
+if test "$includedir" != '${prefix}/include'; then
+tmpdir=`echo ${includedir} |  sed 's%/$%%'`
+search_list="$tmpdir/avcall.h $search_list"
+fi
+if test "$prefix" != "NONE"; then
+tmpdir=`echo ${prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/include/avcall.h $search_list"
+fi
+if test "include" == "lib"; then
+  for tmp_lib_value in $sys_lib_search_path_spec; do
+     search_list="$search_list $tmp_lib_value/avcall.h"
+  done
+fi
+
+search_list="$search_list /usr/include/avcall.h /usr/local/include/avcall.h /opt/ffcall/include/avcall.h /opt/misc/include/avcall.h /opt/misc/include/$cercs_cv_archive/avcall.h"
+tmp_search_results=""
+echo "configure:16044: searching for $search_list " >&5
+for tmp_search_value in $search_list; do
+   if test -r $tmp_search_value; then
+	tmp_search_results=$tmp_search_value
+	echo "configure:16048: first found $tmp_search_results " >&5
+	break
+   fi
+done
+
+if test -n "$tmp_search_results"; then
+cercs_tmp=$tmp_search_results
+fi
+
+if test -n "$cercs_tmp" -a "$cercs_tmp" != "/usr/include/avcall.h"; then
+cercs_cv_ffcall_include_arg=-I`$PATHPROG $cercs_tmp | sed 's#\\\\#/#g' | sed "s#.avcall.h##g"`
+fi
+
+fi
+
+{ $as_echo "$as_me:$LINENO: result: $cercs_cv_ffcall_include_arg" >&5
+$as_echo "$cercs_cv_ffcall_include_arg" >&6; }
+if test -n "$cercs_cv_ffcall_include_arg"; then
+arg="$cercs_cv_ffcall_include_arg"
+no_dash_arg=`echo $arg | sed 's/^-//g'`
+if test `echo $CPPFLAGS | grep -c "$no_dash_arg"` -eq 0; then
+if test `echo $arg | grep -c "ffcall"` -eq 0; then
+CPPFLAGS="$CPPFLAGS $arg";
+else
+CPPFLAGS="$arg $CPPFLAGS"
+fi
+fi
+fi
+
+{ $as_echo "$as_me:$LINENO: checking needed link args for ffcall package" >&5
+$as_echo_n "checking needed link args for ffcall package... " >&6; }
+if test "${cercs_cv_ffcall_link_dir+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+
+
+
+
+cercs_tmp=""
+search_list="./libavcall.la"
+CHAOS_HOMEDIR=""
+if test -n "$CSH"; then
+CHAOS_HOMEDIR=`echo "echo ~chaos" | csh -sf  2>/dev/null | sed 's%/$%%'` || CHAOS_HOMEDIR=""
+fi
+if test -n "$with_ffcall"; then
+if test `echo $with_ffcall | cut -c1` = "~"; then
+EXPANDED=`echo "echo $with_ffcall" | csh -sf 2>/dev/null` || EXPANDED=""
+else
+EXPANDED=$with_ffcall
+fi
+
+search_list="$search_list $EXPANDED/libavcall.la $EXPANDED/lib/libavcall.la $EXPANDED/share/libavcall.la $EXPANDED/$cercs_cv_archive/libavcall.la $EXPANDED/$cercs_cv_archive/lib/libavcall.la $EXPANDED/ffcall/libavcall.la $EXPANDED/ffcall/$cercs_cv_archive/libavcall.la $EXPANDED/ffcall/lib/libavcall.la $EXPANDED/ffcall/lib/$cercs_cv_archive/libavcall.la"
+fi
+if test -z "$with_installed_specified"; then
+search_list="$search_list `pwd`/../ffcall/libavcall.la `pwd`/../lib/libavcall.la `pwd`/../share/libavcall.la"
+if test "$CHAOS_HOMEDIR" != "$HOME"; then
+search_list="$search_list $HOME/ffcall/libavcall.la $HOME/$cercs_cv_archive/lib/libavcall.la $HOME/lib/libavcall.la"
+fi
+fi
+if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
+search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/ffcall/lib/libavcall.la $CHAOS_HOMEDIR/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/$cercs_cv_archive/lib/libavcall.la $CHAOS_HOMEDIR/ffcall/lib/libavcall.la $CHAOS_HOMEDIR/lib/libavcall.la"
+fi
+if test "$libdir" != '${exec_prefix}/lib'; then
+tmpdir=`echo ${libdir} |  sed 's%/$%%'`
+search_list="$tmpdir/libavcall.la $search_list"
+fi
+if test "$exec_prefix" != "NONE"; then
+tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/lib/libavcall.la $search_list"
+fi
+if test "$includedir" != '${prefix}/include'; then
+tmpdir=`echo ${includedir} |  sed 's%/$%%'`
+search_list="$tmpdir/libavcall.la $search_list"
+fi
+if test "$prefix" != "NONE"; then
+tmpdir=`echo ${prefix} |  sed 's%/$%%'`
+search_list="$tmpdir/lib/libavcall.la $search_list"
+fi
+if test "lib" == "lib"; then
+  for tmp_lib_value in $sys_lib_search_path_spec; do
+     search_list="$search_list $tmp_lib_value/libavcall.la"
+  done
+fi
+
+search_list="$search_list /usr/lib/libavcall.la /usr/local/lib/libavcall.la /opt/ffcall/lib/libavcall.la /opt/misc/lib/libavcall.la /opt/misc/lib/$cercs_cv_archive/libavcall.la"
+tmp_search_results=""
+echo "configure:16134: searching for $search_list " >&5
+for tmp_search_value in $search_list; do
+   if test -r $tmp_search_value; then
+	tmp_search_results=$tmp_search_value
+	echo "configure:16138: first found $tmp_search_results " >&5
+	break
+   fi
+done
+
+if test -n "$tmp_search_results"; then
+cercs_tmp=$tmp_search_results
+fi
+
+if test -n "$cercs_tmp" -a "$cercs_tmp" != "libavcall.la"; then
+cercs_cv_ffcall_link_dir=`$PATHPROG $cercs_tmp | sed 's#\\\\#/#g' | sed "s/.libavcall.la//g"`
+else
+cercs_cv_ffcall_link_dir=""
+fi
+
+fi
+
+{ $as_echo "$as_me:$LINENO: result: $cercs_cv_ffcall_link_dir" >&5
+$as_echo "$cercs_cv_ffcall_link_dir" >&6; }
+ld_arg="-L"
+new_flags=$LDFLAGS
+cercs_cv_ffcall_link_arg=`echo $cercs_cv_ffcall_link_dir | sed "/./ s/^/$ld_arg/1"`
+if test -n "$cercs_cv_ffcall_link_arg"; then
+arg=$cercs_cv_ffcall_link_arg
+no_dash_arg=`echo $arg | sed 's/^-//g'`
+if test `echo $new_flags | grep -c "$no_dash_arg"` -eq 0; then
+root=`echo libavcall.la | sed 's/\..*//'`
+if test ! -r $cercs_cv_ffcall_link_dir/$root.la; then
+if eval "test \"\${LIBTOOL+set}\" = set"; then
+arg="$cercs_cv_ffcall_link_arg "`echo $cercs_cv_ffcall_link_dir | sed "/./ s/^/-R/1"`
+fi
+fi
+if test `echo $arg | grep -c "ffcall"` -eq 0; then
+new_flags="$new_flags $arg"
+else
+new_flags="$arg $new_flags"
+fi
+fi
+LDFLAGS=$new_flags
+fi
+
+
 if test "${ac_cv_header_avcall_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for avcall.h" >&5
 $as_echo_n "checking for avcall.h... " >&6; }
