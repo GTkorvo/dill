@@ -1,7 +1,7 @@
 #ifndef _POWERPC_H
 #define _POWERPC_H
- #define OP2(x)		(((x)&0x7) << 22) /* op2 field of format2 insns */
- #define OP3(x)		(((x)&0x3f) << 19) /* op3 field of format3 insns */
+ #define OP(x)		(((x)&0x6) << 26) /* opcd field of insns */
+
  #define HDR(x)		((unsigned)((x)&0x3) << 30) /* hdr field of all insns */
  #define ASI(asi) 	((asi) << 5)
  #define OPF(x)		(((x)&0x1ff) << 5) /* opf field of float insns */
@@ -30,6 +30,9 @@ extern void powerpc_FORM3imm_arith(dill_stream c, int op3, int op, int dest, int
 extern void powerpc_FORM3_farith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void powerpc_FORM2_farith(dill_stream c, int op3, int op, int dest, int src);
 
+
+#define D_FORM(op, r1, r2, i) ((op<<26)|(r1<<21)|(r2<<16)|i)
+#define XL_FORM(op, BO, BI, BH, XO, LK) ((op<<26)|(BO<<21)|(BI<<16)|(BH<<11)|(XO<<1)|LK)
 #define INSN_OUT(c, insn) do {\
 if (c->p->cur_ip >= c->p->code_limit) {\
    extend_dill_stream(c);\
@@ -40,20 +43,21 @@ c->p->cur_ip = (void*)(((long)c->p->cur_ip)+4);\
 } while (0)\
 
 enum {
-    _g0,  _g1,  _g2,  _g3,  _g4,  _g5,  _g6,  _g7, /* globals */
-    _o0,  _o1,  _o2,  _o3,  _o4,  _o5,  _o6,  _o7, /* outs */
-    _l0,  _l1,  _l2,  _l3,  _l4,  _l5,  _l6,  _l7, /* locals */
-    _i0,  _i1,  _i2,  _i3,  _i4,  _i5,  _i6,  _i7, /* ins */
+    _gpr0 = 0,  _gpr1,  _gpr2,  _gpr3,  _gpr4,  _gpr5,  _gpr6,  _gpr7,
+    _gpr8,  _gpr9,  _gpr10,  _gpr11,  _gpr12,  _gpr13,  _gpr14,  _gpr15,
+    _gpr16,  _gpr17,  _gpr18,  _gpr19,  _gpr20,  _gpr21,  _gpr22,  _gpr23,
+    _gpr24,  _gpr25,  _gpr26,  _gpr27,  _gpr28,  _gpr29,  _gpr30,  _gpr31,
 
-    _fp = _i6,	/* framepointer */
-    _ra = _i7,	/* return address */
-    _sp = _o6,	/* stack pointer */
 
     /* floating point */
-    _f0=0,  _f1,  _f2,  _f3,  _f4,  _f5,  _f6,  _f7, /* floats */
-    _f8,    _f9,  _f10, _f11, _f12, _f13, _f14, _f15,
-    _f16,   _f17, _f18, _f19, _f20, _f21, _f22, _f23,
-    _f24,   _f25, _f26, _f27, _f28, _f29, _f30, _f31
+    _fpr0 = 0,  _fpr1,  _fpr2,  _fpr3,  _fpr4,  _fpr5,  _fpr6,  _fpr7,
+    _fpr8,  _fpr9,  _fpr10,  _fpr11,  _fpr12,  _fpr13,  _fpr14,  _fpr15,
+    _fpr16,  _fpr17,  _fpr18,  _fpr19,  _fpr20,  _fpr21,  _fpr22,  _fpr23,
+    _fpr24,  _fpr25,  _fpr26,  _fpr27,  _fpr28,  _fpr29,  _fpr30,  _fpr31,
+
+
+    _sp = _gpr3,/* stack pointer */
+
 };
 
 typedef struct powerpc_mach_info {

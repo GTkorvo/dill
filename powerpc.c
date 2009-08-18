@@ -12,26 +12,28 @@
 
 #define powerpc_save(s, r) powerpc_FORM3_arith(s, 0x3c, 0x2, _sp, _sp, r)
 #define powerpc_savei(s, imm) powerpc_FORM3imm_arith(s, 0x3c, 0x2, _sp, _sp, imm)
-#define powerpc_sethi(s, r, imm) INSN_OUT(s, HDR(0)|RD(r)|OP2(0x4)|imm)
-#define powerpc_ori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP3(0x2)|IM|RD(dest)|RS1(src)|imm)
-#define powerpc_xori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP3(0x3)|IM|RD(dest)|RS1(src)|imm)
+#define powerpc_sethi(s, r, imm) INSN_OUT(s, HDR(0)|RD(r)|OP(0x4)|imm)
+#define powerpc_ori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP(0x2)|IM|RD(dest)|RS1(src)|imm)
+#define powerpc_xori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP(0x3)|IM|RD(dest)|RS1(src)|imm)
 #define powerpc_andi(s, dest, src, imm) powerpc_FORM3imm_arith(s, 0x1, 0, dest, src, imm)
-#define powerpc_or(s, dest, src1, src2) INSN_OUT(s, HDR(0x2)|OP3(0x2)|RD(dest)|RS1(src1)|RS2(src2))
-#define powerpc_movi(s, dest, src) powerpc_or(s, dest, src, _g0)
-#define powerpc_int_mov(s, dest, src) powerpc_or(s, dest, _g0, src)
-#define powerpc_movf(s, dest, src) INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(1)|RS2(src))
-#define powerpc_movd(s, dest, src) INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(2)|RS2(src))
-#define powerpc_simple_ret(c) INSN_OUT(s, HDR(0x2)|OP3(0x38)|RD(_g0)|RS1(_i7)|IM|SIMM13(0x8))
-#define powerpc_restore(c) INSN_OUT(s, HDR(0x2)|OP3(0x3d)|RD(_g0)|RS1(_g0)|RS2(_g0));
-#define powerpc_lshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
-#define powerpc_xlshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
-#define powerpc_rshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
-#define powerpc_xrshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
-#define powerpc_rshai(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
-#define powerpc_xrshai(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP3(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
-#define powerpc_rsh(s, dest, src1, src2) 	INSN_OUT(s, HDR(0x2)|OP3(0x27)|RD(dest)|RS1(src1)|RS2(src2));
+#define powerpc_or(s, dest, src1, src2) INSN_OUT(s, HDR(0x2)|OP(0x2)|RD(dest)|RS1(src1)|RS2(src2))
+#define powerpc_movi(s, dest, src) powerpc_or(s, dest, src, _gpr0)
+#define powerpc_int_mov(s, dest, src) powerpc_or(s, dest, _gpr0, src)
+#define powerpc_movf(s, dest, src) INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(1)|RS2(src))
+#define powerpc_movd(s, dest, src) INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(2)|RS2(src))
+#define BALWAYS 0x14
+#define BRETURN 0x0
+#define powerpc_simple_ret(c) INSN_OUT(s, XL_FORM(19,0x14,0,0,16,0))
+#define powerpc_restore(c) INSN_OUT(s, HDR(0x2)|OP(0x3d)|RD(_gpr0)|RS1(_gpr0)|RS2(_gpr0));
+#define powerpc_lshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
+#define powerpc_xlshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
+#define powerpc_rshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
+#define powerpc_xrshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
+#define powerpc_rshai(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
+#define powerpc_xrshai(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
+#define powerpc_rsh(s, dest, src1, src2) 	INSN_OUT(s, HDR(0x2)|OP(0x27)|RD(dest)|RS1(src1)|RS2(src2));
 
-#define powerpc_nop(c) INSN_OUT(s, OP2(0x4));
+#define powerpc_nop(c) INSN_OUT(s, OP(0x4));
 
 #define IREG 0
 #define FREG 1
@@ -127,7 +129,7 @@ extern int powerpc_local_op(dill_stream s, int flag, int val)
 static int 
 is_temp(int ireg)
 {
-    return ((ireg <= _g7) && (ireg >= _g0));
+  /*    return ((ireg <= _g7) && (ireg >= _g0));*/
 }
 
 extern void
@@ -141,7 +143,7 @@ powerpc_save_restore_op(dill_stream s, int save_restore, int type, int reg)
 	    break;
 	default:
 	    if (is_temp(reg)) {
-		powerpc_pstorei(s, type, 0, reg, _sp, smi->gp_save_offset + (reg - _g0) * smi->stack_align + smi->stack_constant_offset);
+	      /*		powerpc_pstorei(s, type, 0, reg, _sp, smi->gp_save_offset + (reg - _g0) * smi->stack_align + smi->stack_constant_offset);*/
 	    }
 	    break;
 	}
@@ -152,7 +154,7 @@ powerpc_save_restore_op(dill_stream s, int save_restore, int type, int reg)
 	    break;
 	default:
 	    if (is_temp(reg)) {
-		powerpc_ploadi(s, type, 0, reg, _sp, smi->gp_save_offset + (reg - _g0) * smi->stack_align + smi->stack_constant_offset);
+		powerpc_ploadi(s, type, 0, reg, _sp, smi->gp_save_offset + (reg - _gpr0) * smi->stack_align + smi->stack_constant_offset);
 	    }
 	    break;
 	}
@@ -162,43 +164,43 @@ powerpc_save_restore_op(dill_stream s, int save_restore, int type, int reg)
 static void
 powerpc_movi2f(dill_stream s, int dest, int src)
 {
-    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
-    powerpc_pstorei(s, DILL_I, 0, src, _fp, smi->conversion_word);
-    powerpc_ploadi(s, DILL_F, 0, dest, _fp, smi->conversion_word);
+  /*    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
+        powerpc_pstorei(s, DILL_I, 0, src, _fp, smi->conversion_word);
+	  powerpc_ploadi(s, DILL_F, 0, dest, _fp, smi->conversion_word);*/
 }
     
 static void
 powerpc_movf2i(dill_stream s, int dest, int src)
 {
-    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
+  /*    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
     powerpc_pstorei(s, DILL_F, 0, src, _fp, smi->conversion_word);
-    powerpc_ploadi(s, DILL_I, 0, dest, _fp, smi->conversion_word);
+	  powerpc_ploadi(s, DILL_I, 0, dest, _fp, smi->conversion_word);*/
 }
     
 static void
 powerpc_movd2i(dill_stream s, int dest, int src)
 {
-    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
-    powerpc_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
+  /*    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
+        powerpc_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
     if (smi->stack_align == 8) {
 	powerpc_ploadi(s, DILL_L, 0, dest, _fp, smi->conversion_word);
     } else {
 	powerpc_ploadi(s, DILL_I, 0, dest, _fp, smi->conversion_word);
 	powerpc_ploadi(s, DILL_I, 0, dest+1, _fp, smi->conversion_word+4);
-    }
+	}*/
 }
     
 static void
 powerpc_movi2d(dill_stream s, int dest, int src)
 {
-    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
-    if (smi->stack_align == 8) {
+  /*    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
+        if (smi->stack_align == 8) {
 	powerpc_pstorei(s, DILL_L, 0, src, _fp, smi->conversion_word);
     } else {
 	powerpc_pstorei(s, DILL_I, 0, src, _fp, smi->conversion_word);
 	powerpc_pstorei(s, DILL_I, 0, src+1, _fp, smi->conversion_word+4);
     }
-    powerpc_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);
+    powerpc_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);*/
 }
     
 /*
@@ -235,13 +237,13 @@ int dest;
 int src1;
 int src2;
 {
-    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
+  /*    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;*/
     /* format 3 */
-    if ((smi->stack_align == 8) && use_ext_form) {
-	INSN_OUT(s, HDR(0x2)|OP3(powerpc_op3)|1<<12|RD(dest)|RS1(src1)|RS2(src2));
+    /*    if ((smi->stack_align == 8) && use_ext_form) {
+	INSN_OUT(s, HDR(0x2)|OP(powerpc_op3)|1<<12|RD(dest)|RS1(src1)|RS2(src2));
     } else {	
-	INSN_OUT(s, HDR(0x2)|OP3(powerpc_op3)|RD(dest)|RS1(src1)|RS2(src2));
-    }
+	INSN_OUT(s, HDR(0x2)|OP(powerpc_op3)|RD(dest)|RS1(src1)|RS2(src2));
+	}*/
 }
 
 extern void powerpc_FORM3imm_arith(s, op3, use_ext_form, dest, src1, imm)
@@ -262,11 +264,11 @@ long imm;
     }
     if (((long)imm) < 4096 && ((long)imm) >= -4096) {
 	/* format 3 */
-	INSN_OUT(s, HDR(0x2)|OP3(op3)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|powerpcv9<<12);
+	INSN_OUT(s, HDR(0x2)|OP(op3)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|powerpcv9<<12);
     } else {
-	powerpc_set(s, _g1, imm);
+      /*	powerpc_set(s, _g1, imm);*/
 	/* format 3 */
-	INSN_OUT(s, HDR(0x2)|OP3(op3)|RD(dest)|RS1(src1)|RS2(_g1)|powerpcv9<<12);
+      /*	INSN_OUT(s, HDR(0x2)|OP(op3)|RD(dest)|RS1(src1)|RS2(_g1)|powerpcv9<<12);*/
     }
 }
 
@@ -274,7 +276,9 @@ extern void
 powerpc_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args,
 	     dill_reg *arglist)
 {
+#ifdef NOT_DEF
     int i;
+
     int max_in_reg = _i0;
     powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
     int cur_arg_offset = 0;
@@ -310,8 +314,8 @@ powerpc_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 	default:
 	    if (cur_arg_offset < 6 * smi->stack_align) {
 		args[i].is_register = 1;
-		args[i].in_reg = _i0 + cur_arg_offset/smi->stack_align;
-		args[i].out_reg = _o0 + cur_arg_offset/smi->stack_align;
+		args[i].in_reg = _gpr3 + cur_arg_offset/smi->stack_align;
+		args[i].out_reg = _gpr3 + cur_arg_offset/smi->stack_align;
 		max_in_reg = args[i].in_reg;
 	    } else {
 		args[i].is_register = 0;
@@ -322,7 +326,7 @@ powerpc_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 	cur_arg_offset += roundup(type_info[(int)args[i].type].size, smi->stack_align);
     }
     
-    for (i=_i0 ; i < _i6; i++) {
+    for (i=_gpr3 ; i < _gpr10; i++) {
 	if (i <= max_in_reg) {
 	    dill_dealloc_specific(s, i, DILL_I, DILL_VAR);
 	} else {
@@ -360,10 +364,10 @@ powerpc_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 		/* powerpcv8 boundary condition, half in register */
 		if (args[i].offset == 5*4) {
 		    int real_offset = args[i].offset + 68; 
-		    powerpc_pstorei(s, DILL_I, 0, args[i].in_reg, _fp, 
+		    /*		    powerpc_pstorei(s, DILL_I, 0, args[i].in_reg, _fp, 
 				  real_offset);
 		    powerpc_ploadi(s, DILL_F, 0, tmp_reg, _fp, real_offset);
-		    powerpc_ploadi(s, DILL_F, 0, tmp_reg+1, _fp, real_offset+4);
+		    powerpc_ploadi(s, DILL_F, 0, tmp_reg+1, _fp, real_offset+4);*/
 		} else {
 		    powerpc_movi2d(s, tmp_reg, args[i].in_reg);
 		    dill_alloc_specific(s, args[i].in_reg, DILL_I, DILL_VAR);
@@ -394,6 +398,7 @@ powerpc_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 	args[i].in_reg = tmp_reg;
 	args[i].is_register = 1;
     }
+#endif
 }
 
 static char ld_opcodes[] = {
@@ -416,17 +421,17 @@ extern void
 powerpc_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     if  (((long)offset) >= 4096 || ((long)offset) < -4096) {
-	powerpc_set(s, _g1, offset);
-	powerpc_pload(s, type, junk, dest, src, _g1);
+	powerpc_set(s, _gpr2, offset);
+	powerpc_pload(s, type, junk, dest, src, _gpr2);
 	return;
     }
 
     switch (type) {
     case DILL_F:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x20)|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(0x20)|RS1(src)|IM|SIMM13(offset));
 	break;
     case DILL_D:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x23)|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(0x23)|RS1(src)|IM|SIMM13(offset));
 	break;
     case DILL_L: case DILL_UL: case DILL_P:{
 	powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
@@ -436,7 +441,7 @@ powerpc_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset
     }
     /* fall through */
     default:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(ld_opcodes[type])|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(ld_opcodes[type])|RS1(src)|IM|SIMM13(offset));
 	break;
     }
 }
@@ -446,10 +451,10 @@ powerpc_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
     switch (type) {
     case DILL_F:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x20)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(0x20)|RS1(src1)|RS2(src2));
 	break;
     case DILL_D:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x23)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(0x23)|RS1(src1)|RS2(src2));
 	break;
     case DILL_L: case DILL_UL: case DILL_P:
     {
@@ -460,7 +465,7 @@ powerpc_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 	/* fall through */
     }
     default:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(ld_opcodes[type])|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(ld_opcodes[type])|RS1(src1)|RS2(src2));
 	break;
     }
 }
@@ -482,10 +487,10 @@ extern void
 powerpc_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     if (offset == 0) {
-	powerpc_pbsload(s, type, junk, dest, src, _g0);
+	powerpc_pbsload(s, type, junk, dest, src, _gpr2);
     } else {
-	powerpc_set(s, _g1, offset);
-	powerpc_pbsload(s, type, junk, dest, src, _g1);
+	powerpc_set(s, _gpr2, offset);
+	powerpc_pbsload(s, type, junk, dest, src, _gpr2);
     }
 }
 
@@ -503,7 +508,7 @@ powerpc_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 	/* fall through */
     }
     default:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(ld_bs_opcodes[type])|RS1(src1)|RS2(src2)|ASI(0x88));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(ld_bs_opcodes[type])|RS1(src1)|RS2(src2)|ASI(0x88));
 	break;
     }
 }
@@ -528,17 +533,17 @@ extern void
 powerpc_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     if  (((long)offset) >= 4096 || ((long)offset) < -4096) {
-	powerpc_set(s, _g1, offset);
-	powerpc_pstore(s, type, junk, dest, src, _g1);
+	powerpc_set(s, _gpr2, offset);
+	powerpc_pstore(s, type, junk, dest, src, _gpr2);
 	return;
     }
 
     switch (type) {
     case DILL_F:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x24)|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(0x24)|RS1(src)|IM|SIMM13(offset));
 	break;
     case DILL_D:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x27)|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(0x27)|RS1(src)|IM|SIMM13(offset));
 	break;
     case DILL_L: case DILL_UL: case DILL_P:{
 	powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
@@ -548,7 +553,7 @@ powerpc_pstorei(dill_stream s, int type, int junk, int dest, int src, long offse
     }
     /* fall through */
     default:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(st_opcodes[type])|RS1(src)|IM|SIMM13(offset));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(st_opcodes[type])|RS1(src)|IM|SIMM13(offset));
 	break;
     }
 }
@@ -558,10 +563,10 @@ powerpc_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
     switch (type) {
     case DILL_F:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x24)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(0x24)|RS1(src1)|RS2(src2));
 	break;
     case DILL_D:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(0x27)|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(0x27)|RS1(src1)|RS2(src2));
 	break;
     case DILL_L: case DILL_UL: case DILL_P:
     {
@@ -572,7 +577,7 @@ powerpc_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
 	/* fall through */
     }
     default:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP3(st_opcodes[type])|RS1(src1)|RS2(src2));
+	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(st_opcodes[type])|RS1(src1)|RS2(src2));
 	break;
     }
 }
@@ -618,8 +623,8 @@ extern void powerpc_mod(dill_stream s, int data1, int type_long, int dest,
 extern void powerpc_modi(dill_stream s, int data1, int data2, int dest, int src1, 
 		      long imm)
 {
-    powerpc_set(s, _g1, imm);
-    powerpc_mod(s, data1, data2, dest, src1, _g1);
+    powerpc_set(s, _gpr2, imm);
+    powerpc_mod(s, data1, data2, dest, src1, _gpr2);
 }
 
 extern void powerpc_div(dill_stream s, int op3, int type_long, int dest, int src1,
@@ -634,10 +639,10 @@ extern void powerpc_div(dill_stream s, int op3, int type_long, int dest, int src
 
     }
     if (op3 == 0x0d) {
-	INSN_OUT(s, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g0));/*wry(_g0, _g0);*/
+	INSN_OUT(s, HDR(0x2)|RD(0)|OP(0x30)|RS1(_gpr2)|RS2(_gpr2));/*wry(_gpr2, _gpr2);*/
     } else {
-	powerpc_rshai(s, _g1, src1, 31);
-	INSN_OUT(s, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g1));/*wry(_g0, _g1);*/
+	powerpc_rshai(s, _gpr2, src1, 31);
+	INSN_OUT(s, HDR(0x2)|RD(0)|OP(0x30)|RS1(_gpr2)|RS2(_gpr2));/*wry(_gpr2, _gpr2);*/
     }
     if ((type_long == 0) || (smi->stack_align != 8)) {
 	if (op3 == 0x0d) {
@@ -649,7 +654,7 @@ extern void powerpc_div(dill_stream s, int op3, int type_long, int dest, int src
     powerpc_nop(c);
     powerpc_nop(c);
     powerpc_nop(c);
-    INSN_OUT(s, HDR(2)|OP3(op3)|RD(dest)|RS1(src1)|RS2(src2));
+    INSN_OUT(s, HDR(2)|OP(op3)|RD(dest)|RS1(src1)|RS2(src2));
     if (op3 == 0x1f) {
 	INSN_OUT(s, HDR(0)|1<<29|COND(0x7)|2<<22|2);
 	powerpc_sethi(s, dest, 1<<21);
@@ -661,15 +666,15 @@ extern void powerpc_divi(dill_stream s, int powerpc_op3, int type_long,
 {
     powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
     if ((powerpc_op3 == 0x0d /* udiv */) && (type_long == 1)) {
-	powerpc_set(s, _g1, imm);
-	powerpc_div(s, powerpc_op3, type_long, dest, src, _g1);
+	powerpc_set(s, _gpr2, imm);
+	powerpc_div(s, powerpc_op3, type_long, dest, src, _gpr2);
 	return;
     }
     if (powerpc_op3 == 0x0d) {
-	INSN_OUT(s, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g0));/*wry(_g0, _g0);*/
+	INSN_OUT(s, HDR(0x2)|RD(0)|OP(0x30)|RS1(_gpr2)|RS2(_gpr2));/*wry(_gpr2, _gpr2);*/
     } else {
-	powerpc_rshai(s, _g1, src, 31);
-	INSN_OUT(s, HDR(0x2)|RD(0)|OP3(0x30)|RS1(_g0)|RS2(_g1));/*wry(_g0, _g1);*/
+	powerpc_rshai(s, _gpr2, src, 31);
+	INSN_OUT(s, HDR(0x2)|RD(0)|OP(0x30)|RS1(_gpr2)|RS2(_gpr2));/*wry(_gpr2, _gpr2);*/
     }
     if ((type_long == 0) || (smi->stack_align != 8)) {
 	if (powerpc_op3 == 0x0d) {
@@ -678,10 +683,10 @@ extern void powerpc_divi(dill_stream s, int powerpc_op3, int type_long,
 	    powerpc_op3 = 0x1f;
 	}
     }
-    powerpc_set(s, _g1, imm);
+    powerpc_set(s, _gpr2, imm);
     powerpc_nop(c);
     powerpc_nop(c);
-    INSN_OUT(s, HDR(2)|OP3(powerpc_op3)|RD(dest)|RS1(src)|RS2(_g1));
+    INSN_OUT(s, HDR(2)|OP(powerpc_op3)|RD(dest)|RS1(src)|RS2(_gpr2));
     if (powerpc_op3 == 0x1f) {
 	INSN_OUT(s, HDR(0)|1<<29|COND(0x7)|2<<22|2);
 	powerpc_sethi(s, dest, 1<<21);
@@ -707,6 +712,7 @@ powerpc_mov(dill_stream s, int type, int junk, int dest, int src)
 extern void
 powerpc_lea(dill_stream s, int j1, int j2, int dest, int src, long imm)
 {
+#ifdef NOTDEF
     powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
     if (src != _fp) {
 	/* powerpc_add */
@@ -715,6 +721,7 @@ powerpc_lea(dill_stream s, int j1, int j2, int dest, int src, long imm)
 	powerpc_FORM3imm_arith(s, 0, 0, dest, src, 
 			     imm  + smi->stack_constant_offset);
     }
+#endif
 }
 	
 static void
@@ -768,40 +775,40 @@ powerpc_convert(dill_stream s, int from_type, int to_type,
 	powerpc_movi(s, dest,src);
 	break;
     case CONV(DILL_F,DILL_D):
-	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc9)|RS2(src)); /*fstod*/
+	INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(0xc9)|RS2(src)); /*fstod*/
 	break;
     case CONV(DILL_F,DILL_L):
 	if (smi->stack_align == 8) {
-	    INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0x81)|RS2(src));/*fstox*/
-	    powerpc_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
-	    powerpc_ploadi(s, DILL_L, 0, dest, _fp, smi->conversion_word);
+	    INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0x81)|RS2(src));/*fstox*/
+	    /*	    powerpc_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
+		    powerpc_ploadi(s, DILL_L, 0, dest, _fp, smi->conversion_word);*/
 	    break;
 	}
 	/* falling through */
     case CONV(DILL_F,DILL_I):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
 	powerpc_movf2i(s, dest, src);
 	break;
     case CONV(DILL_F,DILL_C):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
 	powerpc_movf2i(s, dest, src);
 	powerpc_lshi(s, dest, src, 24);
 	powerpc_rshai(s, dest, dest, 24);
 	break;
     case CONV(DILL_F,DILL_S):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
 	powerpc_movf2i(s, dest, src);
 	powerpc_lshi(s, dest, src, 16);
 	powerpc_rshai(s, dest, dest, 16);
 	break;
     case CONV(DILL_F,DILL_UC):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
 	powerpc_movf2i(s, dest, src);
 	powerpc_lshi(s, dest, src, 24);
 	powerpc_rshi(s, dest, dest, 24);
 	break;
     case CONV(DILL_F,DILL_US):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
 	powerpc_movf2i(s, dest, src);
 	powerpc_lshi(s, dest, src, 16);
 	powerpc_rshi(s, dest, dest, 16);
@@ -826,29 +833,29 @@ powerpc_convert(dill_stream s, int from_type, int to_type,
 	}
 	break;
     case CONV(DILL_D,DILL_F):
-	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc6)|RS2(src)); /*fdtos*/
+	INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(0xc6)|RS2(src)); /*fdtos*/
 	break;
     case CONV(DILL_D,DILL_L):
 	if (smi->stack_align == 8) {
-	    INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0x82)|RS2(src));/*fdtox*/
-	    powerpc_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
-	    powerpc_ploadi(s, DILL_L, 0, dest, _fp, smi->conversion_word);
+	    INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0x82)|RS2(src));/*fdtox*/
+	    /*	    powerpc_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
+		    powerpc_ploadi(s, DILL_L, 0, dest, _fp, smi->conversion_word);*/
 	    break;
 	}
 	/* falling through */
     case CONV(DILL_D,DILL_I):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
 	powerpc_movf2i(s, dest, src);
 	break;
     case CONV(DILL_D,DILL_C):
     case CONV(DILL_D,DILL_UC):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
 	powerpc_movf2i(s, dest, src);
 	powerpc_andi(s, dest, dest, 0xff);
 	break;
     case CONV(DILL_D,DILL_S):
     case CONV(DILL_D,DILL_US):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP3(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
+	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd2)|RS2(src));/*fdtoi*/
 	powerpc_movf2i(s, dest, src);
 	powerpc_andi(s, dest, dest, 0xffff);
 	break;
@@ -873,23 +880,23 @@ powerpc_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_C,DILL_D):
     case CONV(DILL_S,DILL_D):
     case CONV(DILL_I,DILL_D):
-	powerpc_rshi(s, _g1, src, 0);
-	src = _g1;
+	powerpc_rshi(s, _gpr2, src, 0);
+	src = _gpr2;
 	/* fall through */
     case CONV(DILL_L,DILL_D):
 	powerpc_movi2f(s, dest, src);
-	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc8)|RS2(dest));/*fitod*/
+	INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(0xc8)|RS2(dest));/*fitod*/
 	break;
     case CONV(DILL_UC,DILL_D):
     case CONV(DILL_US,DILL_D):
     case CONV(DILL_U,DILL_D):
 	if (smi->stack_align == 8) { 
-	    powerpc_rshi(s, _g1, src, 0);
-	    src = _g1;
+	    powerpc_rshi(s, _gpr2, src, 0);
+	    src = _gpr2;
 	/* fall through */
-	    powerpc_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
-	    powerpc_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);
-	    INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0x88)|RS2(dest));/*fxtod*/
+	    /*	    powerpc_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
+		    powerpc_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);*/
+	    INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(0x88)|RS2(dest));/*fxtod*/
 	    break;
 	}
 	/* fallthrough */
@@ -907,17 +914,17 @@ powerpc_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_I,DILL_F):
     case CONV(DILL_L,DILL_F):
 	powerpc_movi2f(s, dest, src);
-	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0xc4)|RS2(dest));/*fitos*/
+	INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(0xc4)|RS2(dest));/*fitos*/
 	break;
     case CONV(DILL_UC,DILL_F):
     case CONV(DILL_US,DILL_F):
     case CONV(DILL_U,DILL_F):
 	if (smi->stack_align == 8) { 
-	    powerpc_rshi(s, _g1, src, 0);
-	    src = _g1;
-	    powerpc_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
-	    powerpc_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);
-	    INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0x34)|OPF(0x84)|RS2(dest));/*fxtos*/
+	    powerpc_rshi(s, _gpr2, src, 0);
+	    src = _gpr2;
+	    /*	    powerpc_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
+		    powerpc_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);*/
+	    INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(0x84)|RS2(dest));/*fxtos*/
 	    break;
 	}
 	/* fallthrough */
@@ -1032,12 +1039,12 @@ powerpc_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 {
     switch(type) {
     case DILL_F:
-	INSN_OUT(s, HDR(0x2)|OP3(0x35)|RS1(src1)|OPF(0x51)|RS2(src2));/*fcmps*/
+	INSN_OUT(s, HDR(0x2)|OP(0x35)|RS1(src1)|OPF(0x51)|RS2(src2));/*fcmps*/
 	dill_mark_branch_location(s, label);
 	INSN_OUT(s, HDR(0)|COND(fop_conds[op])|(0x5<<22)|CC(0x0)|P(1)|/*disp */0);/* fbp*/
 	break;
     case DILL_D:
-	INSN_OUT(s, HDR(0x2)|OP3(0x35)|RS1(src1)|OPF(0x52)|RS2(src2));
+	INSN_OUT(s, HDR(0x2)|OP(0x35)|RS1(src1)|OPF(0x52)|RS2(src2));
 	dill_mark_branch_location(s, label);
 	INSN_OUT(s, HDR(0)|COND(fop_conds[op])|(0x5<<22)|CC(0x0)|P(1)|/*disp */0);/* fbp*/
 	break;
@@ -1058,7 +1065,7 @@ powerpc_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 	op += 6; /* second set of codes */
 	/* fall through */
     default:
-	INSN_OUT(s, HDR(0x2)|RD(_g0)|OP3(0x14)|RS1(src1)|RS2(src2)); /* subcc */
+	INSN_OUT(s, HDR(0x2)|RD(_gpr2)|OP(0x14)|RS1(src1)|RS2(src2)); /* subcc */
 	dill_mark_branch_location(s, label);
 	INSN_OUT(s, HDR(0)|COND(op_conds[op])|(2<<22)|/*disp */0);/* bp*/
     }
@@ -1075,20 +1082,20 @@ powerpc_jump_to_label(dill_stream s, unsigned long label)
 
 extern void powerpc_jump_to_reg(dill_stream s, unsigned long reg)
 {
-    INSN_OUT(s, HDR(0x2)|OP3(0x38)|RD(_g0)|RS1(reg)|IM|SIMM13(0x0));
+    INSN_OUT(s, HDR(0x2)|OP(0x38)|RD(_gpr2)|RS1(reg)|IM|SIMM13(0x0));
     powerpc_nop(c);
 }
 
 extern void powerpc_jump_to_imm(dill_stream s, unsigned long imm)
 {
-    INSN_OUT(s, HDR(0x2)|OP3(0x38)|RD(_g0)|RS1(_i7)|IM|SIMM13(imm));
+  /*    INSN_OUT(s, HDR(0x2)|OP(0x38)|RD(_gpr2)|RS1(_i7)|IM|SIMM13(imm));*/
     powerpc_nop(c);
 }
 
 extern void 
 powerpc_jal(dill_stream s, int return_addr_reg, int target)
 {
-    INSN_OUT(s, HDR(0x2)|OP3(0x38)|RD(return_addr_reg)|RS1(target)|IM|SIMM13(0x0));
+    INSN_OUT(s, HDR(0x2)|OP(0x38)|RD(return_addr_reg)|RS1(target)|IM|SIMM13(0x0));
 }
 
 static void internal_push(dill_stream s, int type, int immediate, 
@@ -1113,20 +1120,20 @@ static void internal_push(dill_stream s, int type, int immediate,
     if (smi->cur_arg_offset < 6 * smi->stack_align) {
 	arg.is_register = 1;
 	if ((smi->stack_align == 8) && ((type == DILL_F) || (type == DILL_D))) {
-	    arg.out_reg = _f0  + smi->cur_arg_offset/4;
+	    arg.out_reg = _fpr0  + smi->cur_arg_offset/4;
 	    if (type == DILL_F) arg.out_reg++;
-	    arg.in_reg = _o0   + smi->cur_arg_offset/8;
+	    arg.in_reg = _gpr3   + smi->cur_arg_offset/8;
 	} else {
 	    /* powerpcv8 */
-	    arg.in_reg = _i0 + smi->cur_arg_offset/smi->stack_align;
-	    arg.out_reg = _o0 + smi->cur_arg_offset/smi->stack_align;
+	    arg.in_reg = _gpr3 + smi->cur_arg_offset/smi->stack_align;
+	    arg.out_reg = _gpr3 + smi->cur_arg_offset/smi->stack_align;
 	}
     } else {
 	if ((smi->stack_align == 8) && ((type == DILL_F) || (type == DILL_D)) &&
 	    (smi->cur_arg_offset <= 10 * smi->stack_align)) {
 	    /* floating arg can go in a float reg, but not int reg */
 	    arg.is_register = 1;
-	    arg.out_reg = _f0  + smi->cur_arg_offset/4;
+	    arg.out_reg = _fpr0  + smi->cur_arg_offset/4;
 	    arg.in_reg = -1;
 	} else {
 	    arg.is_register = 0;
@@ -1146,16 +1153,16 @@ static void internal_push(dill_stream s, int type, int immediate,
 		if (type != DILL_D) {
 		    if (type == DILL_F) {
 			float f = (float) *(double*)value_ptr;
-			powerpc_set(s, _g1, *(int*)&f);
+			powerpc_set(s, _gpr2, *(int*)&f);
 		    } else {
-			powerpc_set(s, _g1, *(long*)value_ptr);
+			powerpc_set(s, _gpr2, *(long*)value_ptr);
 		    }
-		    powerpc_pstorei(s, arg.type, 0, _g1, _sp, real_offset);
+		    powerpc_pstorei(s, arg.type, 0, _gpr2, _sp, real_offset);
 		} else {
-		    powerpc_set(s, _g1, *(int*)value_ptr);
-		    powerpc_pstorei(s, DILL_I, 0, _g1, _sp, real_offset);
-		    powerpc_set(s, _g1, *(((int*)value_ptr)+1));
-		    powerpc_pstorei(s, DILL_I, 0, _g1, _sp, real_offset+4);
+		    powerpc_set(s, _gpr2, *(int*)value_ptr);
+		    powerpc_pstorei(s, DILL_I, 0, _gpr2, _sp, real_offset);
+		    powerpc_set(s, _gpr2, *(((int*)value_ptr)+1));
+		    powerpc_pstorei(s, DILL_I, 0, _gpr2, _sp, real_offset+4);
 		}		
 	    } else {
 		if (type != DILL_D) {
@@ -1180,26 +1187,13 @@ static void internal_push(dill_stream s, int type, int immediate,
 			powerpc_set(s, arg.out_reg, *(int*)&f);
 		    } else {
 			powerpc_set(s, arg.out_reg, *(int*)value_ptr);
-			if (arg.out_reg != _o5) {
-			    powerpc_set(s, arg.out_reg+1, *(((int*)value_ptr)+1));
-			} else {
-			    /* powerpcv8 boundary condition */
-			    powerpc_set(s, _g1, *(((int*)value_ptr)+1));
-			    powerpc_pstorei(s, DILL_I, 0, _g1, _sp, real_offset + 4);
-			}
+			powerpc_set(s, arg.out_reg+1, *(((int*)value_ptr)+1));
 		    }
 		} else {
 		    if (type == DILL_F) {
 			powerpc_movf2i(s, arg.out_reg, *(int*)value_ptr);
 		    } else {
-			if (arg.out_reg != _o5) {
-			    powerpc_movd2i(s, arg.out_reg, *(int*)value_ptr);
-			} else {
-			    /* powerpcv8 boundary condition */
-			    powerpc_movf2i(s, arg.out_reg, *(int*)value_ptr);
-			    powerpc_pstorei(s, DILL_F, 0, (*(int*)value_ptr)+1, _sp, 
-					  real_offset + 4);
-			}
+		      powerpc_movd2i(s, arg.out_reg, *(int*)value_ptr);
 		    }
 		}
 
@@ -1212,11 +1206,11 @@ static void internal_push(dill_stream s, int type, int immediate,
 	    if (arg.is_immediate) {
 		if (type == DILL_F) {
 		    float f = (float) *(double*)value_ptr;
-		    powerpc_set(s, _g1, *(int*)&f);
+		    powerpc_set(s, _gpr2, *(int*)&f);
 		} else {
-		    powerpc_set(s, _g1, *(long*)value_ptr);
+		    powerpc_set(s, _gpr2, *(long*)value_ptr);
 		}
-		powerpc_pstorei(s, arg.type, 0, _g1, _sp, real_offset);
+		powerpc_pstorei(s, arg.type, 0, _gpr2, _sp, real_offset);
 	    } else {
 		powerpc_pstorei(s, arg.type, 0, *(int*)value_ptr, _sp, 
 			      real_offset);
@@ -1290,7 +1284,7 @@ extern void powerpc_pushfi(dill_stream s, int type, double value)
 
 extern int powerpc_calli(dill_stream s, int type, void *xfer_address, char *name)
 {
-    int caller_side_ret_reg = _o0;
+    int caller_side_ret_reg = _gpr3;
 
     /* save temporary registers */
     dill_mark_call_location(s, name, xfer_address);
@@ -1298,7 +1292,7 @@ extern int powerpc_calli(dill_stream s, int type, void *xfer_address, char *name
     powerpc_nop(s);
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
-	caller_side_ret_reg = _f0;
+	caller_side_ret_reg = _fpr0;
     }
     push_init(s);
     return caller_side_ret_reg;
@@ -1306,14 +1300,14 @@ extern int powerpc_calli(dill_stream s, int type, void *xfer_address, char *name
 
 extern int powerpc_callr(dill_stream s, int type, int src)
 {
-    int caller_side_ret_reg = _o0;
+    int caller_side_ret_reg = _gpr3;
 
     /* save temporary registers */
-    powerpc_jal(s, _o7, src);
-    powerpc_nop(s);
+    /*    powerpc_jal(s, _o7, src);
+    powerpc_nop(s);*/
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
-	caller_side_ret_reg = _f0;
+	caller_side_ret_reg = _fpr0;
     }
     push_init(s);
     return caller_side_ret_reg;
@@ -1344,7 +1338,7 @@ powerpc_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 	op += 6; /* second set of codes */
 	/* fall through */
     default:
-	powerpc_FORM3imm_arith(s, 0x14, 0, _g0, src, imm); /* subcc */
+	powerpc_FORM3imm_arith(s, 0x14, 0, _gpr2, src, imm); /* subcc */
 	dill_mark_branch_location(s, label);
 	INSN_OUT(s, HDR(0)|COND(op_conds[op])|(2<<22)|/*disp */0);/* bp*/
 	powerpc_nop(s);
@@ -1363,13 +1357,13 @@ extern void powerpc_ret(dill_stream s, int data1, int data2, int src)
     case DILL_L:
     case DILL_UL:
     case DILL_P:
-	if (src != _i0) powerpc_int_mov(s, _i0, src);
+	if (src != _gpr3) powerpc_int_mov(s, _gpr3, src);
 	break;
     case DILL_F:
-	if (src != _f0) powerpc_movf(s, _f0, src);
+	if (src != _fpr0) powerpc_movf(s, _fpr0, src);
 	break;
     case DILL_D:
-	if (src != _f0) powerpc_movd(s, _f0, src);
+	if (src != _fpr0) powerpc_movd(s, _fpr0, src);
 	break;
     }
     powerpc_simple_ret(s);
@@ -1388,7 +1382,7 @@ extern void powerpc_reti(dill_stream s, int data1, int data2, long imm)
     case DILL_L:
     case DILL_UL:
     case DILL_P:
-	powerpc_set(s, _i0, imm);
+	powerpc_set(s, _gpr3, imm);
 	break;
     case DILL_F:
     case DILL_D:
@@ -1465,8 +1459,8 @@ powerpc_PLT_emit(dill_stream s, int force_PLT)
 	    powerpc_nop(s);
 	    powerpc_nop(s);
 
-/*	    powerpc_set(s, _g1, (unsigned long)t->call_locs[i].xfer_addr);*/
-	    powerpc_jump_to_reg(s, _g1);
+/*	    powerpc_set(s, _gpr2, (unsigned long)t->call_locs[i].xfer_addr);*/
+	    powerpc_jump_to_reg(s, _gpr2);
 	    powerpc_nop(s);
 
 	    /* fixup call to reference just-generated PLT code*/
@@ -1537,7 +1531,7 @@ powerpc_emit_save(dill_stream s)
     ar_size = roundup(ar_size, 16) + 16;
 
     s->p->cur_ip = (char*)s->p->code_base + smi->save_insn_offset;
-    powerpc_savei(s, -ar_size);
+    //    powerpc_savei(s, -ar_size);
     s->p->fp = (char*)s->p->code_base + smi->save_insn_offset;
     s->p->cur_ip = save_ip;
 }
@@ -1640,19 +1634,19 @@ powerpc_setf(dill_stream s, int type, int junk, int dest, double imm)
     powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
     if (type == DILL_F) {
 	a.f = (float) imm;
-	powerpc_set(s, _g1, a.i);
-	powerpc_movi2f(s, dest, _g1);
+	powerpc_set(s, _gpr2, a.i);
+	powerpc_movi2f(s, dest, _gpr2);
     } else if (smi->stack_align == 4) {
 	b.d = imm;
-	powerpc_set(s, _g1, b.i[0]);
-	powerpc_movi2f(s, dest, _g1);
-	powerpc_set(s, _g1, b.i[1]);
-	powerpc_movi2f(s, dest+1, _g1);
+	powerpc_set(s, _gpr2, b.i[0]);
+	powerpc_movi2f(s, dest, _gpr2);
+	powerpc_set(s, _gpr2, b.i[1]);
+	powerpc_movi2f(s, dest+1, _gpr2);
     } else {
 	/* double powerpcv9 */
 	b.d = imm;
-	powerpc_set(s, _g1, b.l);
-	powerpc_movi2d(s, dest, _g1);
+	powerpc_set(s, _gpr2, b.l);
+	powerpc_movi2d(s, dest, _gpr2);
     }
 }	
 
@@ -1664,8 +1658,12 @@ dill_stream s;
 int r;
 long val;
 {
+  INSN_OUT(s, D_FORM(14, r, 0, val));
+}
+
+#ifdef NOT_DEF
     if  (((long)val) < 4096 && ((long)val) >= -4096) {
-	powerpc_ori(s, r, _g0, (val&0x1fff));
+	powerpc_ori(s, r, _gpr2, (val&0x1fff));
 #if SIZEOF_LONG == 8
     } else if ((val >> 34) == 0) {
 	/* fits in 34 positive bits */
@@ -1678,15 +1676,15 @@ long val;
 	powerpc_lshi(s, r,r,2);
 	powerpc_xori(s, r,r,(val & 0xfff)|0x1000);
     } else {
-	if (r != _g1) {
+	if (r != _gpr2) {
 	    /* case where we can use g1 as a temporary */
 	    powerpc_sethi(s, r,hh(val));
-	    powerpc_sethi(s, _g1,lm(val));
+	    powerpc_sethi(s, _gpr2,lm(val));
 /*	    printf("lm (%lx) = %lx\n", val, lm(val));*/
 	    powerpc_ori(s, r,r,hm(val));
-	    powerpc_ori(s, _g1,_g1,lo(val));
+	    powerpc_ori(s, _gpr2,_gpr2,lo(val));
 	    powerpc_xlshi(s, r,r,32);
-	    powerpc_or(s, r,r,_g1);
+	    powerpc_or(s, r,r,_gpr2);
 	    /* can't use g1! */
 	} else {
 	    /* set hi, set low */
@@ -1716,6 +1714,8 @@ long val;
 #endif
 }
 
+#endif
+
 extern void powerpc_bswap(s, junk, typ, dest, src)
 dill_stream s;
 int junk;
@@ -1723,9 +1723,9 @@ int typ;
 int dest;
 int src;
 {
-    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
+  /*    powerpc_mach_info smi = (powerpc_mach_info) s->p->mach_info;
     powerpc_pstorei(s, typ, 0, src, _fp, smi->conversion_word);
-    powerpc_pbsloadi(s, typ, 0, dest, _fp, smi->conversion_word);
+    powerpc_pbsloadi(s, typ, 0, dest, _fp, smi->conversion_word);*/
 }
 
 #define bit_R(x) ((unsigned long)1<<x)
@@ -1733,19 +1733,17 @@ int src;
 extern void
 powerpc_reg_init(dill_stream s)
 {
-    s->p->var_i.init_avail[0] = (bit_R(_l0)|bit_R(_l1)|bit_R(_l2)|bit_R(_l3)|
-				 bit_R(_l4)|bit_R(_l5)|bit_R(_l6)|bit_R(_l7));
-    s->p->var_i.members[0] = s->p->var_i.init_avail[0] |
-	(bit_R(_i0)|bit_R(_i1)|bit_R(_i2)|bit_R(_i3)|
-	 bit_R(_i4)|bit_R(_i5)|bit_R(_i6)|bit_R(_i7));
-    s->p->tmp_i.init_avail[0] = (bit_R(_g2)|bit_R(_g3));
-    s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0] | bit_R(_g1);
+    s->p->var_i.init_avail[0] = (bit_R(_gpr0)|bit_R(_gpr1)|bit_R(_gpr2)|bit_R(_gpr3)|
+				 bit_R(_gpr4)|bit_R(_gpr5)|bit_R(_gpr6)|bit_R(_gpr7));
+    s->p->var_i.members[0] = s->p->var_i.init_avail[0];
+    s->p->tmp_i.init_avail[0] = (bit_R(_gpr2)|bit_R(_gpr3));
+    s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0] | bit_R(_gpr2);
     s->p->var_f.init_avail[0] = 0;
     s->p->var_f.members[0] = s->p->var_f.init_avail[0];
-    s->p->tmp_f.init_avail[0] = (bit_R(_f2)|bit_R(_f4)|bit_R(_f6)|
-				 bit_R(_f8)|bit_R(_f10)|bit_R(_f12)|bit_R(_f14)|
-				 bit_R(_f16)|bit_R(_f18)|bit_R(_f20)|bit_R(_f22)|
-				 bit_R(_f24)|bit_R(_f26)|bit_R(_f28)|bit_R(_f30));
+    s->p->tmp_f.init_avail[0] = (bit_R(_fpr2)|bit_R(_fpr4)|bit_R(_fpr6)|
+				 bit_R(_fpr8)|bit_R(_fpr10)|bit_R(_fpr12)|bit_R(_fpr14)|
+				 bit_R(_fpr16)|bit_R(_fpr18)|bit_R(_fpr20)|bit_R(_fpr22)|
+				 bit_R(_fpr24)|bit_R(_fpr26)|bit_R(_fpr28)|bit_R(_fpr30));
     s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
 
@@ -1793,7 +1791,7 @@ powerpc_init_disassembly_info(dill_stream s, void * ptr)
 #else
     INIT_DISASSEMBLE_INFO(*i, stdout);
 #endif
-    i->mach = bfd_mach_powerpc_v9;
+    i->mach = bfd_mach_ppc;
     if (s->p->code_base != NULL) {
 	i->buffer = (bfd_byte *)s->p->code_base;
 	i->buffer_vma = (bfd_vma)(long)s->p->code_base;
@@ -1802,7 +1800,7 @@ powerpc_init_disassembly_info(dill_stream s, void * ptr)
 	i->buffer_vma = (bfd_vma)(long)s->p->native.code_base;
     }
     i->buffer_length = MAXLENGTH;
-#ifdef HAVE_PRINT_INSN_POWERPC
+#ifdef HAVE_PRINT_INSN_BIG_POWERPC
     return 1;
 #else
     return 0;
@@ -1812,8 +1810,8 @@ powerpc_init_disassembly_info(dill_stream s, void * ptr)
 extern int
 powerpc_print_insn(dill_stream s, void *info_ptr, void *insn)
 {
-#ifdef HAVE_PRINT_INSN_POWERPC
-    return print_insn_powerpc((unsigned long) insn, (disassemble_info*)info_ptr);
+#ifdef HAVE_PRINT_INSN_BIG_POWERPC
+    return print_insn_big_powerpc((unsigned long) insn, (disassemble_info*)info_ptr);
 #else
     return 0;
 #endif
@@ -1831,26 +1829,11 @@ powerpc_print_reg(dill_stream s, int typ, int reg)
     case DILL_C: case DILL_UC:
     case DILL_S: case DILL_US:
     case DILL_I: case DILL_U: case DILL_L: case DILL_UL:
-	if (reg == _fp) {
-	    printf("fp");
-	    return;
-	} else if (reg == _ra) {
-	    printf("ra");
-	    return;
-	} else if (reg == _sp) {
+	if (reg == _sp) {
 	    printf("sp");
 	    return;
-	} else if (reg <= _g7) {
-	    printf("g%d\n", reg - _g0);
-	    return;
-	} else if (reg <= _o7) {
-	    printf("o%d\n", reg - _o0);
-	    return;
-	} else if (reg <= _l7) {
-	    printf("l%d\n", reg - _l0);
-	    return;
-	} else if (reg <= _i7) {
-	    printf("i%d\n", reg - _i0);
+	} else if (reg <= _gpr31) {
+	    printf("g%d\n", reg - _gpr0);
 	    return;
 	}
 	break;
