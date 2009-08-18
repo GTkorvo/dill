@@ -37,10 +37,13 @@
 #undef HAVE_PRINT_INSN_LITTLE_ARM
 
 /* Define if you have the `print_insn_powerpc' function. */
-#undef HAVE_PRINT_INSN_POWERPC
+#undef HAVE_PRINT_INSN_BIG_POWERPC
 
 /* Define if you have the `print_insn_sparc' function. */
 #undef HAVE_PRINT_INSN_SPARC
+
+/* Define if you have the `print_insn_powerpc' function. */
+#undef HAVE_PRINT_INSN_POWERPC
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
