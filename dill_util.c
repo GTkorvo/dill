@@ -112,6 +112,7 @@ extern void dill_sparcv9_init(dill_stream s);
 extern void dill_x86_init(dill_stream s);
 extern void dill_x86_64_init(dill_stream s);
 extern void dill_arm_init(dill_stream s);
+extern void dill_powerpc_init(dill_stream s);
 extern void dill_ia64_init(dill_stream s);
 #if defined(EMULATION_ONLY)
 static void null_init(dill_stream s) {}
@@ -150,6 +151,12 @@ set_mach_reset(dill_stream s, char *arch)
 #if defined(MULTI_TARGET) || defined(HOST_ARM)
     if (strcmp(arch, "arm5") == 0) {
 	s->p->mach_reset = dill_arm_init;
+	return 1;
+    }
+#endif
+#if defined(MULTI_TARGET) || defined(HOST_POWERPC)
+    if (strcmp(arch, "powerpc") == 0) {
+	s->p->mach_reset = dill_powerpc_init;
 	return 1;
     }
 #endif
@@ -1485,7 +1492,7 @@ dill_dump(dill_stream s)
 	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
 	    l = s->j->print_insn(s, &info, (void *)p);
 	    printf("\n");
-	    if (l == -1) return;
+	    if (l <= 0) return;
 	    p = (char*)p + l;
 	    insn_count++;
 	}
