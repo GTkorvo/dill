@@ -36,6 +36,9 @@
 /* Define if you have the `print_insn_little_arm' function. */
 #undef HAVE_PRINT_INSN_LITTLE_ARM
 
+/* Define if you have the `print_insn_powerpc' function. */
+#undef HAVE_PRINT_INSN_POWERPC
+
 /* Define if you have the `print_insn_sparc' function. */
 #undef HAVE_PRINT_INSN_SPARC
 

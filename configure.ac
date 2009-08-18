@@ -159,7 +159,7 @@ case $host_cpu in
           AC_DEFINE(HOST_POWERPC, 1, [Define if the host processor is a powerpc])
           NATIVE_ARCH=powerpc
         fi
-	DIS_ROUTINE=powerpc
+	DIS_ROUTINE=big_powerpc
 	ARCH_FILE=powerpc
 	;;
      i*86 )
@@ -245,6 +245,7 @@ if test "x$multitarget" = xfalse; then
   ECL_CHECK_DISASSEMBLER($DIS_ROUTINE)
 else
   ECL_CHECK_DISASSEMBLER(sparc)
+  ECL_CHECK_DISASSEMBLER(powerpc)
   ECL_CHECK_DISASSEMBLER(ia64)
   ECL_CHECK_DISASSEMBLER(i386)
   ECL_CHECK_DISASSEMBLER(arm)
