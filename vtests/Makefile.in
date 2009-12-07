@@ -34,14 +34,19 @@ host_triplet = @host@
 @BUILD_LIBRARY_TRUE@EXTRA_PROGRAMS = basic_call$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	general$(EXEEXT) t1$(EXEEXT) opt$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	branch$(EXEEXT) pkg_test$(EXEEXT) \
-@BUILD_LIBRARY_TRUE@	multi_test$(EXEEXT) opt$(EXEEXT)
+@BUILD_LIBRARY_TRUE@	multi_test$(EXEEXT)
 @BUILD_LIBRARY_TRUE@TESTS = general$(EXEEXT) t1$(EXEEXT) opt$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	branch$(EXEEXT) pkg_test$(EXEEXT) \
-@BUILD_LIBRARY_TRUE@	multi_test$(EXEEXT) opt$(EXEEXT)
+@BUILD_LIBRARY_TRUE@	multi_test$(EXEEXT)
 subdir = vtests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/config/cercs.m4 \
+	$(top_srcdir)/config/libtool.m4 \
+	$(top_srcdir)/config/ltoptions.m4 \
+	$(top_srcdir)/config/ltsugar.m4 \
+	$(top_srcdir)/config/ltversion.m4 \
+	$(top_srcdir)/config/lt~obsolete.m4 $(top_srcdir)/acinclude.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -109,6 +114,7 @@ CFLAGS = @CFLAGS@
 CONFIG_SIZEOF_LONG = @CONFIG_SIZEOF_LONG@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CSH = @CSH@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
@@ -159,6 +165,7 @@ PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
+PATHPROG = @PATHPROG@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL = @PERL@
 RANLIB = @RANLIB@
@@ -222,6 +229,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dependencies foreign
+VALGRIND = ../libtool --mode=execute valgrind --tool=memcheck --error-exitcode=1 --quiet --trace-children=yes
 LDADD = ../libdill.la
 general_LDADD = ../libdill.la ${MATH_LIB} 
 NOOPT_COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -566,6 +574,8 @@ uninstall-am:
 
 @BUILD_LIBRARY_TRUE@check-local: basic_call.stamp
 
+@BUILD_LIBRARY_TRUE@valgrind:  basic_call.valgrind general.valgrind t1.valgrind opt.valgrind branch.valgrind pkg_test.valgrind multi_test.valgrind
+
 general.o: general.c
 	$(NOOPT_COMPILE) -c `test -f '$<' || echo '$(srcdir)/'`$<
 
@@ -578,6 +588,27 @@ basic_call.stamp:  basic_call@EXEEXT@
 	@mv tmp1.out tmp.out
 	diff -w tmp.out $(srcdir)/basic_call.out && touch basic_call.stamp
 	@rm tmp.out
+
+basic_call.valgrind:  basic_call@EXEEXT@
+	$(VALGRIND) ./basic_call 1>/dev/null  2>&1
+
+general.valgrind:  general@EXEEXT@
+	$(VALGRIND) ./general 1>/dev/null  2>&1
+
+t1.valgrind:  t1@EXEEXT@
+	$(VALGRIND) ./t1 1>/dev/null  2>&1
+
+opt.valgrind:  opt@EXEEXT@
+	$(VALGRIND) ./opt 1>/dev/null  2>&1
+
+branch.valgrind:  branch@EXEEXT@
+	$(VALGRIND) ./branch 1>/dev/null  2>&1
+
+pkg_test.valgrind:  pkg_test@EXEEXT@
+	$(VALGRIND) ./pkg_test 1>/dev/null  2>&1
+
+multi_test.valgrind:  multi_test@EXEEXT@
+	$(VALGRIND) ./multi_test 1>/dev/null  2>&1
 
 # t2.stamp:  t2@EXEEXT@
 # 	./t2 1>tmp.out 2>&1

@@ -2,12 +2,16 @@
 AUTOMAKE_OPTIONS = no-dependencies foreign
 
 if BUILD_LIBRARY
-EXTRA_PROGRAMS = basic_call general t1 opt branch pkg_test multi_test opt
+EXTRA_PROGRAMS = basic_call general t1 opt branch pkg_test multi_test
 
-TESTS = general$(EXEEXT) t1$(EXEEXT) opt branch pkg_test multi_test opt
+TESTS = general$(EXEEXT) t1$(EXEEXT) opt branch pkg_test multi_test
 
 check-local: basic_call.stamp
+
+valgrind:  basic_call.valgrind general.valgrind t1.valgrind opt.valgrind branch.valgrind pkg_test.valgrind multi_test.valgrind
 endif BUILD_LIBRARY
+
+VALGRIND= ../libtool --mode=execute valgrind --tool=memcheck --error-exitcode=1 --quiet --trace-children=yes
 
 LDADD = ../libdill.la
 
@@ -28,6 +32,27 @@ basic_call.stamp:  basic_call@EXEEXT@
 	@mv tmp1.out tmp.out
 	diff -w tmp.out $(srcdir)/basic_call.out && touch basic_call.stamp
 	@rm tmp.out
+
+basic_call.valgrind:  basic_call@EXEEXT@
+	$(VALGRIND) ./basic_call 1>/dev/null  2>&1
+
+general.valgrind:  general@EXEEXT@
+	$(VALGRIND) ./general 1>/dev/null  2>&1
+
+t1.valgrind:  t1@EXEEXT@
+	$(VALGRIND) ./t1 1>/dev/null  2>&1
+
+opt.valgrind:  opt@EXEEXT@
+	$(VALGRIND) ./opt 1>/dev/null  2>&1
+
+branch.valgrind:  branch@EXEEXT@
+	$(VALGRIND) ./branch 1>/dev/null  2>&1
+
+pkg_test.valgrind:  pkg_test@EXEEXT@
+	$(VALGRIND) ./pkg_test 1>/dev/null  2>&1
+
+multi_test.valgrind:  multi_test@EXEEXT@
+	$(VALGRIND) ./multi_test 1>/dev/null  2>&1
 
 # t2.stamp:  t2@EXEEXT@
 # 	./t2 1>tmp.out 2>&1
