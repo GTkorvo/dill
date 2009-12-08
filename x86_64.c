@@ -493,8 +493,16 @@ x86_64_pmov(dill_stream s, int typ, int dest, int src)
     if (src != dest) {
 	switch (typ) {
 	case DILL_D: case DILL_F:
-	    BYTE_OUT3R(s, rex, 0x0f, 0x29, ModRM(0x3, src, dest));
-	    break;
+	  //	The 0x29 form of this instruction is not supported by valgrind
+	  //      the 0x28 version reverses the operands.
+	  //	    BYTE_OUT1(s, 0x66);
+	  //	    BYTE_OUT3R(s, rex, 0x0f, 0x29, ModRM(0x3, src, dest));
+	  rex = 0;
+	  if (dest > RDI) rex |= REX_R;
+	  if (src > RDI) rex |= REX_B;
+	  BYTE_OUT1(s, 0x66);
+	  BYTE_OUT3R(s, rex, 0x0f, 0x28, ModRM(0x3, dest, src));
+	  break;
 	default:
 	    BYTE_OUT2R(s, rex, MOV32, ModRM(0x3, src, dest));
 	    break;
@@ -1860,8 +1868,8 @@ x86_64_convert(dill_stream s, int from_type, int to_type,
 	/* cvtss2sd */
 	/* cvtsd2ss */
     {
-	int rex = REX_W;
-	/* cvtsi2s{s,d} */
+	int rex = 0;
+	/* cvts{d,s}2s{s,d} */
 	if (src > RDI) rex |= REX_B;
 	if (dest > RDI) rex |= REX_R;
 	BYTE_OUT1R3(s, (from_type == DILL_D) ? 0xf2 : 0xf3, rex, 0xf, 0x5a, ModRM(0x3, dest, src));
@@ -1942,7 +1950,7 @@ x86_64_convert(dill_stream s, int from_type, int to_type,
     {
 	int return_reg = dill_scalld(s, (void*)dill_x86_64_hidden_ULtoD, "dill_x86_64_hidden_ULtoD", "%l", src);
 	if (to_type == DILL_F) {
-	    BYTE_OUT1R3(s, 0xf2, REX_W, 0xf, 0x5a, ModRM(0x3, return_reg, return_reg));
+	    BYTE_OUT1R3(s, 0xf2, 0, 0xf, 0x5a, ModRM(0x3, return_reg, return_reg));
 	}
 	x86_64_pmov(s, to_type, dest, return_reg);
 	break;

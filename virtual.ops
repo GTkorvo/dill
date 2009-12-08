@@ -335,6 +335,7 @@ extern void virtual_ret(dill_stream s, int data1, int data2, int src)
     virtual_insn i;
     i.class_code = iclass_ret;
     i.insn_code = data1;
+    memset(&i.opnds, 0, sizeof(i.opnds));
     i.opnds.a1.src = src;
     INSN_OUT(s, i);
 }
