@@ -71,3 +71,15 @@ $(libdill_la_OBJECTS) : dill.h
 
 libopcodes.la:
 	$(srcdir)/make_dummy_la @LIBOPCODES_DIR@ opcodes $(libdir)
+
+valgrind: valgrind-recursive
+
+valgrind-recursive:
+	@target=`echo $@ | sed s/-recursive//`;\
+	for dir in $(SUBDIRS); do \
+	  if test "$$dir" != "."; then \
+	    (cd $$dir && $(MAKE) $(AM_MAKEFLAGS) $$target) || exit 1; \
+	  fi;\
+	done
+
+.PHONY: valgrind-recursive valgrind

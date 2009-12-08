@@ -393,8 +393,8 @@ install-includeHEADERS: $(include_HEADERS)
 	@list='$(include_HEADERS)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  f=$(am__strip_dir) \
-	  echo " cmp -s $$d$$p $(DESTDIR)$(includedir)/$$f || $(includeHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(includedir)/$$f'"; \
-	  cmp -s $$d$$p $(DESTDIR)$(includedir)/$$f || $(includeHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(includedir)/$$f"; \
+	  echo " cmp -s '$$d$$p' '$(DESTDIR)$(includedir)/$$f' || $(includeHEADERS_INSTALL) '$$d$$p' '$(DESTDIR)$(includedir)/$$f'"; \
+	   cmp -s "$$d$$p" "$(DESTDIR)$(includedir)/$$f" || $(includeHEADERS_INSTALL) "$$d$$p" "$(DESTDIR)$(includedir)/$$f"; \
 	done
 
 uninstall-includeHEADERS:
@@ -843,6 +843,18 @@ $(libdill_la_OBJECTS) : dill.h
 
 libopcodes.la:
 	$(srcdir)/make_dummy_la @LIBOPCODES_DIR@ opcodes $(libdir)
+
+valgrind: valgrind-recursive
+
+valgrind-recursive:
+	@target=`echo $@ | sed s/-recursive//`;\
+	for dir in $(SUBDIRS); do \
+	  if test "$$dir" != "."; then \
+	    (cd $$dir && $(MAKE) $(AM_MAKEFLAGS) $$target) || exit 1; \
+	  fi;\
+	done
+
+.PHONY: valgrind-recursive valgrind
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
