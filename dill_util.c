@@ -1281,7 +1281,7 @@ dill_dump_reg(dill_stream s, int typ, int reg)
     s->j->print_reg(s, typ, reg);
 }
 
-#if !defined (HAVE_DIS_ASM_H)
+#if !defined (HAVE_DIS_ASM_H) || defined(NO_DISASSEMBLER)
 struct disassemble_info {
     void *junk;
 };
