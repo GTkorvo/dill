@@ -15872,7 +15872,9 @@ if test x$cercs_cv_binutils_link_dir = x; then
      fi
   done
 fi
-if test "${cercs_cv_binutils_link_dir+set}" = set; then
+echo cercs_cv_binutils_link_dir = ${cercs_cv_binutils_link_dir+set}
+if test "${cercs_cv_binutils_link_dir+set}" != "set"; then
+echo setting dummy
 DUMMY_LIBOPCODES_TARGET=libopcodes.la
 LIBOPCODES_DIR=$cercs_cv_binutils_link_dir
 cercs_cv_binutils_link_dir=.
@@ -16041,11 +16043,11 @@ fi
 
 search_list="$search_list /usr/include/avcall.h /usr/local/include/avcall.h /opt/ffcall/include/avcall.h /opt/misc/include/avcall.h /opt/misc/include/$cercs_cv_archive/avcall.h"
 tmp_search_results=""
-echo "configure:16044: searching for $search_list " >&5
+echo "configure:16046: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:16048: first found $tmp_search_results " >&5
+	echo "configure:16050: first found $tmp_search_results " >&5
 	break
    fi
 done
@@ -16131,11 +16133,11 @@ fi
 
 search_list="$search_list /usr/lib/libavcall.la /usr/local/lib/libavcall.la /opt/ffcall/lib/libavcall.la /opt/misc/lib/libavcall.la /opt/misc/lib/$cercs_cv_archive/libavcall.la"
 tmp_search_results=""
-echo "configure:16134: searching for $search_list " >&5
+echo "configure:16136: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:16138: first found $tmp_search_results " >&5
+	echo "configure:16140: first found $tmp_search_results " >&5
 	break
    fi
 done

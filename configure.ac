@@ -79,7 +79,7 @@ if test x$cercs_cv_binutils_link_dir = x; then
      fi
   done
 fi
-if test "${cercs_cv_binutils_link_dir+set}" = set; then
+if test "${cercs_cv_binutils_link_dir+set}" != "set"; then
 DUMMY_LIBOPCODES_TARGET=libopcodes.la
 LIBOPCODES_DIR=$cercs_cv_binutils_link_dir
 cercs_cv_binutils_link_dir=.
