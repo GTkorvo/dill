@@ -108,7 +108,7 @@ translit(arg="$cercs_cv_$1_link_arg "`echo $cercs_cv_$1_link_dir, `/',`_') | sed
 fi
 fi
 if test `echo $arg | grep -c "$1"` -eq 0; then
-dnl if arg does not includes a project spec add it at the end
+# if arg does not includes a project spec add it at the end
 new_flags="$new_flags $arg"
 else
 new_flags="$arg $new_flags"
@@ -135,41 +135,41 @@ $3=""
 search_list="./$2"
 CHAOS_HOMEDIR=""
 if test -n "$CSH"; then
-CHAOS_HOMEDIR=`echo "echo ~chaos" | csh -sf  2>/dev/null | sed 's%/$%%'` || CHAOS_HOMEDIR=""
+    CHAOS_HOMEDIR=`echo "echo ~chaos" | csh -sf  2>/dev/null | sed 's%/$%%'` || CHAOS_HOMEDIR=""
 fi
 if test -n "$4"; then
-if test `echo $4 | cut -c1` = "~"; then
-EXPANDED=`echo "echo $4" | csh -sf 2>/dev/null` || EXPANDED=""
-else
-EXPANDED=$4
-fi
+    if test `echo $4 | cut -c1` = "~"; then
+        EXPANDED=`echo "echo $4" | csh -sf 2>/dev/null` || EXPANDED=""
+    else
+        EXPANDED=$4
+    fi
 
-search_list="$search_list $EXPANDED/$2 $EXPANDED/$5/$2 $EXPANDED/share/$2 $EXPANDED/$cercs_cv_archive/$2 $EXPANDED/$cercs_cv_archive/$5/$2 $EXPANDED/$1/$2 $EXPANDED/$1/$cercs_cv_archive/$2 $EXPANDED/$1/$5/$2 $EXPANDED/$1/$5/$cercs_cv_archive/$2"
+    search_list="$search_list $EXPANDED/$2 $EXPANDED/$5/$2 $EXPANDED/share/$2 $EXPANDED/$cercs_cv_archive/$2 $EXPANDED/$cercs_cv_archive/$5/$2 $EXPANDED/$1/$2 $EXPANDED/$1/$cercs_cv_archive/$2 $EXPANDED/$1/$5/$2 $EXPANDED/$1/$5/$cercs_cv_archive/$2"
 fi
 if test -z "$with_installed_specified"; then
-search_list="$search_list `pwd`/../$1/$2 `pwd`/../$5/$2 `pwd`/../share/$2"
-if test "$CHAOS_HOMEDIR" != "$HOME"; then
-search_list="$search_list $HOME/$1/$2 $HOME/$cercs_cv_archive/$5/$2 $HOME/$5/$2"
-fi
+  search_list="$search_list `pwd`/../$1/$2 `pwd`/../$5/$2 `pwd`/../share/$2"
+  if test "$CHAOS_HOMEDIR" != "$HOME"; then
+    search_list="$search_list $HOME/$1/$2 $HOME/$cercs_cv_archive/$5/$2 $HOME/$5/$2"
+  fi
 fi
 if test -n "$CHAOS_HOMEDIR" -a -n "$cercs_cv_archive"; then
-search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/$1/$5/$2 $CHAOS_HOMEDIR/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$5/$2 $CHAOS_HOMEDIR/$5/$2"
+  search_list="$search_list $CHAOS_HOMEDIR/$cercs_cv_archive/$1/$5/$2 $CHAOS_HOMEDIR/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$cercs_cv_archive/$5/$2 $CHAOS_HOMEDIR/$1/$5/$2 $CHAOS_HOMEDIR/$5/$2"
 fi
 if test "$libdir" != '${exec_prefix}/lib'; then
-tmpdir=`echo ${libdir} |  sed 's%/$%%'` 
-search_list="$tmpdir/$2 $search_list"
+  tmpdir=`echo ${libdir} |  sed 's%/$%%'` 
+  search_list="$tmpdir/$2 $search_list"
 fi
 if test "$exec_prefix" != "NONE"; then
-tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'` 
-search_list="$tmpdir/lib/$2 $search_list"
+  tmpdir=`echo ${exec_prefix} |  sed 's%/$%%'` 
+  search_list="$tmpdir/lib/$2 $search_list"
 fi
 if test "$includedir" != '${prefix}/include'; then
-tmpdir=`echo ${includedir} |  sed 's%/$%%'` 
-search_list="$tmpdir/$2 $search_list"
+  tmpdir=`echo ${includedir} |  sed 's%/$%%'` 
+  search_list="$tmpdir/$2 $search_list"
 fi
 if test "$prefix" != "NONE"; then
-tmpdir=`echo ${prefix} |  sed 's%/$%%'` 
-search_list="$tmpdir/$5/$2 $search_list"
+  tmpdir=`echo ${prefix} |  sed 's%/$%%'` 
+  search_list="$tmpdir/$5/$2 $search_list"
 fi
 if test "$5" == "lib"; then
   for tmp_lib_value in $sys_lib_search_path_spec; do
@@ -179,11 +179,38 @@ fi
 
 search_list="$search_list /usr/$5/$2 /usr/local/$5/$2 /opt/$1/$5/$2 /opt/misc/$5/$2 /opt/misc/$5/$cercs_cv_archive/$2"
 CERCS_SEARCH($search_list)
+if test -n "$with_rpm_build_specified"; then
+  if test "$5" == "lib"; then
+     tmp_search_results=$libdir;
+  fi
+  if test "$5" == "include"; then
+     tmp_search_results=$incdir;
+  fi
+fi
+if test -n "$with_deb_build_specified"; then
+# test build directories
+   if test -d "../$1"; then
+      tmp_search_results=`pwd`/../$1;
+   fi
+   if test -d "../../$1"; then
+      tmp_search_results=`pwd`/../../$1;
+   fi
+# srcdir presence overrides
+   if test -f "$srcdir/../$1/$2"; then
+      tmp_search_results='${abs_top_srcdir}/../$1';
+   fi
+   if test -f "$srcdir/../../$1/$2"; then
+      tmp_search_results='${abs_top_srcdir}/../../$1';
+   fi
+fi
 if test -n "$tmp_search_results"; then
-$3=$tmp_search_results
+  $3=$tmp_search_results
 fi
 ])dnl
+
 AC_DEFUN([CERCS_SET_INSTALLED],[AC_ARG_WITH(installed, [  --with-installed        Don't use local copies of CERCS packages],with_installed_specified=1)])
+AC_DEFUN([CERCS_SET_RPM_BUILD],[AC_ARG_WITH(rpm-build, [  --with-rpm-build        Assume necessary files in CERCS packages will be installed],with_rpm_build_specified=1)])
+AC_DEFUN([CERCS_SET_DEB_BUILD],[AC_ARG_WITH(deb-build, [  --with-deb-build        Assume necessary files in CERCS packages will be installed],with_deb_build_specified=1)])
 AC_DEFUN([CERCS_SET_LOCAL],[AC_ARG_WITH(local, [  --with-local            Use only local copies of CERCS packages],with_local_specified=1)])
 dnl
 dnl CERCS_SET_ARCHIVE()
@@ -191,6 +218,8 @@ dnl   set the $cercs_cv_machine_target variable to a standard archive name
 dnl
 AC_DEFUN([CERCS_SET_ARCHIVE],[
 AC_REQUIRE([CERCS_SET_INSTALLED])
+AC_REQUIRE([CERCS_SET_RPM_BUILD])
+AC_REQUIRE([CERCS_SET_DEB_BUILD])
 AC_REQUIRE([CERCS_SET_LOCAL])
 AC_REQUIRE([CERCS_HAS_CSH])
 CHAOS_HOMEDIR=""
