@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include "config.h"
 
-static char *DILL_version = "DILL Version 1.0.98 rev. 8321  -- 2010-05-24 20:21:42 -0400 (Mon, 24 May 2010)\n";
+static char *DILL_version = "DILL Version 1.0.99 rev. 8352  -- 2010-06-05 22:58:05 -0400 (Sat, 05 Jun 2010)\n";
 
 void DILLprint_version(){
     printf("%s",DILL_version);
