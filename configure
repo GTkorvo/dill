@@ -17294,7 +17294,7 @@ fi
 fi
 if (test "$NO_DISASSEMBLER" = "yes") then
     DIS_LIBS=""
-    DUMMY_LIBOPCODES_TARGET=libopcodes.la
+    DUMMY_LIBOPCODES_TARGET=""
 
 $as_echo "#define NO_DISASSEMBLER 1" >>confdefs.h
 
