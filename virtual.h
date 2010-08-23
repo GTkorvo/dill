@@ -4,7 +4,10 @@ if ((((char*)c->p->cur_ip) + sizeof(virtual_insn)) >= (char*)c->p->code_limit) {
    extend_dill_stream(c);\
 }\
 *(virtual_insn*)c->p->cur_ip = i;\
-if (c->dill_debug) dump_cur_dill_insn(c);\
+if (c->dill_debug) {\
+printf("%lx  -- ", (unsigned long)c->p->cur_ip);\
+virtual_print_insn(c, NULL, c->p->cur_ip);\
+printf("\n");}\
 c->p->cur_ip = ((char*)c->p->cur_ip)+ sizeof(virtual_insn)
 
 typedef enum {iclass_arith3, iclass_arith3i, iclass_arith2, iclass_ret, iclass_convert, iclass_loadstore, iclass_loadstorei, iclass_set, iclass_setf, iclass_mov, iclass_reti, iclass_branch, iclass_branchi, iclass_jump_to_label, iclass_special, iclass_jump_to_reg, iclass_jump_to_imm, iclass_push, iclass_pushi, iclass_pushf, iclass_call, iclass_lea, iclass_compare, iclass_nop} insn_class;
