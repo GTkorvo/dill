@@ -153,7 +153,7 @@ CACHE_LIBS=$LIBS
 AC_CACHE_CHECK([if print_insn_$1 is found], [ecl_cv_print_insn_$1],
 	ECL_SET_DIS_VARS($1))
 AS_IF([test AS_VAR_GET(ecl_dis) = yes],
-      [AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_PRINT_INSN_$1), 1, [Define if you have the `print_insn_$1' function.])])dnl
+      [AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_PRINT_INSN_$1), 1, [Define if you have the `print_insn_$1' function.])])
 AC_CACHE_CHECK([what disassembly libraries to use],[ecl_cv_disassembly_libs],
 	ECL_SET_DIS_VARS($1))
 DIS_LIBS="$ecl_cv_disassembly_libs"

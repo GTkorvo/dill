@@ -15921,7 +15921,8 @@ cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_PRINT_INSN_$DIS_ROUTINE" | $as_tr_cpp` 1
 _ACEOF
 
-fi{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
 $as_echo_n "checking what disassembly libraries to use... " >&6; }
 if test "${ecl_cv_disassembly_libs+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -16128,7 +16129,8 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_PRINT_INSN_SPARC 1
 _ACEOF
 
-fi{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
 $as_echo_n "checking what disassembly libraries to use... " >&6; }
 if test "${ecl_cv_disassembly_libs+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -16333,7 +16335,8 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_PRINT_INSN_BIG_POWERPC 1
 _ACEOF
 
-fi{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
 $as_echo_n "checking what disassembly libraries to use... " >&6; }
 if test "${ecl_cv_disassembly_libs+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -16538,7 +16541,8 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_PRINT_INSN_IA64 1
 _ACEOF
 
-fi{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
 $as_echo_n "checking what disassembly libraries to use... " >&6; }
 if test "${ecl_cv_disassembly_libs+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -16743,7 +16747,8 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_PRINT_INSN_I386 1
 _ACEOF
 
-fi{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
 $as_echo_n "checking what disassembly libraries to use... " >&6; }
 if test "${ecl_cv_disassembly_libs+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -16948,7 +16953,8 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_PRINT_INSN_ARM 1
 _ACEOF
 
-fi{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
 $as_echo_n "checking what disassembly libraries to use... " >&6; }
 if test "${ecl_cv_disassembly_libs+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -17153,7 +17159,8 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_PRINT_INSN_LITTLE_ARM 1
 _ACEOF
 
-fi{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking what disassembly libraries to use" >&5
 $as_echo_n "checking what disassembly libraries to use... " >&6; }
 if test "${ecl_cv_disassembly_libs+set}" = set; then :
   $as_echo_n "(cached) " >&6
