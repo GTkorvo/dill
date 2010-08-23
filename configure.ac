@@ -255,6 +255,7 @@ ECL_CHECK_BFD_ARGS
 fi
 if (test "$NO_DISASSEMBLER" = "yes") then
     DIS_LIBS=""
+    DUMMY_LIBOPCODES_TARGET=libopcodes.la
     AC_DEFINE(NO_DISASSEMBLER, 1, [Define if there is no disassembler])
 fi
 AC_SUBST(DIS_LIBS)
