@@ -446,8 +446,8 @@ install-includeHEADERS: $(include_HEADERS)
 	  echo "$$d$$p"; \
 	done | $(am__base_list) | \
 	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(includedir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(includedir)" || exit $$?; \
+	  echo " cmp -s '$$files' '$(DESTDIR)$(includedir)/$xfiles' || $(INSTALL_HEADER) $$files '$(DESTDIR)$(includedir)'"; \
+	  cmp -s '$$files' '$(DESTDIR)$(includedir)/$xfiles' || $(INSTALL_HEADER) $$files "$(DESTDIR)$(includedir)" || exit $$?; \
 	done
 
 uninstall-includeHEADERS:
