@@ -36,10 +36,10 @@ host_triplet = @host@
 @BUILD_LIBRARY_TRUE@EXTRA_PROGRAMS = basic_call$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	general$(EXEEXT) t1$(EXEEXT) opt$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	branch$(EXEEXT) pkg_test$(EXEEXT) \
-@BUILD_LIBRARY_TRUE@	multi_test$(EXEEXT)
+@BUILD_LIBRARY_TRUE@	multi_test$(EXEEXT) prefix_test$(EXEEXT)
 @BUILD_LIBRARY_TRUE@TESTS = general$(EXEEXT) t1$(EXEEXT) opt$(EXEEXT) \
 @BUILD_LIBRARY_TRUE@	branch$(EXEEXT) pkg_test$(EXEEXT) \
-@BUILD_LIBRARY_TRUE@	multi_test$(EXEEXT)
+@BUILD_LIBRARY_TRUE@	multi_test$(EXEEXT) prefix_test$(EXEEXT)
 subdir = vtests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -80,6 +80,10 @@ pkg_test_SOURCES = pkg_test.c
 pkg_test_OBJECTS = pkg_test.$(OBJEXT)
 pkg_test_LDADD = $(LDADD)
 pkg_test_DEPENDENCIES = ../libdill.la
+prefix_test_SOURCES = prefix_test.c
+prefix_test_OBJECTS = prefix_test.$(OBJEXT)
+prefix_test_LDADD = $(LDADD)
+prefix_test_DEPENDENCIES = ../libdill.la
 t1_SOURCES = t1.c
 t1_OBJECTS = t1.$(OBJEXT)
 t1_LDADD = $(LDADD)
@@ -97,9 +101,9 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = basic_call.c branch.c general.c multi_test.c opt.c \
-	pkg_test.c t1.c
+	pkg_test.c prefix_test.c t1.c
 DIST_SOURCES = basic_call.c branch.c general.c multi_test.c opt.c \
-	pkg_test.c t1.c
+	pkg_test.c prefix_test.c t1.c
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -293,6 +297,9 @@ opt$(EXEEXT): $(opt_OBJECTS) $(opt_DEPENDENCIES)
 pkg_test$(EXEEXT): $(pkg_test_OBJECTS) $(pkg_test_DEPENDENCIES) 
 	@rm -f pkg_test$(EXEEXT)
 	$(LINK) $(pkg_test_OBJECTS) $(pkg_test_LDADD) $(LIBS)
+prefix_test$(EXEEXT): $(prefix_test_OBJECTS) $(prefix_test_DEPENDENCIES) 
+	@rm -f prefix_test$(EXEEXT)
+	$(LINK) $(prefix_test_OBJECTS) $(prefix_test_LDADD) $(LIBS)
 t1$(EXEEXT): $(t1_OBJECTS) $(t1_DEPENDENCIES) 
 	@rm -f t1$(EXEEXT)
 	$(LINK) $(t1_OBJECTS) $(t1_LDADD) $(LIBS)
@@ -621,7 +628,7 @@ basic_call.stamp:  basic_call@EXEEXT@
 	./basic_call | head -200 1>tmp.out  2>&1
 	@grep -v "lib[vi]code.a" tmp.out > tmp1.out
 	@mv tmp1.out tmp.out
-	diff -w tmp.out $(srcdir)/basic_call.out && touch basic_call.stamp
+	diff -w tmp.out $(srcdir)/basic_call.out && touch basic_call.stamp && echo PASS: basic_call
 	@rm tmp.out
 
 basic_call.valgrind:  basic_call@EXEEXT@

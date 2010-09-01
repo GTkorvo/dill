@@ -1,10 +1,11 @@
 
+
 AUTOMAKE_OPTIONS = no-dependencies foreign
 
 if BUILD_LIBRARY
-EXTRA_PROGRAMS = basic_call general t1 opt branch pkg_test multi_test
+EXTRA_PROGRAMS = basic_call general t1 opt branch pkg_test multi_test prefix_test
 
-TESTS = general$(EXEEXT) t1$(EXEEXT) opt branch pkg_test multi_test
+TESTS = general$(EXEEXT) t1$(EXEEXT) opt branch pkg_test multi_test prefix_test
 
 check-local: basic_call.stamp
 
@@ -30,7 +31,7 @@ basic_call.stamp:  basic_call@EXEEXT@
 	./basic_call | head -200 1>tmp.out  2>&1
 	@grep -v "lib[vi]code.a" tmp.out > tmp1.out
 	@mv tmp1.out tmp.out
-	diff -w tmp.out $(srcdir)/basic_call.out && touch basic_call.stamp
+	diff -w tmp.out $(srcdir)/basic_call.out && touch basic_call.stamp && echo PASS: basic_call
 	@rm tmp.out
 
 basic_call.valgrind:  basic_call@EXEEXT@

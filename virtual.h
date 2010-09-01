@@ -40,6 +40,7 @@ typedef struct mach_info {
     arg_info_list arg_info;
     int bbcount;
     basic_block bblist;
+    int prefix_code_start;
 } *virtual_mach_info;
 
 struct arith3 {
