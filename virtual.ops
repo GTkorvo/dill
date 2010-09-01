@@ -469,7 +469,7 @@ virtual_setf(dill_stream s, int type, int junk, int dest, double imm)
     INSN_OUT(s, i);
 }
 
-static void
+extern void
 virtual_reti(dill_stream s, int type, int junk, long imm)
 {
     virtual_insn i;
