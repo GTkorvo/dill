@@ -4045,6 +4045,7 @@ do_com_sub_exp(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
     int k;
     int stop = 0;
     int used_vregs[3];
+    int root_is_load;
     if (def_vreg == -1) return;
     insn_uses(root_insn, &used_vregs[0]);
     if (used_vregs[0] == -1) return;
@@ -4065,10 +4066,13 @@ do_com_sub_exp(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	virtual_print_insn(c, NULL, root_insn);
 	printf("\n");
     }
+    root_is_load = (((root_insn->class_code == iclass_loadstorei) ||
+		     (root_insn->class_code == iclass_loadstore)) &&
+		    (((root_insn->insn_code & 0x10) && 0x10) == 0));
     for (k = loc + 1; ((k <= bb->end) && (!stop)); k++) {
 	virtual_insn *ip = &((virtual_insn *)insns)[k];
 	int replace_vreg = insn_defines(ip);
-	int l, stop2;
+	int l, stop2, insn_is_store;
 	/* stop looking if old dest is wiped */ 
 	if (insn_define_test(ip, def_vreg)) stop++;
 	/* stop looking if srcs become different */
@@ -4077,6 +4081,11 @@ do_com_sub_exp(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	    insn_define_test(ip, used_vregs[1])) stop++;
 	if ((used_vregs[2] != -1) &&
 	    insn_define_test(ip, used_vregs[2])) stop++;
+	/* stop looking if this is a load and we're about to pass a store */
+	insn_is_store = (((ip->class_code == iclass_loadstorei) ||
+			  (ip->class_code == iclass_loadstore)) &&
+			 ((ip->insn_code & 0x10) == 0x10));
+	if (root_is_load && insn_is_store) stop++;
 	
 	if (do_ldi0_optim &&
 	    (ip->class_code == iclass_loadstorei) &&
