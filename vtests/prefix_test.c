@@ -4,7 +4,6 @@
 static int verbose = 0;
 
 int gg(int a, int b) {
-    printf("In gg  a=%d, b=%d\n", a, b);
      return a+b;
 }
 int ff(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j) {
@@ -105,11 +104,52 @@ int a () {
      return result == 135;
 }
 
+int c () 
+{
+     dill_reg a,b,c, f;
+     int (*ip)();
+     int ret;
+     dill_exec_handle h;
+     
+     dill_stream s = dill_create_stream();
+
+     dill_start_simple_proc(s, "c_gen", DILL_I);
+     a = dill_getreg(s, DILL_I);
+     c = dill_getreg(s, DILL_I);
+     b = dill_getreg(s, DILL_I);
+     f = dill_getreg(s, DILL_I);
+
+     dill_reti(s, c);
+     dill_begin_prefix_code(s);
+     dill_setp(s, f, (void*)gg);
+     dill_seti(s, a, 1);
+     dill_seti(s, b, 2);  
+     dill_push_init(s);
+     if (!dill_do_reverse_vararg_push(s)) {
+	 dill_push_argi(s, a);
+	 dill_push_argi(s, b);
+     } else {
+	 dill_push_argi(s, b);
+	 dill_push_argi(s, a);
+     }
+     a = dill_callri(s, f);
+     dill_movi(s, c, a);
+     h = dill_finalize(s);
+     ip = (int(*)())dill_get_fp(h);
+
+     if (verbose) dill_dump(s);
+
+     ret = (*ip)();
+     dill_free_stream(s);
+     return ret == 3;
+}
+
 
 int 
 main(int argc, char **argv)
 {
     if (argc > 1) verbose++;
     if (a() == 0) return 1;
+    if (c() == 0) return 1;
     return 0;
 }

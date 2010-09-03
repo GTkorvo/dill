@@ -328,7 +328,8 @@ pushpop_inuse_regs(dill_stream c, int pop, virtual_insn *ip)
 
 
 #define end_bb(b, lab, f) \
-bb->end_branch_label = lab;\
+{\
+bb->end_branch_label = lab;		\
 bb->fall_through = f;\
 bb->end = i - 1;\
 vmi->bbcount++;\
@@ -343,7 +344,8 @@ bb->loop_depth = 0;				\
 bb->is_loop_start = 0;				\
 bb->is_loop_end = 0;				\
 bb->regs_used = new_bit_vec(c->p->vreg_count);\
-bb->regs_defined = new_bit_vec(c->p->vreg_count);
+bb->regs_defined = new_bit_vec(c->p->vreg_count);\
+}
 
 static bit_vec
 new_bit_vec(int max)
@@ -1232,6 +1234,7 @@ build_bbs(dill_stream c, void *vinsns, void *prefix_begin, void *code_end)
 	while((insn = &insns[i++]) < (virtual_insn *)code_end) {
 	    build_bb_body(c, insn, i, insns);
 	}
+	bb = &vmi->bblist[vmi->bbcount];
 	i -= 1;
 	end_bb(bb, -1, 1);
     }
