@@ -164,11 +164,11 @@ AS_VAR_POPDEF([ecl_dis])dnl
 AC_DEFUN([ECL_CHECK_BFD_ARGS],
 [
 AC_CACHE_CHECK([bfd functions use bfd_byte typed args],[ecl_cv_bfd_byte],
-[AC_COMPILE_IFELSE([#include "dis-asm.h"
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE([#include "dis-asm.h"
 bfd_vma
 bfd_getl64 (addr)
 register const bfd_byte *addr;
-{return 1;}],[ecl_cv_bfd_byte=yes],[ecl_cv_bfd_byte=no])
+{return 1;}])],[ecl_cv_bfd_byte=yes],[ecl_cv_bfd_byte=no])
 ])
 if test $ecl_cv_bfd_byte = yes; then
    AC_DEFINE([BFD_BYTE], 1,

@@ -177,7 +177,7 @@ if test "$5" == "lib"; then
   done
 fi
 
-search_list="$search_list /usr/$5/$2 /usr/local/$5/$2 /opt/$1/$5/$2 /opt/misc/$5/$2 /opt/misc/$5/$cercs_cv_archive/$2"
+search_list="$search_list /usr/$5/$2 /usr/local/$5/$2 /opt/$1/$5/$2 /opt/misc/$5/$2 /opt/misc/$5/$cercs_cv_archive/$2 /opt/local/$5/$2"
 CERCS_SEARCH($search_list)
 if test -n "$with_rpm_build_specified"; then
   if test "$5" == "lib"; then
