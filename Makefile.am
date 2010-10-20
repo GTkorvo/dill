@@ -20,6 +20,8 @@ endif INSTALL_DUMMY_OPCODES
 
 noinst_HEADERS = config.h dill_internal.h
 
+INSTALL_HEADER = ${srcdir}/config/install-sh -m 644
+
 clean-local:
 	rm -f libopcodes.la
 
