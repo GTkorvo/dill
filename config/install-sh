@@ -3,7 +3,7 @@
 # Customized for CHAOS to compare with the installed file and only 
 # install if there is a difference
 
-scriptversion=2010-10-19.09
+scriptversion=2010-10-26.04GSE
 
 # This originates from X11R5 (mit/util/scripts/install.sh), which was
 # later released in X11R6 (xc/config/util/install.sh) with the
@@ -466,7 +466,7 @@ do
       && { test -z "$stripcmd" || $doit $stripcmd "$dsttmp"; } \
       && { test -z "$chmodcmd" || $doit $chmodcmd $mode "$dsttmp"; } &&
 
-    { $doit cmp -s "$dsttmp" "$dst" ; } &&
+    $doit cmp -s "$dsttmp" "$dst" || 
 
     # Now rename the file to the real destination.
     { $doit $mvcmd -f "$dsttmp" "$dst" 2>/dev/null \
@@ -506,6 +506,6 @@ done
 # Local variables:
 # eval: (add-hook 'write-file-hooks 'time-stamp)
 # time-stamp-start: "scriptversion="
-# time-stamp-format: "%:y-%02m-%02d.%02H"
+# time-stamp-format: "%:y-%02m-%02d.%02HGSE"
 # time-stamp-end: "$"
 # End:
