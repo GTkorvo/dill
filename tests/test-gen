@@ -431,7 +431,7 @@ print<<EOF;
 	/* ret reg */
 	if (verbose) printf(" - $insn\\n");
         dill_start_simple_proc(s, "$insn", DILL_I);
-		l = dill_alloc_label(s);
+		l = dill_alloc_label(s, NULL);
 		$insn(s, l);
 			dill_retii(s, 0);
 		dill_mark_label(s, l);
@@ -671,7 +671,7 @@ print<<EOF;
 	if (verbose) printf(" - $insn\\n");
 	/* reg <- (reg $op reg) */
         dill_start_proc(s, "$insn", DILL_$upt, "%$t%$t");
-		l = dill_alloc_label(s);
+		l = dill_alloc_label(s, NULL);
         	dill_$insn(s, dill_param_reg(s, 0), $cast dill_param_reg(s, 1), l);
         		dill_retii(s, 0);
 		dill_mark_label(s, l);
@@ -700,7 +700,7 @@ print<<EOF;
 	/* reg <- (reg $op imm) */
 	if (verbose) printf(" - $insni\\n");
         dill_start_proc(s, "$insni", DILL_$upt, "%$t");
-		l = dill_alloc_label(s);
+		l = dill_alloc_label(s, NULL);
         	dill_$insni(s, dill_param_reg(s, 0), $cast s2$t, l);
         		dill_retii(s, 0);
 		dill_mark_label(s, l);

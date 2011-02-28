@@ -28,9 +28,9 @@ dill_exec_handle mk_test(dill_stream s) {
 
 	dill_start_proc(s, "foo", DILL_I, "%i%d");
 
-	abortl1 = dill_alloc_label(s);
-	abortl2 = dill_alloc_label(s);
-	abortl3 = dill_alloc_label(s);
+	abortl1 = dill_alloc_label(s, NULL);
+	abortl2 = dill_alloc_label(s, NULL);
+	abortl3 = dill_alloc_label(s, NULL);
 
 	for(i = 0; i < 5 && dill_raw_getreg(s, &r[i], DILL_I, DILL_TEMP); i++) {
 /*		(void)("allocated register %d\n", i);*/
