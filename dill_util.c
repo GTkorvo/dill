@@ -524,7 +524,7 @@ dill_take_code(dill_stream s)
 }
 
 EXTERN int
-dill_alloc_label(dill_stream s)
+dill_alloc_label(dill_stream s, char *name)
 {
     struct branch_table *t = &s->p->branch_table;
     if (t->next_label == t->max_alloc) {
@@ -532,6 +532,8 @@ dill_alloc_label(dill_stream s)
 	t->label_locs = realloc(t->label_locs, sizeof(int)*t->max_alloc);
     }
     t->label_locs[t->next_label] = -1;
+    t->label_name[t->next_label] = NULL;
+    if (name) t->label_name[t->next_label] = strdup(name);
     return t->next_label++;
 }
 

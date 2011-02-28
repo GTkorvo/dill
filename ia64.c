@@ -1558,7 +1558,7 @@ ia64_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 extern void
 ia64_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 {
-    int label = dill_alloc_label(s);
+    int label = dill_alloc_label(s, NULL);
     ia64_setl(s, dest, 1);
     ia64_branch(s, op, type, src1, src2, label);
     ia64_setl(s, dest, 0);
@@ -1568,7 +1568,7 @@ ia64_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 extern void
 ia64_comparei(dill_stream s, int op, int type, int dest, int src, long imm)
 {
-    int label = dill_alloc_label(s);
+    int label = dill_alloc_label(s, NULL);
     ia64_setl(s, dest, 1);
     ia64_branchi(s, op, type, src, imm, label);
     ia64_setl(s, dest, 0);
