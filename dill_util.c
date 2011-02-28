@@ -75,6 +75,7 @@ dill_branch_init(dill_stream s)
     t->next_label = 0;
     for (i=0; i<t->max_alloc; i++) {
 	t->label_locs[i] = -1;
+	t->label_name[i] = NULL;
     }
     t->branch_count = 0;
     t->data_segment_size = 0;
@@ -171,6 +172,13 @@ EXTERN void
 dill_free_stream(dill_stream s)
 {
     if (s->p->branch_table.label_locs) free(s->p->branch_table.label_locs);
+    if (s->p->branch_table.label_name) {
+	int i=0;
+	for (i=0; i< s->p->branch_table.max_alloc; i++) {
+	    if (s->p->branch_table.label_name[i]) free(s->p->branch_table.label_name[i]);
+	}
+	free(s->p->branch_table.label_name);
+    }
     if (s->p->branch_table.branch_locs) free(s->p->branch_table.branch_locs);
     if (s->p->branch_table.data_segment) free(s->p->branch_table.data_segment);
     free(s->p->call_table.call_locs);
@@ -221,6 +229,7 @@ dill_cross_init(char *arch)
     bt = &s->p->branch_table;
     bt->max_alloc = 1;
     bt->label_locs = malloc(sizeof(bt->label_locs[0]));
+    bt->label_name = malloc(sizeof(bt->label_name[0]));
     bt->branch_alloc = 1;
     bt->branch_locs = malloc(sizeof(bt->branch_locs[0]));
     bt->data_segment_size = 0;
@@ -530,6 +539,7 @@ dill_alloc_label(dill_stream s, char *name)
     if (t->next_label == t->max_alloc) {
 	t->max_alloc++;
 	t->label_locs = realloc(t->label_locs, sizeof(int)*t->max_alloc);
+	t->label_name = realloc(t->label_name, sizeof(char*)*t->max_alloc);
     }
     t->label_locs[t->next_label] = -1;
     t->label_name[t->next_label] = NULL;

@@ -36,6 +36,7 @@ struct branch_table {
     int next_label;
     int max_alloc;
     int *label_locs;
+    char **label_name;
     int branch_count;
     int branch_alloc;
     struct branch_location *branch_locs;

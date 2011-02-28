@@ -211,7 +211,6 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 		printf("call%s R%ld, %c%d", dill_type_names[typ], 
 		       insn->opnds.bri.imm_l, OPND(insn->opnds.bri.src));
 	    } else {
-		char *name = get_xfer_name(insn
 		printf("call%s 0x%p, %c%d", dill_type_names[typ], 
 		       insn->opnds.bri.imm_a, OPND(insn->opnds.bri.src));
 	    }
