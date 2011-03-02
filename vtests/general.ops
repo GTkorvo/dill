@@ -503,7 +503,7 @@ print COUT<<EOF;
 	    opnd1 = dill_param_reg(c, 1);
 	    opnd2 = dill_param_reg(c, 2);
 	
-	    label = dill_alloc_label(c);
+	    label = dill_alloc_label(c, NULL);
 	    dill_$full_op(c, opnd1, opnd2, label);
 	    dill_retii(c, 0);
 	    dill_mark_label(c, label);	    
@@ -586,7 +586,7 @@ print COUT<<EOF;
 	    dill_start_proc(c, "no name", DILL_I, "%EC$arg_str");
 	    opnd1 = dill_param_reg(c, 1);
 	
-	    label = dill_alloc_label(c);
+	    label = dill_alloc_label(c, NULL);
 	    dill_$full_op(c, opnd1, $cast source2_$_, label);
 	    dill_retii(c, 0);
 	    dill_mark_label(c, label);	    

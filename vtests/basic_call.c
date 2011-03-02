@@ -22,7 +22,7 @@ void a () {
      int (*ip)();
 
      dill_start_simple_proc(s, "a_gen", DILL_I);
-     L1 = dill_alloc_label(s);
+     L1 = dill_alloc_label(s, NULL);
 /*     func = dill_getreg(s, DILL_P);*/
      cnt = dill_getreg(s, DILL_P);
      a = dill_getreg(s, DILL_I);

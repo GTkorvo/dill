@@ -23,11 +23,11 @@ main(int argc, char **argv)
     dill_reg reg, ret_reg = dill_getreg(s, DILL_I);
     reg = dill_scalli(s, proc, "P", "");
     dill_movi(s, ret_reg, reg);
-    check_success = dill_alloc_label(s);
+    check_success = dill_alloc_label(s, NULL);
     dill_bneii(s, ret_reg, (int)1, check_success);
     dill_retii(s, -1);
     dill_mark_label(s, check_success);
-    end_label = dill_alloc_label(s);
+    end_label = dill_alloc_label(s, NULL);
     dill_bneii(s, ret_reg, (int)2, end_label);
     dill_retii(s, -2);
     dill_mark_label(s, end_label);
