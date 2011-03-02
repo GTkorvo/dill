@@ -4255,11 +4255,13 @@ build_label_translation(dill_stream c)
 {
     int i;
     int label_count = c->p->branch_table.next_label;
+    struct branch_table *t = &c->p->branch_table;
     label_translation_table l = malloc(sizeof(struct label_translation) *
 				       (label_count + 1));
+    t->virtual_label_max = label_count - 1;
     for(i = 0; i < label_count; i++) {
 	l[i].old_label = i;
-	l[i].old_location = c->p->branch_table.label_locs[i];
+	l[i].old_location = t->label_locs[i];
 	l[i].new_label = dill_alloc_label(c, NULL);
     }
     /* Good old reliable insertion sort */
@@ -4417,6 +4419,9 @@ virtual_do_end(dill_stream c, int package)
 	if (!package) c->p->code_base = NULL;
 	c->p->mach_info = NULL;
 	c->p->mach_reset = dill_virtual_init;
+    }
+    if (dill_verbose) {
+	dill_dump(c);
     }
 }
 

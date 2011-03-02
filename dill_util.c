@@ -79,6 +79,7 @@ dill_branch_init(dill_stream s)
     }
     t->branch_count = 0;
     t->data_segment_size = 0;
+    t->virtual_label_max = -1;
 }
 
 static void
@@ -1459,7 +1460,14 @@ dill_dump(dill_stream s)
 	printf("\nDILL virtual instruction stream\n\n");
 	for (p =base; p < code_limit;) {
 	    /* can't insert branch locs, that information is gone */
-
+	    int i;
+	    struct branch_table *t = &s->p->branch_table;
+	    for (i=0; i <= t->virtual_label_max; i++) {
+		if (t->label_locs[i] == 
+		    ((char*)p - (char*)base)) {
+		    printf("L%d:\n", i);
+		}
+	    }
 	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
 	    l = s->p->virtual.mach_jump->print_insn(s, &info, (void *)p);
 	    printf("\n");

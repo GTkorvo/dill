@@ -39,6 +39,7 @@ struct branch_table {
     char **label_name;
     int branch_count;
     int branch_alloc;
+    int virtual_label_max;
     struct branch_location *branch_locs;
     int data_segment_size;
     char *data_segment;
