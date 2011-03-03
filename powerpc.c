@@ -1017,7 +1017,7 @@ static char fop_conds[] = {
 extern void
 powerpc_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 {
-    int label = dill_alloc_label(s, NULL);
+    int label = dill_alloc_label(s, "compare end");
     powerpc_set(s, dest, 1);
     powerpc_branch(s, op, type, src1, src2, label);
     powerpc_set(s, dest, 0);
@@ -1027,7 +1027,7 @@ powerpc_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 extern void
 powerpc_comparei(dill_stream s, int op, int type, int dest, int src, long imm)
 {
-    int label = dill_alloc_label(s, NULL);
+    int label = dill_alloc_label(s, "compare end");
     powerpc_set(s, dest, 1);
     powerpc_branchi(s, op, type, src, imm, label);
     powerpc_set(s, dest, 0);

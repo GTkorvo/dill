@@ -22,7 +22,7 @@ int a () {
      int result;
 
      dill_start_simple_proc(s, "a_gen", DILL_I);
-     L1 = dill_alloc_label(s, NULL);
+     L1 = dill_alloc_label(s, "before call");
 /*     func = dill_getreg(s, DILL_P);*/
      cnt = dill_getreg(s, DILL_P);
      a = dill_getreg(s, DILL_I);

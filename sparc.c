@@ -1010,7 +1010,7 @@ static char fop_conds[] = {
 extern void
 sparc_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 {
-    int label = dill_alloc_label(s, NULL);
+    int label = dill_alloc_label(s, "compare end");
     sparc_set(s, dest, 1);
     sparc_branch(s, op, type, src1, src2, label);
     sparc_set(s, dest, 0);
@@ -1020,7 +1020,7 @@ sparc_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 extern void
 sparc_comparei(dill_stream s, int op, int type, int dest, int src, long imm)
 {
-    int label = dill_alloc_label(s, NULL);
+    int label = dill_alloc_label(s, "compare end");
     sparc_set(s, dest, 1);
     sparc_branchi(s, op, type, src, imm, label);
     sparc_set(s, dest, 0);

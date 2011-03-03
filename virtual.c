@@ -152,9 +152,13 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     case iclass_branch:
     {
 	int br_op = insn->insn_code;
+	struct branch_table *t = &c->p->branch_table;
         printf("b%s %c%d, %c%d, L%d", branch_op_names[br_op], 
 	       OPND(insn->opnds.br.src1), 
 	       OPND(insn->opnds.br.src2), insn->opnds.br.label);
+	if (t->label_name[insn->opnds.br.label] != NULL) {
+	    printf("<%s>", t->label_name[insn->opnds.br.label]);
+	}
         break;
     }
     case iclass_compare:
@@ -169,14 +173,22 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     case iclass_branchi:
     {
 	int br_op = insn->insn_code;
+	struct branch_table *t = &c->p->branch_table;
         printf("b%si %c%d, %ld, L%d", branch_op_names[br_op], 
 	       OPND(insn->opnds.bri.src), 
 	       insn->opnds.bri.imm_l, insn->opnds.bri.label);
+	if (t->label_name[insn->opnds.bri.label] != NULL) {
+	    printf("<%s>", t->label_name[insn->opnds.bri.label]);
+	}
         break;
     }
     case iclass_jump_to_label:
     {
+	struct branch_table *t = &c->p->branch_table;
         printf("br L%d", insn->opnds.br.label);
+	if (t->label_name[insn->opnds.br.label] != NULL) {
+	    printf("<%s>", t->label_name[insn->opnds.br.label]);
+	}
         break;
     }
     case iclass_jump_to_reg:
@@ -206,21 +218,45 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     {
 	int typ = insn->insn_code & 0xf;
 	int reg = insn->insn_code & 0x10;
+	struct call_table *t = &c->p->call_table;
+	int i;
+	const char *call_name = NULL;
 	if (typ != DILL_V) {
 	    if (reg != 0) {
 		printf("call%s R%ld, %c%d", dill_type_names[typ], 
 		       insn->opnds.bri.imm_l, OPND(insn->opnds.bri.src));
 	    } else {
-		printf("call%s 0x%p, %c%d", dill_type_names[typ], 
-		       insn->opnds.bri.imm_a, OPND(insn->opnds.bri.src));
+		for (i=0; i < t->call_count; i++) {
+		    if (t->call_locs[i].xfer_addr == insn->opnds.bri.imm_a) {
+			call_name = t->call_locs[i].xfer_name;
+		    }
+		}
+		if (call_name) {
+		    printf("call%s 0x%p<%s>, %c%d", dill_type_names[typ], 
+			   insn->opnds.bri.imm_a, call_name,
+			   OPND(insn->opnds.bri.src));
+		} else {
+		    printf("call%s 0x%p, %c%d", dill_type_names[typ], 
+			   insn->opnds.bri.imm_a, OPND(insn->opnds.bri.src));
+		}
 	    }
 	} else {
 	    if (reg != 0) {
 		printf("call%s R%ld", dill_type_names[typ], 
 		       insn->opnds.bri.imm_l);
 	    } else {
-		printf("call%s 0x%p", dill_type_names[typ], 
-		       insn->opnds.bri.imm_a);
+		for (i=0; i < t->call_count; i++) {
+		    if (t->call_locs[i].xfer_addr == insn->opnds.bri.imm_a) {
+			call_name = t->call_locs[i].xfer_name;
+		    }
+		}
+		if (call_name) {
+		    printf("call%s 0x%p<%s>", dill_type_names[typ], 
+			   insn->opnds.bri.imm_a, call_name);
+		} else {
+		    printf("call%s 0x%p", dill_type_names[typ], 
+			   insn->opnds.bri.imm_a);
+		}
 	    }
 	}
         break;
@@ -4262,7 +4298,7 @@ build_label_translation(dill_stream c)
     for(i = 0; i < label_count; i++) {
 	l[i].old_label = i;
 	l[i].old_location = t->label_locs[i];
-	l[i].new_label = dill_alloc_label(c, NULL);
+	l[i].new_label = dill_alloc_label(c, t->label_name[i]);
     }
     /* Good old reliable insertion sort */
     {

@@ -1465,7 +1465,11 @@ dill_dump(dill_stream s)
 	    for (i=0; i <= t->virtual_label_max; i++) {
 		if (t->label_locs[i] == 
 		    ((char*)p - (char*)base)) {
-		    printf("L%d:\n", i);
+		    if (t->label_name[i] == NULL) {
+			printf("L%d:\n", i);
+		    } else {
+			printf("L%d<%s>:\n", i, t->label_name[i]);
+		    }
 		}
 	    }
 	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
