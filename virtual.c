@@ -228,7 +228,8 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 	    } else {
 		for (i=0; i < t->call_count; i++) {
 		    if (t->call_locs[i].xfer_addr == insn->opnds.bri.imm_a) {
-			call_name = t->call_locs[i].xfer_name;
+			if (t->call_locs[i].xfer_name) 
+			    call_name = t->call_locs[i].xfer_name;
 		    }
 		}
 		if (call_name) {
@@ -247,7 +248,8 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 	    } else {
 		for (i=0; i < t->call_count; i++) {
 		    if (t->call_locs[i].xfer_addr == insn->opnds.bri.imm_a) {
-			call_name = t->call_locs[i].xfer_name;
+			if (t->call_locs[i].xfer_name) 
+			    call_name = t->call_locs[i].xfer_name;
 		    }
 		}
 		if (call_name) {
@@ -3342,7 +3344,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		if (reg != 0) {
 		    rr = dill_pcallr(c, typ, pused[0]);
 		} else {
-		    rr = dill_pcall(c, typ, ip->opnds.bri.imm_a, "");
+		    rr = dill_pcall(c, typ, ip->opnds.bri.imm_a, NULL);
 		}
 		state.ret_reg = rr;
 		state.ret_vreg = vdest;
