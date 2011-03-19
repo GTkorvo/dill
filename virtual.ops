@@ -94,6 +94,7 @@ print COUT "\t  ${mach}_jump_table->callr = virtual_callr;\n";
 print COUT "	${mach}_jump_table->lea = virtual_lea;\n";
 #  print COUT "\t  ${mach}_jump_table->local = sparc_local_op;\n";
 #  print COUT "\t  ${mach}_jump_table->save_restore = sparc_save_restore_op;\n";
+print COUT "\t  ${mach}_jump_table->mark_label = virtual_mark_label;\n";
 print COUT "\t  ${mach}_jump_table->init_disassembly = virtual_init_disassembly_info;\n";
 print COUT "\t  ${mach}_jump_table->print_insn = virtual_print_insn;\n";
 print COUT "\t  ${mach}_jump_table->print_reg = NULL;\n";
@@ -492,6 +493,17 @@ virtual_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 }
 
 static void
+virtual_mark_label(dill_stream s, int op, int type, int src1, int src2, int label)
+{
+    virtual_insn i;
+    i.class_code = iclass_mark_label;
+    i.insn_code = 0;
+    i.opnds.label.label = label;
+    i.opnds.label.label_name = NULL;
+    INSN_OUT(s, i);
+}
+
+static void
 virtual_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 {
     virtual_insn i;
@@ -536,12 +548,12 @@ extern int virtual_calli(dill_stream s, int type, void *xfer_address, const char
     virtual_insn i;
     i.class_code = iclass_call;
     i.insn_code = type;
-    i.opnds.bri.src = -1;
-    dill_mark_call_location(s, name, xfer_address);
-    if (type != DILL_V) i.opnds.bri.src = dill_getreg(s, type);
-    i.opnds.bri.imm_a = xfer_address;
+    i.opnds.calli.src = -1;
+    if (type != DILL_V) i.opnds.calli.src = dill_getreg(s, type);
+    i.opnds.calli.imm_a = xfer_address;
+    i.opnds.calli.xfer_name = name;
     INSN_OUT(s, i);
-    return i.opnds.bri.src;
+    return i.opnds.calli.src;
 }
 
 extern int virtual_callr(dill_stream s, int type, int src)

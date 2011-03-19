@@ -491,6 +491,7 @@ struct jmp_table_s {
     push_oppi pushpi;
     local_op local;
     save_restore_op save_restore;
+    branch_op mark_label;
     
     init_disassembly_op init_disassembly;
     print_insn_op print_insn;

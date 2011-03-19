@@ -191,6 +191,15 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 	}
         break;
     }
+    case iclass_mark_label:
+    {
+	struct branch_table *t = &c->p->branch_table;
+        printf("L%d:", insn->opnds.label.label);
+	if (t->label_name[insn->opnds.label.label] != NULL) {
+	    printf("<%s>", t->label_name[insn->opnds.label.label]);
+	}
+        break;
+    }
     case iclass_jump_to_reg:
     {
         printf("jmp %c%d", OPND(insn->opnds.br.src1));
@@ -218,46 +227,33 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     {
 	int typ = insn->insn_code & 0xf;
 	int reg = insn->insn_code & 0x10;
-	struct call_table *t = &c->p->call_table;
-	int i;
-	const char *call_name = NULL;
 	if (typ != DILL_V) {
 	    if (reg != 0) {
 		printf("call%s R%ld, %c%d", dill_type_names[typ], 
-		       insn->opnds.bri.imm_l, OPND(insn->opnds.bri.src));
+		       insn->opnds.calli.imm_l, OPND(insn->opnds.calli.src));
 	    } else {
-		for (i=0; i < t->call_count; i++) {
-		    if (t->call_locs[i].xfer_addr == insn->opnds.bri.imm_a) {
-			if (t->call_locs[i].xfer_name) 
-			    call_name = t->call_locs[i].xfer_name;
-		    }
-		}
+		char *call_name = insn->opnds.calli.xfer_name;
 		if (call_name) {
 		    printf("call%s 0x%p<%s>, %c%d", dill_type_names[typ], 
-			   insn->opnds.bri.imm_a, call_name,
-			   OPND(insn->opnds.bri.src));
+			   insn->opnds.calli.imm_a, call_name,
+			   OPND(insn->opnds.calli.src));
 		} else {
 		    printf("call%s 0x%p, %c%d", dill_type_names[typ], 
-			   insn->opnds.bri.imm_a, OPND(insn->opnds.bri.src));
+			   insn->opnds.calli.imm_a, OPND(insn->opnds.calli.src));
 		}
 	    }
 	} else {
 	    if (reg != 0) {
 		printf("call%s R%ld", dill_type_names[typ], 
-		       insn->opnds.bri.imm_l);
+		       insn->opnds.calli.imm_l);
 	    } else {
-		for (i=0; i < t->call_count; i++) {
-		    if (t->call_locs[i].xfer_addr == insn->opnds.bri.imm_a) {
-			if (t->call_locs[i].xfer_name) 
-			    call_name = t->call_locs[i].xfer_name;
-		    }
-		}
+		char *call_name = insn->opnds.calli.xfer_name;
 		if (call_name) {
 		    printf("call%s 0x%p<%s>", dill_type_names[typ], 
-			   insn->opnds.bri.imm_a, call_name);
+			   insn->opnds.calli.imm_a, call_name);
 		} else {
 		    printf("call%s 0x%p", dill_type_names[typ], 
-			   insn->opnds.bri.imm_a);
+			   insn->opnds.calli.imm_a);
 		}
 	    }
 	}
@@ -346,6 +342,7 @@ insn_same_except_dest(virtual_insn *i, virtual_insn *j)
     case iclass_pushi:
     case iclass_pushf:
     case iclass_nop:
+    case iclass_mark_label:
 	break;
     }
     return 0;
@@ -749,7 +746,7 @@ insn_defines(virtual_insn *insn)
 	int typ = insn->insn_code & 0xf;
 	/* put the return register definition in the next bb */
 	if (typ != DILL_V) {
-	    return insn->opnds.bri.src;
+	    return insn->opnds.calli.src;
 	}
 	return -1;
     }
@@ -757,6 +754,7 @@ insn_defines(virtual_insn *insn)
     case iclass_pushi:
     case iclass_pushf:
     case iclass_nop:
+    case iclass_mark_label:
 	return -1;
     default:
 	assert(0);
@@ -813,7 +811,7 @@ insn_define_test(virtual_insn *insn, int vreg)
 	int typ = insn->insn_code & 0xf;
 	/* put the return register definition in the next bb */
 	if (typ != DILL_V) {
-	    return insn->opnds.bri.src == vreg;
+	    return insn->opnds.calli.src == vreg;
 	}
 	return 0;
     }
@@ -898,7 +896,7 @@ insn_uses(virtual_insn *insn, int *used)
     case iclass_call: {
 	int reg = insn->insn_code & 0x10;
 	if (reg != 0) {
-	    long imm = insn->opnds.bri.imm_l;
+	    long imm = insn->opnds.calli.imm_l;
 	    int src1_vreg = imm;
 	    used[0] = src1_vreg;
 	}
@@ -1080,7 +1078,7 @@ insn_use_test(virtual_insn *insn, int vreg)
     case iclass_call:{
 	int reg = insn->insn_code & 0x10;
 	if (reg != 0) {
-	    long imm = insn->opnds.bri.imm_l;
+	    long imm = insn->opnds.calli.imm_l;
 	    int src1_vreg = imm;
 	    if (vreg == src1_vreg) return 1;
 	}
@@ -1123,8 +1121,6 @@ build_bb_body(dill_stream c, virtual_insn *insn, int i, virtual_insn *insns)
 {
     virtual_mach_info vmi = (virtual_mach_info)c->p->mach_info;
     basic_block bb = &vmi->bblist[vmi->bbcount];		\
-    struct branch_table *t = &c->p->branch_table;
-    int j;
 
     switch(insn->class_code) {
     case iclass_arith3:
@@ -1208,7 +1204,7 @@ build_bb_body(dill_stream c, virtual_insn *insn, int i, virtual_insn *insns)
 	end_bb(bb, -1, 1);
 	/* put the return register definition in the next bb */
 	if (typ != DILL_V) {
-	    bb_defines(c, bb, insn->opnds.bri.src);
+	    bb_defines(c, bb, insn->opnds.calli.src);
 	}
 	break;
     }
@@ -1224,23 +1220,21 @@ build_bb_body(dill_stream c, virtual_insn *insn, int i, virtual_insn *insns)
 	break;
     case iclass_nop:
 	break;
-    }
-    for (j=0; j < t->next_label; j++) {
-	if ((unsigned)t->label_locs[j] == 
-	    ((char*)insn - (char*)insns) + sizeof(virtual_insn)) {
-	    int fall_through = 1;
-	    switch (insns[i-1].class_code) {
-	    case iclass_ret:
-	    case iclass_reti:
-		fall_through = 0;
-	    default:
-		break;
-	    }
-	    if (bb->start != i) {
-		end_bb(bb, -1, fall_through);
-	    }
-	    bb->label = j;
+    case iclass_mark_label:{
+	int fall_through = 1;
+	switch (insns[i-1].class_code) {
+	case iclass_ret:
+	case iclass_reti:
+	    fall_through = 0;
+	default:
+	    break;
 	}
+	if (bb->start != i) {
+	    end_bb(bb, -1, fall_through);
+	}
+	bb->label = insn->opnds.label.label;
+	break;
+    }
     }
 }
 
@@ -1427,10 +1421,10 @@ do_use_def_count(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
     case iclass_call: {
 	int reg = insn->insn_code & 0x10;
 	if ((insn->insn_code & 0xf) != DILL_V) {
-	    set_defined(c, insn->opnds.bri.src);
+	    set_defined(c, insn->opnds.calli.src);
 	}
 	if (reg != 0) {
-	    long imm = insn->opnds.bri.imm_l;
+	    long imm = insn->opnds.calli.imm_l;
 	    int src1_vreg = imm;
 	    set_used(c, src1_vreg);
 	}
@@ -2477,7 +2471,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    case iclass_call:
 	    {
 		basic_block next_bb = &vmi->bblist[i+1];
-		int dest_vreg = ip->opnds.bri.src;
+		int dest_vreg = ip->opnds.calli.src;
 		int dest_preg = 0;
 		
 		int reg = ip->insn_code & 0x10;
@@ -2486,7 +2480,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		
 		if (typ != DILL_V) dest_preg = preg_of(c, next_bb, dest_vreg);
 		if (reg != 0) {
-		    int src1_vreg = ip->opnds.bri.imm_l;
+		    int src1_vreg = ip->opnds.calli.imm_l;
 		    int src1_preg = preg_of(c, bb, src1_vreg);
 		    if (src1_preg == -1) {
 			/* load src1 */
@@ -2505,7 +2499,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		    }
 		    rr = dill_pcallr(c, typ, src1_preg);
 		} else {
-		    rr = dill_pcall(c, typ, ip->opnds.bri.imm_a, "");
+		    rr = dill_pcall(c, typ, ip->opnds.calli.imm_a, ip->opnds.calli.xfer_name);
 		}
 		if (typ != DILL_V) {
 		    if (preg_of(c, next_bb, dest_vreg) == -1) {
@@ -3344,7 +3338,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		if (reg != 0) {
 		    rr = dill_pcallr(c, typ, pused[0]);
 		} else {
-		    rr = dill_pcall(c, typ, ip->opnds.bri.imm_a, NULL);
+		    rr = dill_pcall(c, typ, ip->opnds.calli.imm_a, NULL);
 		}
 		state.ret_reg = rr;
 		state.ret_vreg = vdest;
@@ -3376,6 +3370,8 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		c->j->pushfi(c, ip->insn_code & 0xf, ip->opnds.sf.imm);
 		break;
 	    case iclass_nop:
+		break;
+	    case iclass_mark_label:
 		break;
 	    }
 	    if ((pdest == -1) && (vdest != -1)) {
@@ -3830,6 +3826,8 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 	break;
     case iclass_nop:
 	break;
+    case iclass_mark_label:
+	break;
     }
     if (found) {
 	if (set_vreg >= 100) {
@@ -4062,6 +4060,7 @@ do_const_prop(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	    case iclass_pushi:
 	    case iclass_pushf:
 	    case iclass_nop:
+	    case iclass_mark_label:
 		break;
 	    }
 	}
@@ -4293,14 +4292,12 @@ build_label_translation(dill_stream c)
 {
     int i;
     int label_count = c->p->branch_table.next_label;
-    struct branch_table *t = &c->p->branch_table;
     label_translation_table l = malloc(sizeof(struct label_translation) *
 				       (label_count + 1));
-    t->virtual_label_max = label_count - 1;
     for(i = 0; i < label_count; i++) {
 	l[i].old_label = i;
-	l[i].old_location = t->label_locs[i];
-	l[i].new_label = dill_alloc_label(c, t->label_name[i]);
+	l[i].old_location = c->p->branch_table.label_locs[i];
+	l[i].new_label = dill_alloc_label(c, NULL);
     }
     /* Good old reliable insertion sort */
     {
@@ -4350,19 +4347,19 @@ extern void dill_begin_prefix_code(dill_stream s)
 
 
 static void
-virtual_do_end(dill_stream c, int package)
+virtual_do_end(dill_stream s, int package)
 {
     static int no_optimize = -1;
     static int dill_verbose = -1;
     static int old_reg_alloc = -1;
     static int do_emulation = -1;
 
-    virtual_mach_info vmi = (virtual_mach_info)c->p->mach_info;
-    void *insns = c->p->code_base;
-    void *code_end = c->p->cur_ip;
+    virtual_mach_info vmi = (virtual_mach_info)s->p->mach_info;
+    void *insns = s->p->code_base;
+    void *code_end = s->p->cur_ip;
     void *prefix_begin = (char*)insns + (vmi->prefix_code_start * sizeof(virtual_insn));;
     label_translation_table ltable;
-    int virtual_local_pointer = c->dill_local_pointer;
+    int virtual_local_pointer = s->dill_local_pointer;
 
     if (dill_verbose == -1) {
 	dill_verbose = (getenv ("DILL_VERBOSE") != NULL);
@@ -4374,7 +4371,7 @@ virtual_do_end(dill_stream c, int package)
 #endif
     }
     if (vmi->prefix_code_start == -1) prefix_begin = code_end;
-    build_bbs(c, insns, prefix_begin, code_end);
+    build_bbs(s, insns, prefix_begin, code_end);
 
     if (!no_optimize) {
 	if (count_verbose == -1) {
@@ -4382,84 +4379,84 @@ virtual_do_end(dill_stream c, int package)
 	}
 	if (count_verbose == 1) {
 	    printf("Prior to optimization, %d non-null virtual insns\n", 
-		   virtual_insn_count(c));
+		   virtual_insn_count(s));
 	}
-	const_propagation(c, insns, vmi);
+	const_propagation(s, insns, vmi);
 	if (count_verbose == 1) {
 	    printf("After constant propagation, %d non-null virtual insns\n", 
-		   virtual_insn_count(c));
+		   virtual_insn_count(s));
 	}
-	CSE_elimination(c, insns, vmi);
+	CSE_elimination(s, insns, vmi);
 	if (count_verbose == 1) {
 	    printf("After duplicate instruction elimination (CSE-lite), %d non-null virtual insns\n", 
-		   virtual_insn_count(c));
+		   virtual_insn_count(s));
 	}
-	reset_use_def_count(c, insns, vmi);
-	kill_dead_regs(c, insns, vmi);
+	reset_use_def_count(s, insns, vmi);
+	kill_dead_regs(s, insns, vmi);
     }
 
     if (dill_verbose) {
-	dump_bbs(c);
-	c->dill_debug = 1;
+	dump_bbs(s);
+	s->dill_debug = 1;
     }
-    c->p->virtual.mach_jump = c->j;
-    c->p->virtual.mach_reset = c->p->mach_reset;
-    c->p->virtual.mach_info = c->p->mach_info;
-    c->p->virtual.code_base = c->p->code_base;
-    c->p->virtual.cur_ip = c->p->cur_ip;
-    c->p->virtual.code_limit = c->p->code_limit;
+    s->p->virtual.mach_jump = s->j;
+    s->p->virtual.mach_reset = s->p->mach_reset;
+    s->p->virtual.mach_info = s->p->mach_info;
+    s->p->virtual.code_base = s->p->code_base;
+    s->p->virtual.cur_ip = s->p->cur_ip;
+    s->p->virtual.code_limit = s->p->code_limit;
 
     if (do_emulation) {
 #ifdef BUILD_EMULATOR
-	setup_VM_proc(c);
+	setup_VM_proc(s);
 #endif
-	c->p->mach_reset = dill_virtual_init;
+	s->p->mach_reset = dill_virtual_init;
     } else {
-	c->j = c->p->native.mach_jump;
-	c->p->mach_reset = c->p->native.mach_reset;
-	c->p->mach_info = c->p->native.mach_info;
-	c->p->code_base = c->p->native.code_base;
-	c->p->native.code_base = NULL;
-	c->p->native.mach_info = NULL;
-	if (c->p->code_base == NULL) {
-	    init_code_block(c);
-	    c->p->native.code_base = c->p->code_base;
-	    c->p->native.code_limit = c->p->code_limit;
+	s->j = s->p->native.mach_jump;
+	s->p->mach_reset = s->p->native.mach_reset;
+	s->p->mach_info = s->p->native.mach_info;
+	s->p->code_base = s->p->native.code_base;
+	s->p->native.code_base = NULL;
+	s->p->native.mach_info = NULL;
+	if (s->p->code_base == NULL) {
+	    init_code_block(s);
+	    s->p->native.code_base = s->p->code_base;
+	    s->p->native.code_limit = s->p->code_limit;
 	}
-	c->p->cur_ip = c->p->code_base;
-	c->p->code_limit = c->p->native.code_limit;
+	s->p->cur_ip = s->p->code_base;
+	s->p->code_limit = s->p->native.code_limit;
 
-	c->p->native_mach_reset(c);
-	(c->j->proc_start)(c, "no name", c->p->c_param_count, 
+	s->p->native_mach_reset(s);
+	(s->j->proc_start)(s, "no name", s->p->c_param_count, 
 			   vmi->arg_info, (void*)0);
-	ltable = build_label_translation(c);
+	ltable = build_label_translation(s);
 	if (old_reg_alloc) {
-	    do_register_assign(c, insns, code_end, virtual_local_pointer, vmi);
-	    emit_insns(c, insns, ltable, vmi);
+	    do_register_assign(s, insns, code_end, virtual_local_pointer, vmi);
+	    emit_insns(s, insns, ltable, vmi);
 	} else {
-	    new_emit_insns(c, insns, ltable, vmi);
+	    new_emit_insns(s, insns, ltable, vmi);
 	}
 	free_bbs(vmi);
 	free(ltable);
 	if (package) {
-	    c->j->package_end(c);
+	    s->j->package_end(s);
 	} else {
 	    dill_exec_handle h;
-	    h = dill_finalize(c);
+	    h = dill_finalize(s);
 	    dill_free_handle(h);
 	}
-	c->j = c->p->native.mach_jump;
-	c->p->native.mach_reset = c->p->mach_reset;
-	c->p->native.mach_info = c->p->mach_info;
-	c->p->native.code_base = c->p->code_base;
-	c->p->native.cur_ip = c->p->cur_ip;
-	c->p->native.code_limit = c->p->code_limit;
-	if (!package) c->p->code_base = NULL;
-	c->p->mach_info = NULL;
-	c->p->mach_reset = dill_virtual_init;
+	s->j = s->p->native.mach_jump;
+	s->p->native.mach_reset = s->p->mach_reset;
+	s->p->native.mach_info = s->p->mach_info;
+	s->p->native.code_base = s->p->code_base;
+	s->p->native.cur_ip = s->p->cur_ip;
+	s->p->native.code_limit = s->p->code_limit;
+	if (!package) s->p->code_base = NULL;
+	s->p->mach_info = NULL;
+	s->p->mach_reset = dill_virtual_init;
     }
     if (dill_verbose) {
-	dill_dump(c);
+	dill_dump(s);
     }
 }
 

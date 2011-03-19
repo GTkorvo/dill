@@ -79,7 +79,6 @@ dill_branch_init(dill_stream s)
     }
     t->branch_count = 0;
     t->data_segment_size = 0;
-    t->virtual_label_max = -1;
 }
 
 static void
@@ -553,6 +552,14 @@ EXTERN void dill_mark_label(dill_stream s, int label)
     struct branch_table *t = &s->p->branch_table;
     int label_loc = (int) ((char*)s->p->cur_ip - (char*)s->p->code_base);
     t->label_locs[label] = label_loc;
+    if (s->j->mark_label) (s->j->mark_label)(s, 0, 0, 0, 0, label);
+    if (s->dill_debug) {
+	if (t->label_name[label] == NULL) {
+	    printf("L%d:\n", label);
+	} else {
+	    printf("L%d<%s>:\n", label, t->label_name[label]);
+	}
+    }
 }
 
 EXTERN int dill_is_label_mark(dill_stream s)
@@ -1459,19 +1466,6 @@ dill_dump(dill_stream s)
 	int insn_count = 0;
 	printf("\nDILL virtual instruction stream\n\n");
 	for (p =base; p < code_limit;) {
-	    /* can't insert branch locs, that information is gone */
-	    int i;
-	    struct branch_table *t = &s->p->branch_table;
-	    for (i=0; i <= t->virtual_label_max; i++) {
-		if (t->label_locs[i] == 
-		    ((char*)p - (char*)base)) {
-		    if (t->label_name[i] == NULL) {
-			printf("L%d:\n", i);
-		    } else {
-			printf("L%d<%s>:\n", i, t->label_name[i]);
-		    }
-		}
-	    }
 	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
 	    l = s->p->virtual.mach_jump->print_insn(s, &info, (void *)p);
 	    printf("\n");

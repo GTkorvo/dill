@@ -10,7 +10,7 @@ virtual_print_insn(c, NULL, c->p->cur_ip);\
 printf("\n");}\
 c->p->cur_ip = ((char*)c->p->cur_ip)+ sizeof(virtual_insn)
 
-typedef enum {iclass_arith3, iclass_arith3i, iclass_arith2, iclass_ret, iclass_convert, iclass_loadstore, iclass_loadstorei, iclass_set, iclass_setf, iclass_mov, iclass_reti, iclass_branch, iclass_branchi, iclass_jump_to_label, iclass_special, iclass_jump_to_reg, iclass_jump_to_imm, iclass_push, iclass_pushi, iclass_pushf, iclass_call, iclass_lea, iclass_compare, iclass_nop} insn_class;
+typedef enum {iclass_arith3, iclass_arith3i, iclass_arith2, iclass_ret, iclass_convert, iclass_loadstore, iclass_loadstorei, iclass_set, iclass_setf, iclass_mov, iclass_reti, iclass_branch, iclass_branchi, iclass_jump_to_label, iclass_special, iclass_jump_to_reg, iclass_jump_to_imm, iclass_push, iclass_pushi, iclass_pushf, iclass_call, iclass_lea, iclass_compare, iclass_mark_label, iclass_nop} insn_class;
 typedef struct bitv {
     short len;
     char vec[2];
@@ -85,6 +85,18 @@ struct branchi {
     long imm_l;
 };
 
+struct calli {
+    unsigned short src;
+    void *imm_a;
+    long imm_l;
+    const char *xfer_name;
+};
+
+struct label {
+    unsigned short label;
+    char *label_name;
+};
+
 struct special {
     special_operations type;
     long param;
@@ -98,6 +110,8 @@ union operands {
     struct setf sf;
     struct branch br;
     struct branchi bri;
+    struct calli calli;
+    struct label label;
     struct special spec;
 };
 
