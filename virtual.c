@@ -1122,6 +1122,8 @@ build_bb_body(dill_stream c, virtual_insn *insn, int i, virtual_insn *insns)
 {
     virtual_mach_info vmi = (virtual_mach_info)c->p->mach_info;
     basic_block bb = &vmi->bblist[vmi->bbcount];		\
+    struct branch_table *t = &c->p->branch_table;
+    int j;
 
     switch(insn->class_code) {
     case iclass_arith3:
@@ -1220,23 +1222,25 @@ build_bb_body(dill_stream c, virtual_insn *insn, int i, virtual_insn *insns)
     case iclass_pushf:
 	break;
     case iclass_nop:
-	break;
-    case iclass_mark_label:{
-	int fall_through = 1;
-	switch (insns[i-1].class_code) {
-	case iclass_ret:
-	case iclass_reti:
-	    fall_through = 0;
-	default:
-	    break;
-	}
-	if (bb->start != i) {
-	    end_bb(bb, -1, fall_through);
-	}
-	bb->label = insn->opnds.label.label;
-	bb->start += 1;  /* skip label insn */
+    case iclass_mark_label:
 	break;
     }
+    for (j=0; j < t->next_label; j++) {
+	if ((unsigned)t->label_locs[j] == 
+	    ((char*)insn - (char*)insns) + sizeof(virtual_insn)) {
+	    int fall_through = 1;
+	    switch (insns[i-1].class_code) {
+	    case iclass_ret:
+	    case iclass_reti:
+		fall_through = 0;
+	    default:
+		break;
+	    }
+	    if (bb->start != i) {
+		end_bb(bb, -1, fall_through);
+	    }
+	    bb->label = j;
+	}
     }
 }
 
