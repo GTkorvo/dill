@@ -232,7 +232,7 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 		printf("call%s R%ld, %c%d", dill_type_names[typ], 
 		       insn->opnds.calli.imm_l, OPND(insn->opnds.calli.src));
 	    } else {
-		char *call_name = insn->opnds.calli.xfer_name;
+		const char *call_name = insn->opnds.calli.xfer_name;
 		if (call_name) {
 		    printf("call%s 0x%p<%s>, %c%d", dill_type_names[typ], 
 			   insn->opnds.calli.imm_a, call_name,
@@ -247,7 +247,7 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 		printf("call%s R%ld", dill_type_names[typ], 
 		       insn->opnds.calli.imm_l);
 	    } else {
-		char *call_name = insn->opnds.calli.xfer_name;
+		const char *call_name = insn->opnds.calli.xfer_name;
 		if (call_name) {
 		    printf("call%s 0x%p<%s>", dill_type_names[typ], 
 			   insn->opnds.calli.imm_a, call_name);
@@ -819,6 +819,7 @@ insn_define_test(virtual_insn *insn, int vreg)
     case iclass_pushi:
     case iclass_pushf:
     case iclass_nop:
+    case iclass_mark_label:
 	return 0;
     default:
 	assert(0);
@@ -1233,6 +1234,7 @@ build_bb_body(dill_stream c, virtual_insn *insn, int i, virtual_insn *insns)
 	    end_bb(bb, -1, fall_through);
 	}
 	bb->label = insn->opnds.label.label;
+	bb->start += 1;  /* skip label insn */
 	break;
     }
     }
