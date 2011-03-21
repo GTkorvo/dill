@@ -3344,7 +3344,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		if (reg != 0) {
 		    rr = dill_pcallr(c, typ, pused[0]);
 		} else {
-		    rr = dill_pcall(c, typ, ip->opnds.calli.imm_a, NULL);
+		    rr = dill_pcall(c, typ, ip->opnds.calli.imm_a, ip->opnds.calli.xfer_name);
 		}
 		state.ret_reg = rr;
 		state.ret_vreg = vdest;
