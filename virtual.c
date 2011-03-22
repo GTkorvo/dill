@@ -4351,6 +4351,13 @@ extern void dill_begin_prefix_code(dill_stream s)
     vmi->prefix_code_start = (s->p->cur_ip - s->p->code_base) / sizeof(virtual_insn);
 }
 
+static dill_foreign_cg_func dill_foreign_cg = NULL;
+
+extern void
+dill_set_foreign_cg(dill_foreign_cg_func foreign)
+{
+    dill_foreign_cg = foreign;
+}
 
 static void
 virtual_do_end(dill_stream s, int package)
@@ -4417,6 +4424,8 @@ virtual_do_end(dill_stream s, int package)
 	setup_VM_proc(s);
 #endif
 	s->p->mach_reset = dill_virtual_init;
+    } else if (dill_foreign_cg) {
+	(dill_foreign_cg)(s, (virtual_insn *)s->p->code_base, (virtual_insn *)s->p->cur_ip);
     } else {
 	s->j = s->p->native.mach_jump;
 	s->p->mach_reset = s->p->native.mach_reset;

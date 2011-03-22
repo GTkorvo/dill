@@ -81,6 +81,92 @@ foreach $key (sort keys %poly_array) {
 }
 
 print HOUT<<EOF;
+
+typedef enum {iclass_arith3, iclass_arith3i, iclass_arith2, iclass_ret, iclass_convert, iclass_loadstore, iclass_loadstorei, iclass_set, iclass_setf, iclass_mov, iclass_reti, iclass_branch, iclass_branchi, iclass_jump_to_label, iclass_special, iclass_jump_to_reg, iclass_jump_to_imm, iclass_push, iclass_pushi, iclass_pushf, iclass_call, iclass_lea, iclass_compare, iclass_mark_label, iclass_nop} insn_class;
+
+struct arith3 {
+    unsigned short dest;
+    unsigned short src1;
+    unsigned short src2;
+};
+
+struct arith3i {
+    unsigned short dest;
+    unsigned short src;
+    union {
+	long imm;
+	void *imm_a;
+    }u;
+};
+
+struct arith2 {
+    unsigned short dest;
+    unsigned short src;
+};
+
+struct arith1 {
+    unsigned short src;
+};
+
+struct setf {
+    unsigned short dest;
+    double imm;
+};
+
+struct branch {
+    unsigned short src1;
+    unsigned short src2;
+    unsigned short label;
+};
+
+struct branchi {
+    unsigned short src;
+    unsigned short label;
+    void *imm_a;
+    long imm_l;
+};
+
+struct calli {
+    unsigned short src;
+    void *imm_a;
+    long imm_l;
+    const char *xfer_name;
+};
+
+struct label {
+    unsigned short label;
+    char *label_name;
+};
+
+struct special {
+    special_operations type;
+    long param;
+};
+
+union operands {
+    struct arith3 a3;
+    struct arith3i a3i;
+    struct arith2 a2;
+    struct arith1 a1;
+    struct setf sf;
+    struct branch br;
+    struct branchi bri;
+    struct calli calli;
+    struct label label;
+    struct special spec;
+};
+
+typedef struct {
+    char class_code;
+    char insn_code;
+    union operands opnds;
+} virtual_insn;
+
+typedef void (*dill_foreign_cg_func)(dill_stream s, virtual_insn *start, virtual_insn *end);
+
+extern void
+dill_set_foreign_cg(dill_foreign_cg_func foreign);
+
 #if defined(__cplusplus) || defined(c_plusplus)
 }
 #endif

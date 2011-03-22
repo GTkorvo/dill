@@ -10,7 +10,6 @@ virtual_print_insn(c, NULL, c->p->cur_ip);\
 printf("\n");}\
 c->p->cur_ip = ((char*)c->p->cur_ip)+ sizeof(virtual_insn)
 
-typedef enum {iclass_arith3, iclass_arith3i, iclass_arith2, iclass_ret, iclass_convert, iclass_loadstore, iclass_loadstorei, iclass_set, iclass_setf, iclass_mov, iclass_reti, iclass_branch, iclass_branchi, iclass_jump_to_label, iclass_special, iclass_jump_to_reg, iclass_jump_to_imm, iclass_push, iclass_pushi, iclass_pushf, iclass_call, iclass_lea, iclass_compare, iclass_mark_label, iclass_nop} insn_class;
 typedef struct bitv {
     short len;
     char vec[2];
@@ -42,84 +41,6 @@ typedef struct mach_info {
     basic_block bblist;
     int prefix_code_start;
 } *virtual_mach_info;
-
-struct arith3 {
-    unsigned short dest;
-    unsigned short src1;
-    unsigned short src2;
-};
-
-struct arith3i {
-    unsigned short dest;
-    unsigned short src;
-    union {
-	long imm;
-	void *imm_a;
-    }u;
-};
-
-struct arith2 {
-    unsigned short dest;
-    unsigned short src;
-};
-
-struct arith1 {
-    unsigned short src;
-};
-
-struct setf {
-    unsigned short dest;
-    double imm;
-};
-
-struct branch {
-    unsigned short src1;
-    unsigned short src2;
-    unsigned short label;
-};
-
-struct branchi {
-    unsigned short src;
-    unsigned short label;
-    void *imm_a;
-    long imm_l;
-};
-
-struct calli {
-    unsigned short src;
-    void *imm_a;
-    long imm_l;
-    const char *xfer_name;
-};
-
-struct label {
-    unsigned short label;
-    char *label_name;
-};
-
-struct special {
-    special_operations type;
-    long param;
-};
-
-union operands {
-    struct arith3 a3;
-    struct arith3i a3i;
-    struct arith2 a2;
-    struct arith1 a1;
-    struct setf sf;
-    struct branch br;
-    struct branchi bri;
-    struct calli calli;
-    struct label label;
-    struct special spec;
-};
-
-typedef struct {
-    char class_code;
-    char insn_code;
-    union operands opnds;
-} virtual_insn;
 
 extern int dill_type_of(dill_stream c, int vreg);
 extern void
