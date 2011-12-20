@@ -179,15 +179,15 @@ fi
 
 search_list="$search_list /usr/$5/$2 /usr/local/$5/$2 /opt/$1/$5/$2 /opt/misc/$5/$2 /opt/misc/$5/$cercs_cv_archive/$2 /opt/local/$5/$2"
 CERCS_SEARCH($search_list)
+#if test -n "$with_deb_build_specified"; then
+#  if test "$5" == "lib"; then
+#     tmp_search_results=$libdir;
+#  fi
+#  if test "$5" == "include"; then
+#     tmp_search_results=$incdir;
+#  fi
+#fi
 if test -n "$with_rpm_build_specified"; then
-  if test "$5" == "lib"; then
-     tmp_search_results=$libdir;
-  fi
-  if test "$5" == "include"; then
-     tmp_search_results=$incdir;
-  fi
-fi
-if test -n "$with_deb_build_specified"; then
 # test build directories
    if test -d "../$1"; then
       tmp_search_results=`pwd`/../$1;

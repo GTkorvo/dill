@@ -766,7 +766,6 @@ enable_fast_install
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
-with_gnu_ld
 enable_disassembly
 with_installed
 with_rpm_build
@@ -786,9 +785,6 @@ LIBS
 CPPFLAGS
 CXX
 CXXFLAGS
-LDFLAGS
-LIBS
-CPPFLAGS
 CCC
 CPP
 CXXCPP'
@@ -15299,24 +15295,24 @@ fi
 
 search_list="$search_list /usr/include/dis-asm.h /usr/local/include/dis-asm.h /opt/binutils/include/dis-asm.h /opt/misc/include/dis-asm.h /opt/misc/include/$cercs_cv_archive/dis-asm.h /opt/local/include/dis-asm.h"
 tmp_search_results=""
-echo "configure:15302: searching for $search_list " >&5
+echo "configure:15298: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:15306: first found $tmp_search_results " >&5
+	echo "configure:15302: first found $tmp_search_results " >&5
 	break
    fi
 done
 
+#if test -n "$with_deb_build_specified"; then
+#  if test "include" == "lib"; then
+#     tmp_search_results=$libdir;
+#  fi
+#  if test "include" == "include"; then
+#     tmp_search_results=$incdir;
+#  fi
+#fi
 if test -n "$with_rpm_build_specified"; then
-  if test "include" == "lib"; then
-     tmp_search_results=$libdir;
-  fi
-  if test "include" == "include"; then
-     tmp_search_results=$incdir;
-  fi
-fi
-if test -n "$with_deb_build_specified"; then
 # test build directories
    if test -d "../binutils"; then
       tmp_search_results=`pwd`/../binutils;
@@ -15413,24 +15409,24 @@ fi
 
 search_list="$search_list /usr/lib/libopcodes.la /usr/local/lib/libopcodes.la /opt/binutils/lib/libopcodes.la /opt/misc/lib/libopcodes.la /opt/misc/lib/$cercs_cv_archive/libopcodes.la /opt/local/lib/libopcodes.la"
 tmp_search_results=""
-echo "configure:15416: searching for $search_list " >&5
+echo "configure:15412: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:15420: first found $tmp_search_results " >&5
+	echo "configure:15416: first found $tmp_search_results " >&5
 	break
    fi
 done
 
+#if test -n "$with_deb_build_specified"; then
+#  if test "lib" == "lib"; then
+#     tmp_search_results=$libdir;
+#  fi
+#  if test "lib" == "include"; then
+#     tmp_search_results=$incdir;
+#  fi
+#fi
 if test -n "$with_rpm_build_specified"; then
-  if test "lib" == "lib"; then
-     tmp_search_results=$libdir;
-  fi
-  if test "lib" == "include"; then
-     tmp_search_results=$incdir;
-  fi
-fi
-if test -n "$with_deb_build_specified"; then
 # test build directories
    if test -d "../binutils"; then
       tmp_search_results=`pwd`/../binutils;
@@ -15562,24 +15558,24 @@ fi
 
 search_list="$search_list /usr/lib/libopcodes.a /usr/local/lib/libopcodes.a /opt/binutils/lib/libopcodes.a /opt/misc/lib/libopcodes.a /opt/misc/lib/$cercs_cv_archive/libopcodes.a /opt/local/lib/libopcodes.a"
 tmp_search_results=""
-echo "configure:15565: searching for $search_list " >&5
+echo "configure:15561: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:15569: first found $tmp_search_results " >&5
+	echo "configure:15565: first found $tmp_search_results " >&5
 	break
    fi
 done
 
+#if test -n "$with_deb_build_specified"; then
+#  if test "lib" == "lib"; then
+#     tmp_search_results=$libdir;
+#  fi
+#  if test "lib" == "include"; then
+#     tmp_search_results=$incdir;
+#  fi
+#fi
 if test -n "$with_rpm_build_specified"; then
-  if test "lib" == "lib"; then
-     tmp_search_results=$libdir;
-  fi
-  if test "lib" == "include"; then
-     tmp_search_results=$incdir;
-  fi
-fi
-if test -n "$with_deb_build_specified"; then
 # test build directories
    if test -d "../binutils"; then
       tmp_search_results=`pwd`/../binutils;
@@ -15781,24 +15777,24 @@ fi
 
 search_list="$search_list /usr/include/avcall.h /usr/local/include/avcall.h /opt/ffcall/include/avcall.h /opt/misc/include/avcall.h /opt/misc/include/$cercs_cv_archive/avcall.h /opt/local/include/avcall.h"
 tmp_search_results=""
-echo "configure:15784: searching for $search_list " >&5
+echo "configure:15780: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:15788: first found $tmp_search_results " >&5
+	echo "configure:15784: first found $tmp_search_results " >&5
 	break
    fi
 done
 
+#if test -n "$with_deb_build_specified"; then
+#  if test "include" == "lib"; then
+#     tmp_search_results=$libdir;
+#  fi
+#  if test "include" == "include"; then
+#     tmp_search_results=$incdir;
+#  fi
+#fi
 if test -n "$with_rpm_build_specified"; then
-  if test "include" == "lib"; then
-     tmp_search_results=$libdir;
-  fi
-  if test "include" == "include"; then
-     tmp_search_results=$incdir;
-  fi
-fi
-if test -n "$with_deb_build_specified"; then
 # test build directories
    if test -d "../ffcall"; then
       tmp_search_results=`pwd`/../ffcall;
@@ -15895,24 +15891,24 @@ fi
 
 search_list="$search_list /usr/lib/libavcall.la /usr/local/lib/libavcall.la /opt/ffcall/lib/libavcall.la /opt/misc/lib/libavcall.la /opt/misc/lib/$cercs_cv_archive/libavcall.la /opt/local/lib/libavcall.la"
 tmp_search_results=""
-echo "configure:15898: searching for $search_list " >&5
+echo "configure:15894: searching for $search_list " >&5
 for tmp_search_value in $search_list; do
    if test -r $tmp_search_value; then
 	tmp_search_results=$tmp_search_value
-	echo "configure:15902: first found $tmp_search_results " >&5
+	echo "configure:15898: first found $tmp_search_results " >&5
 	break
    fi
 done
 
+#if test -n "$with_deb_build_specified"; then
+#  if test "lib" == "lib"; then
+#     tmp_search_results=$libdir;
+#  fi
+#  if test "lib" == "include"; then
+#     tmp_search_results=$incdir;
+#  fi
+#fi
 if test -n "$with_rpm_build_specified"; then
-  if test "lib" == "lib"; then
-     tmp_search_results=$libdir;
-  fi
-  if test "lib" == "include"; then
-     tmp_search_results=$incdir;
-  fi
-fi
-if test -n "$with_deb_build_specified"; then
 # test build directories
    if test -d "../ffcall"; then
       tmp_search_results=`pwd`/../ffcall;
