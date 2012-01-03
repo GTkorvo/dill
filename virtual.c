@@ -3424,6 +3424,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
     }
     free(state.fpregs);
     free(state.ipregs);
+    free(state.param_info);
 }
 
 static void
