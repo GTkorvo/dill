@@ -57,7 +57,7 @@ print HOUT "#define dill_jalp(s, return_addr_reg, target) (s->j->jal)(s, return_
 print HOUT "#define dill_special(s, type, param) if (s->j->special) (s->j->special)(s, type, param)\n";
 
 print COUT "\n/* This file is generated from base.ops.  Do not edit directly. */\n\n";
-print COUT "#include <dill.h>\n";
+print COUT "#include \"dill.h\"\n";
 print COUT "\nchar *arith3_name[] = \{".substr($enum_a3,2). "\};\n";
 print COUT "\nchar *arith2_name[] = \{".substr($enum_a2,2). "\};\n";
 foreach $key (sort keys %poly_array) {
