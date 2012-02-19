@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 2.8)
+
+set (TESTS regress ctest call-test t1 pkg_test)
+INCLUDE_DIRECTORIES(${dill_BINARY_DIR} ${dill_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+
+ADD_CUSTOM_COMMAND(
+   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/regress.c
+   COMMAND perl -w ${CMAKE_CURRENT_SOURCE_DIR}/test-gen ${TEST_PERL_FLAGS} > regress.c
+   MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/test-gen
+)
+
+ADD_CUSTOM_COMMAND(
+   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/call-test.c
+   COMMAND perl -w ${CMAKE_CURRENT_SOURCE_DIR}/call-gen ${TEST_PERL_FLAGS} > call-test.c
+   MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/call-gen 
+)
+foreach (TEST ${TESTS} )
+    ADD_EXECUTABLE(${TEST} ${TEST}.c)
+    TARGET_LINK_LIBRARIES(${TEST} dill )
+    ADD_TEST(${TEST} "${TEST}")
+endforeach()
+
+ADD_EXECUTABLE(cplus cplus.cc)
+TARGET_LINK_LIBRARIES(cplus dill )
+ADD_TEST(cplus cplus)
+ADD_EXECUTABLE(stest stest.c)
+TARGET_LINK_LIBRARIES(stest dill )
+ADD_TEST(stest stest "hello world!
+success!
+hello world!
+success!
+hello world!
+success!")
+
+SET_TARGET_PROPERTIES(call-test PROPERTIES LINKER_LANGUAGE C)
+SET_TARGET_PROPERTIES(ctest PROPERTIES LINKER_LANGUAGE C)
+SET_TARGET_PROPERTIES(pkg_test PROPERTIES LINKER_LANGUAGE C)
+SET_TARGET_PROPERTIES(cplus PROPERTIES LINKER_LANGUAGE CXX)
+
+

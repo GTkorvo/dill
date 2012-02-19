@@ -10,7 +10,7 @@
 #undef EMULATION_ONLY
 
 /* Define to 1 if you have the <dis-asm.h> header file. */
-#undef HAVE_DIS_ASM_H
+#cmakedefine HAVE_DIS_ASM_H
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
@@ -19,10 +19,10 @@
 #undef HAVE_INTTYPES_H
 
 /* Define to 1 if you have the <malloc.h> header file. */
-#undef HAVE_MALLOC_H
+#cmakedefine HAVE_MALLOC_H
 
 /* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
+#cmakedefine HAVE_MEMORY_H
 
 /* Define if you have the `print_insn_arm' function. */
 #undef HAVE_PRINT_INSN_ARM
@@ -112,32 +112,11 @@
 /* Define if we should not use inlined procedures from BFD */
 #undef NO_INLINED_BFD_PROCS
 
-/* Name of package */
-#undef PACKAGE
-
-/* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
-
-/* Define to the full name of this package. */
-#undef PACKAGE_NAME
-
-/* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
-
-/* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
-
-/* Define to the version of this package. */
-#undef PACKAGE_VERSION
-
 /* The number of bytes in type long */
 #undef SIZEOF_LONG
 
 /* Define to 1 if you have the ANSI C header files. */
-#undef STDC_HEADERS
+#cmakedefine STDC_HEADERS
 
 /* Define if the membar instruction should be used to sync Icache and Dcache
    */
@@ -146,11 +125,8 @@
 /* Define this is mmap should be used instead of malloc() for code memory */
 #cmakedefine USE_MMAP_CODE_SEG
 
-/* Version number of package */
-#undef VERSION
-
 /* Define if byteorder is bigendian */
-#undef WORDS_BIGENDIAN
+#cmakedefine WORDS_BIGENDIAN
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
