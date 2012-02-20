@@ -38,7 +38,7 @@ ENDIF()
 option(ENABLE_DISASSEMBLY "enable binutils-based disassembly (default is OFF)"
          OFF)
 
-set (ARCHICTURES sparc powerpc virtual x86 x86_64 ia64 arm5)
+set (ARCHITECTURES sparc powerpc virtual x86 x86_64 ia64 arm5)
 foreach(_arch ${ARCHITECTURES})
   add_custom_command(
     OUTPUT "dill_${_arch}.c"
@@ -46,7 +46,6 @@ foreach(_arch ${ARCHITECTURES})
     DEPENDS ${_arch}.ops
   ) 
   list(APPEND arch_files "dill_${_arch}.c" "${_arch}.c"})
-
 endforeach()
 
 add_custom_command(
