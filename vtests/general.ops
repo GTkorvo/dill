@@ -49,7 +49,6 @@ while ($_ = $ARGV[0]) {
 
 print COUT "    return failed;\n}\n";
 
-$skip_count = 0;
 
 sub arith_insn {
     local ($dill_ops, $c_ops, $type_list) = @_;
@@ -703,7 +702,6 @@ sub convert {
 	    $dill_type = "DILL_".&upperc(${_});
             $to = $_;
 	    $dill_to_type = "DILL_".&upperc(${_});
-	    $dill_from_type = "DILL_".&upperc(${_});
 	    $c_to_type = $c_types{${to}};
 	    $c_from_type = $c_types{${from}};
 	    $c_to_pformat = $c_print_formats{${to}};
@@ -1018,7 +1016,6 @@ EOF
 }
 
 sub output_header {
-    $mach = "virtual";
     open(COUT, ">general.c") || die "Can't open test output";
 print COUT<<EOF;
 /* This file is generated from general.ops.  Do not edit directly. */
