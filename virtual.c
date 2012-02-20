@@ -1,8 +1,8 @@
+#include <assert.h>
 #include "config.h"
 #include "dill.h"
 #include "dill_internal.h"
 #include "virtual.h"
-#include "assert.h"
 #ifndef LINUX_KERNEL_MODULE
 #include <stdlib.h>
 #include <stdio.h>

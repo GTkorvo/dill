@@ -5,6 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
+include(Compile)
 
 set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c version.c)
 
@@ -13,7 +14,8 @@ IF( NOT CMAKE_BUILD_TYPE )
 ENDIF()
 
 set (NATIVE_CG true)
-if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86")
+if (("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86") OR
+	("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64"))
     if (CMAKE_SIZEOF_VOID_P MATCHES "8")
       	set (NATIVE_ARCH x86_64)
 	set (HOST_X86_64 1)
@@ -28,19 +30,13 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86")
 else ()
     set (NATIVE_CG false)
 endif()
+
 IF ((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     set (USE_MMAP_CODE_SEG 1)
 ENDIF()
 
 option(ENABLE_DISASSEMBLY "enable binutils-based disassembly (default is OFF)"
          OFF)
-
-if (ENABLE_DISASSEMBLY)
-   FIND_LIBRARY (BINUTIL_LIB opcodes)
-   if (NOT BINUTIL_LIB)
-	message(FATAL_ERROR "libopcodes not found, You need to install binutils")
-   endif()
-endif()
 
 set (ARCHICTURES sparc powerpc virtual x86 x86_64 ia64 arm5)
 foreach(_arch ${ARCHITECTURES})
@@ -50,6 +46,7 @@ foreach(_arch ${ARCHITECTURES})
     DEPENDS ${_arch}.ops
   ) 
   list(APPEND arch_files "dill_${_arch}.c" "${_arch}.c"})
+
 endforeach()
 
 add_custom_command(
@@ -99,10 +96,31 @@ CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
 CHECK_INCLUDE_FILES(stdarg.h STDC_HEADERS)
 CHECK_INCLUDE_FILES(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILES(memory.h HAVE_MEMORY_H)
+
+set (NO_DISASSEMBLER TRUE)
+if (ENABLE_DISASSEMBLY)
+    FIND_PACKAGE (BinUtils)
+    if (NOT BINUTILS_LIBRARIES)
+	message(FATAL_ERROR "libopcodes not found, You need to install binutils for disassembler support.")
+    else()
+	INCLUDE_DIRECTORIES(${BINUTILS_INCLUDE_DIR})
+	LINK_DIRECTORIES(${BINUTILS_LIB_DIR})
+	TARGET_LINK_LIBRARIES(dill ${BINUTILS_LIBRARIES})
+	TARGET_LINK_LIBRARIES(dill-static opcodes)
+	set (NO_DISASSEMBLER FALSE)
+    endif()
+    if(NOT DEFINED INIT_DISASSEMBLE_INFO_THREE_ARG)
+	#if not in Cache
+	set (INIT_DISASSEMBLE_INFO_THREE_ARG OFF CACHE BOOL "Does the INIT_DISASSEMBLE_INFO macro require three arguments")
+    	FILE (WRITE check_init_disassemble_args.c "#include \"dis-asm.h\"
+extern int main() {struct disassemble_info info;INIT_DISASSEMBLE_INFO(info, stdout, fprintf);}" )
+    	COMPILE (INIT_DISASSEMBLE_INFO_THREE_ARG ${CMAKE_CURRENT_SOURCE_DIR}/check_init_disassemble_args.c)
+    	FILE (REMOVE check_init_disassemble_args.c)
+    endif()
+endif()
+
+
 CHECK_INCLUDE_FILES(dis-asm.h HAVE_DIS_ASM_H)
-
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h )
-
 INSTALL(FILES ${CURRENT_BINARY_DIR}/dill.h DESTINATION include)
 INSTALL(TARGETS dill dill-static
   RUNTIME DESTINATION bin
@@ -110,6 +128,7 @@ INSTALL(TARGETS dill dill-static
   ARCHIVE DESTINATION lib
 )
 
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h )
 
 # display status message for important variables
 MESSAGE( STATUS )
@@ -118,8 +137,8 @@ MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
 MESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
 MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
-MESSAGE( STATUS )
 
 ENABLE_TESTING()
 ADD_SUBDIRECTORY( tests )
 ADD_SUBDIRECTORY( vtests )
+

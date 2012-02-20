@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 set (TESTS basic_call general t1 opt branch pkg_test multi_test prefix_test)
 
-INCLUDE_DIRECTORIES(${dill_BINARY_DIR} ${dill_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+INCLUDE_DIRECTORIES(BEFORE ${dill_BINARY_DIR} ${dill_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 ADD_CUSTOM_COMMAND(
    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/general.c

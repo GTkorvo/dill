@@ -88,7 +88,7 @@
 #cmakedefine HOST_X86_64
 
 /* Define if INIT_DISASSEMBLE_INFO takes three arguments instead of two */
-#undef INIT_DISASSEMBLE_INFO_THREE_ARG
+#cmakedefine INIT_DISASSEMBLE_INFO_THREE_ARG
 
 /* Define if integrating with kernel plugins */
 #undef KPLUGINS_INTEGRATION
@@ -107,7 +107,7 @@
 #cmakedefine NATIVE_ARCH "@NATIVE_ARCH@"
 
 /* Define if there is no disassembler */
-#undef NO_DISASSEMBLER
+#cmakedefine NO_DISASSEMBLER
 
 /* Define if we should not use inlined procedures from BFD */
 #undef NO_INLINED_BFD_PROCS

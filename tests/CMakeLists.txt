@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 set (TESTS regress ctest call-test t1 pkg_test)
-INCLUDE_DIRECTORIES(${dill_BINARY_DIR} ${dill_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+INCLUDE_DIRECTORIES(BEFORE ${dill_BINARY_DIR} ${dill_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 ADD_CUSTOM_COMMAND(
    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/regress.c
@@ -20,6 +20,7 @@ foreach (TEST ${TESTS} )
     ADD_TEST(${TEST} "${TEST}")
 endforeach()
 
+TARGET_LINK_LIBRARIES(regress m)
 ADD_EXECUTABLE(cplus cplus.cc)
 TARGET_LINK_LIBRARIES(cplus dill )
 ADD_TEST(cplus cplus)

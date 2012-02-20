@@ -2,6 +2,9 @@
 #include "dill.h"
 #include "dill_internal.h"
 #include "sys/mman.h"
+#ifdef HAVE_MEMORY_H
+#include "memory.h"
+#endif
 #include "x86.h"
 
 extern long dill_x86_64_hidden_mod(long a, long b)
