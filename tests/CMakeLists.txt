@@ -26,12 +26,24 @@ TARGET_LINK_LIBRARIES(cplus dill )
 ADD_TEST(cplus cplus)
 ADD_EXECUTABLE(stest stest.c)
 TARGET_LINK_LIBRARIES(stest dill )
-ADD_TEST(stest stest "hello world!
+ADD_TEST(stest stest)
+
+set_tests_properties (call-test
+  PROPERTIES PASS_REGULAR_EXPRESSION "No errors!")
+set_tests_properties (regress
+  PROPERTIES PASS_REGULAR_EXPRESSION "No errors!")
+set_tests_properties (stest
+  PROPERTIES PASS_REGULAR_EXPRESSION "hello world!
 success!
 hello world!
 success!
 hello world!
 success!")
+set_tests_properties (ctest
+  PROPERTIES PASS_REGULAR_EXPRESSION "Hello: 10 20 30 40
+Hello: 10 20 30 40
+Hello: 10 20 30 40 50 60 70 80 90 100
+Hello: 1.000000e+01 2.000000e+01 3.000000e+01 4.000000e+01 5.000000e+01 6.000000e+01 7.000000e+01 8.000000e+01 9.000000e+01 1.000000e+02")
 
 SET_TARGET_PROPERTIES(call-test PROPERTIES LINKER_LANGUAGE C)
 SET_TARGET_PROPERTIES(ctest PROPERTIES LINKER_LANGUAGE C)
