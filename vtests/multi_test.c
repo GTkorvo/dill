@@ -25,14 +25,14 @@ int main(int argc, char **argv)
 	handle1 = dill_finalize(s);
 	dill_free_handle(handle1);
 	handle1 = dill_get_handle(s);
-	func1 = dill_get_fp(handle1);
+	func1 = (int(*)())dill_get_fp(handle1);
 
 	dill_start_simple_proc(s, "foo", DILL_I);
 	dill_retii(s, 2);
 	handle2 = dill_finalize(s);
 	dill_free_handle(handle2);
 	handle2 = dill_get_handle(s);
-	func2 = dill_get_fp(handle2);
+	func2 = (int(*)())dill_get_fp(handle2);
 
 
 	dill_start_simple_proc(s, "foo", DILL_I);
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 	handle3 = dill_finalize(s);
 	dill_free_handle(handle3);
 	handle3 = dill_get_handle(s);
-	func3 = dill_get_fp(handle3);
+	func3 = (int(*)())dill_get_fp(handle3);
 
 
 	dill_free_stream(s);
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 
 	dill_free_handle(handle1);
 
-	func1 = dill_get_fp(handle1);
+	func1 = (int(*)())dill_get_fp(handle1);
 	assert(func1() == 1);
 
 	dill_free_handle(handle1);
