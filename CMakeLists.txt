@@ -91,6 +91,7 @@ SET_TARGET_PROPERTIES(dill-static PROPERTIES OUTPUT_NAME "dill")
 # so we add a "lib" prefix (which is default on other platforms anyway):
 SET_TARGET_PROPERTIES(dill-static PROPERTIES PREFIX "lib")
 SET_TARGET_PROPERTIES(dill PROPERTIES STATIC_LIB "libdill.a")
+SET_TARGET_PROPERTIES(dill PROPERTIES LT_SHOULDNOTLINK "no")
 
 CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
 
