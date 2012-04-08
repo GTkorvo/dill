@@ -5,6 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
+include(CreateLibtoolFile)
 include(Compile)
 
 set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c version.c)
@@ -89,12 +90,14 @@ SET_TARGET_PROPERTIES(dill-static PROPERTIES OUTPUT_NAME "dill")
 # This conflicts with the "foo.lib" import library corresponding to "foo.dll",
 # so we add a "lib" prefix (which is default on other platforms anyway):
 SET_TARGET_PROPERTIES(dill-static PROPERTIES PREFIX "lib")
+SET_TARGET_PROPERTIES(dill PROPERTIES STATIC_LIB "libdill.a")
 
 CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
 
 CHECK_INCLUDE_FILES(stdarg.h STDC_HEADERS)
 CHECK_INCLUDE_FILES(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILES(memory.h HAVE_MEMORY_H)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 set (NO_DISASSEMBLER TRUE)
 if (ENABLE_DISASSEMBLY)
@@ -120,6 +123,9 @@ endif()
 
 
 CHECK_INCLUDE_FILES(dis-asm.h HAVE_DIS_ASM_H)
+
+CREATE_LIBTOOL_FILE(dill /lib)
+
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.h DESTINATION include)
 INSTALL(TARGETS dill dill-static
   RUNTIME DESTINATION bin
@@ -127,7 +133,7 @@ INSTALL(TARGETS dill dill-static
   ARCHIVE DESTINATION lib
 )
 
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h )
 
 # display status message for important variables
 MESSAGE( STATUS )
