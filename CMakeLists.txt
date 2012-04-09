@@ -135,7 +135,7 @@ INSTALL(TARGETS dill dill-static
   ARCHIVE DESTINATION lib
 )
 
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h )
+CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
 
 # display status message for important variables
 MESSAGE( STATUS )
