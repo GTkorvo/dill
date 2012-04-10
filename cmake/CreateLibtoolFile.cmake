@@ -47,5 +47,5 @@ MACRO(GET_TARGET_PROPERTY_WITH_DEFAULT _variable _target _property _default_valu
    FILE(APPEND ${_laname} "dlpreopen='${_target_dlpreopen}'\n\n")
    FILE(APPEND ${_laname} "# Directory that this library needs to be installed in:\n")
    FILE(APPEND ${_laname} "libdir='${CMAKE_INSTALL_PREFIX}${_install_DIR}'\n")
-   INSTALL( FILES ${_laname} DESTINATION ${CMAKE_INSTALL_PREFIX}${_install_DIR})
+   INSTALL( FILES ${_laname} DESTINATION lib)
  ENDMACRO(CREATE_LIBTOOL_FILE)
