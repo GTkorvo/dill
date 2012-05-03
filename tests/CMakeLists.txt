@@ -18,8 +18,7 @@ ADD_CUSTOM_COMMAND(
 foreach (TEST ${TESTS} )
     ADD_EXECUTABLE(dill_${TEST} ${TEST}.c)
     TARGET_LINK_LIBRARIES(dill_${TEST} dill )
-    ADD_TEST(dill_${TEST} "dill_${TEST}")
-    message (STATUS "adding test " dill_${TEST})
+    ADD_TEST(dill_${TEST} dill_${TEST} ${TEST_PERL_FLAGS})
 endforeach()
 
 TARGET_LINK_LIBRARIES(dill_regress m)
