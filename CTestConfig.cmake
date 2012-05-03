@@ -7,6 +7,6 @@ ENDIF(NOT DEFINED CTEST_DROP_METHOD)
 
 IF(CTEST_DROP_METHOD STREQUAL "http")
   SET(CTEST_DROP_SITE "cdash.cercs.gatech.edu")
-  SET(CTEST_DROP_LOCATION "/cdash/submit.php?project=Dill")
+  SET(CTEST_DROP_LOCATION "/submit.php?project=Dill")
   SET(CTEST_TRIGGER_SITE "cdash.cercs.gatech.edu")
 ENDIF(CTEST_DROP_METHOD STREQUAL "http")
