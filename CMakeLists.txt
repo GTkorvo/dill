@@ -5,6 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
+include(CheckTypeSize)
 include(CreateLibtoolFile)
 include(Compile)
 
@@ -14,6 +15,7 @@ IF( NOT CMAKE_BUILD_TYPE )
     SET( CMAKE_BUILD_TYPE "RelWithDebInfo" )
 ENDIF()
 
+CHECK_TYPE_SIZE("void*" CMAKE_SIZEOF_VOID_P)
 set (NATIVE_CG true)
 if (("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86") OR
 	("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64"))
@@ -25,7 +27,7 @@ if (("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86") OR
     else (CMAKE_SIZEOF_VOID_P MATCHES "8")
 	set (NATIVE_ARCH x86)
 	set (HOST_X86 1)
-	set (TEST_PERL_FLAGS "-max_arg=2")
+	set (TEST_PERL_FLAGS -no_float -max_arg=2)
 	set (ARCH_FILE x86)
     endif (CMAKE_SIZEOF_VOID_P MATCHES "8")
 else ()
