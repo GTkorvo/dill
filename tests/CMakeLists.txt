@@ -23,6 +23,7 @@ foreach (TEST ${TESTS} )
 endforeach()
 
 TARGET_LINK_LIBRARIES(dill_regress m)
+SET_TARGET_PROPERTIES(dill_regress PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")
 ADD_EXECUTABLE(cplus cplus.cc)
 TARGET_LINK_LIBRARIES(cplus dill )
 ADD_TEST(dill_cplus cplus)

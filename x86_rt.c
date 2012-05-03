@@ -2,6 +2,7 @@
 #ifdef USE_MMAP_CODE_SEG
 #include <sys/mman.h>
 #endif
+#include <string.h>
 #include "dill.h"
 #include "dill_internal.h"
 #include "x86.h"
