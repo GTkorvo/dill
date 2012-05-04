@@ -6,6 +6,7 @@
 #include "dill.h"
 #include "dill_internal.h"
 #include "x86.h"
+#include <string.h>
 
 extern long dill_x86_hidden_mod(long a, long b)
 { return a % b; }
