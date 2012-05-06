@@ -136,6 +136,10 @@ INSTALL(TARGETS dill dill-static
   ARCHIVE DESTINATION lib
 )
 
+if (${CMAKE_C_COMPILER_ID} MATCHES "Intel") 
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
+endif()
+
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
 
 # display status message for important variables
