@@ -38,6 +38,8 @@ IF ((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Li
     set (USE_MMAP_CODE_SEG 1)
 ENDIF()
 
+option(BUILD_STATIC "enable building the static library" ON)
+option(BUILD_DYNAMIC "enable building the dynamic library" ON)
 option(ENABLE_DISASSEMBLY "enable binutils-based disassembly (default is OFF)"
          OFF)
 
@@ -77,23 +79,32 @@ if (MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
     endif()
 else ()
     message ( FATAL_ERROR "Configure has detected no native dynamic code generation support 
-	for this architecture ("$NATIVE_ARCH"), --enable-multitarget 
+	for this architecture ("$NATIVE_ARCH"), -DMULTI_TARGET=ON 
 	was not specified, and no emulation is possible (avcall library 
 	not found)
 		       NO LIBRARY WILL BE BUILT")
 endif()
 
-add_library(dill SHARED ${SRC_LIST} dill.h)
-add_library(dill-static STATIC ${SRC_LIST} dill.h)
-# The library target "dill" already has a default OUTPUT_NAME of "dill", so we don't need to change it.
-# The library target "dill-static" has a default OUTPUT_NAME of "dill-static", so change it.
-SET_TARGET_PROPERTIES(dill-static PROPERTIES OUTPUT_NAME "dill")
-# Now the library target "foo-static" will be named "foo.lib" with MS tools.
-# This conflicts with the "foo.lib" import library corresponding to "foo.dll",
-# so we add a "lib" prefix (which is default on other platforms anyway):
-SET_TARGET_PROPERTIES(dill-static PROPERTIES PREFIX "lib")
-SET_TARGET_PROPERTIES(dill PROPERTIES STATIC_LIB "libdill.a")
-SET_TARGET_PROPERTIES(dill PROPERTIES LT_SHOULDNOTLINK "no")
+set (INSTALL_TARGETS)
+if (BUILD_DYNAMIC)
+  add_library(dill SHARED ${SRC_LIST} dill.h)
+  SET_TARGET_PROPERTIES(dill PROPERTIES LT_SHOULDNOTLINK "no")
+  if (BUILD_DYNAMIC)
+    set_target_properties(dill PROPERTIES STATIC_LIB "libdill.a")
+  endif (BUILD_DYNAMIC)
+  LIST(APPEND INSTALL_TARGETS dill)
+endif (BUILD_DYNAMIC)
+if (BUILD_STATIC)
+  add_library(dill-static STATIC ${SRC_LIST} dill.h)
+  # The library target "dill" already has a default OUTPUT_NAME of "dill", so we don't need to change it.
+  # The library target "dill-static" has a default OUTPUT_NAME of "dill-static", so change it.
+  SET_TARGET_PROPERTIES(dill-static PROPERTIES OUTPUT_NAME "dill")
+  # Now the library target "foo-static" will be named "foo.lib" with MS tools.
+  # This conflicts with the "foo.lib" import library corresponding to "foo.dll",
+  # so we add a "lib" prefix (which is default on other platforms anyway):
+  SET_TARGET_PROPERTIES(dill-static PROPERTIES PREFIX "lib")
+  LIST(APPEND INSTALL_TARGETS dill-static)
+endif (BUILD_STATIC)
 
 CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
 
@@ -110,8 +121,12 @@ if (ENABLE_DISASSEMBLY)
     else()
 	INCLUDE_DIRECTORIES(${BINUTILS_INCLUDE_DIR})
 	LINK_DIRECTORIES(${BINUTILS_LIB_DIR})
-	TARGET_LINK_LIBRARIES(dill ${BINUTILS_LIBRARIES})
-	TARGET_LINK_LIBRARIES(dill-static opcodes)
+	if (BUILD_DYNAMIC)
+	  TARGET_LINK_LIBRARIES(dill ${BINUTILS_LIBRARIES})
+	endif (BUILD_DYNAMIC)
+	if (BUILD_STATIC)
+	  TARGET_LINK_LIBRARIES(dill-static opcodes)
+	endif (BUILD_STATIC)
 	set (NO_DISASSEMBLER FALSE)
     endif()
     if(NOT DEFINED INIT_DISASSEMBLE_INFO_THREE_ARG)
@@ -130,7 +145,7 @@ CHECK_INCLUDE_FILES(dis-asm.h HAVE_DIS_ASM_H)
 CREATE_LIBTOOL_FILE(dill /lib)
 
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.h DESTINATION include)
-INSTALL(TARGETS dill dill-static
+install(TARGETS ${INSTALL_TARGETS}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
@@ -147,6 +162,10 @@ MESSAGE( STATUS )
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
 MESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
+MESSAGE( STATUS "BUILD_STATIC = ${BUILD_STATIC}" )
+MESSAGE( STATUS "BUILD_DYNAMIC = ${BUILD_DYNAMIC}" )
+MESSAGE( STATUS "ENABLE_DISASSEMBLY = ${ENABLE_DISASSEMBLY}" )
+MESSAGE( STATUS "MULTI_TARGET = ${MULTI_TARGET}" )
 MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 
