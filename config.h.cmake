@@ -25,43 +25,43 @@
 #cmakedefine HAVE_MEMORY_H
 
 /* Define if you have the `print_insn_arm' function. */
-#undef HAVE_PRINT_INSN_ARM
+#cmakedefine HAVE_PRINT_INSN_ARM
 
 /* Define if you have the `print_insn_big_powerpc' function. */
-#undef HAVE_PRINT_INSN_BIG_POWERPC
+#cmakedefine HAVE_PRINT_INSN_BIG_POWERPC
 
 /* Define if you have the `print_insn_i386' function. */
-#undef HAVE_PRINT_INSN_I386
+#cmakedefine HAVE_PRINT_INSN_I386
 
 /* Define if you have the `print_insn_ia64' function. */
-#undef HAVE_PRINT_INSN_IA64
+#cmakedefine HAVE_PRINT_INSN_IA64
 
 /* Define if you have the `print_insn_little_arm' function. */
-#undef HAVE_PRINT_INSN_LITTLE_ARM
+#cmakedefine HAVE_PRINT_INSN_LITTLE_ARM
 
 /* Define if you have the `print_insn_sparc' function. */
-#undef HAVE_PRINT_INSN_SPARC
+#cmakedefine HAVE_PRINT_INSN_SPARC
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
+#cmakedefine HAVE_STDINT_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
+#cmakedefine HAVE_STDLIB_H
 
 /* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
+#cmakedefine HAVE_STRINGS_H
 
 /* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
+#cmakedefine HAVE_STRING_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
+#cmakedefine HAVE_SYS_STAT_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
+#cmakedefine HAVE_SYS_TYPES_H
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
+#cmakedefine HAVE_UNISTD_H
 
 /* Define if the host processor is ARM */
 #cmakedefine HOST_ARM
@@ -91,17 +91,17 @@
 #cmakedefine INIT_DISASSEMBLE_INFO_THREE_ARG
 
 /* Define if integrating with kernel plugins */
-#undef KPLUGINS_INTEGRATION
+#cmakedefine KPLUGINS_INTEGRATION
 
 /* Define if compiling for linux kernel */
-#undef LINUX_KERNEL_MODULE
+#cmakedefine LINUX_KERNEL_MODULE
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
-#undef LT_OBJDIR
+#cmakedefine LT_OBJDIR
 
 /* Define if you want more than just native target */
-#undef MULTI_TARGET
+#cmakedefine MULTI_TARGET
 
 /* Define for the host architecture type */
 #cmakedefine NATIVE_ARCH "@NATIVE_ARCH@"
@@ -110,17 +110,17 @@
 #cmakedefine NO_DISASSEMBLER
 
 /* Define if we should not use inlined procedures from BFD */
-#undef NO_INLINED_BFD_PROCS
+#cmakedefine NO_INLINED_BFD_PROCS
 
 /* The number of bytes in type long */
-#undef SIZEOF_LONG
+#cmakedefine SIZEOF_LONG
 
 /* Define to 1 if you have the ANSI C header files. */
 #cmakedefine STDC_HEADERS
 
 /* Define if the membar instruction should be used to sync Icache and Dcache
    */
-#undef USE_MEMBAR
+#cmakedefine USE_MEMBAR
 
 /* Define this is mmap should be used instead of malloc() for code memory */
 #cmakedefine USE_MMAP_CODE_SEG

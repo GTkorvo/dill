@@ -3,11 +3,14 @@ project(dill)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+include(CheckCSourceCompiles)
 include(CheckFunctionExists)
+include(CheckLibraryExists)
 include(CheckIncludeFiles)
 include(CheckTypeSize)
 include(CreateLibtoolFile)
 include(Compile)
+include(FindCERCSProject)
 
 set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c version.c)
 
@@ -115,7 +118,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 set (NO_DISASSEMBLER TRUE)
 if (ENABLE_DISASSEMBLY)
-    FIND_PACKAGE (BinUtils)
+#    FIND_PACKAGE (BinUtils)
+    FIND_CERCS_PROJECT(binutils LIBRARY opcodes INCLUDES dis-asm.h REQUIRED)
     if (NOT BINUTILS_LIBRARIES)
 	message(FATAL_ERROR "libopcodes not found, You need to install binutils for disassembler support.")
     else()
@@ -131,16 +135,22 @@ if (ENABLE_DISASSEMBLY)
     endif()
     if(NOT DEFINED INIT_DISASSEMBLE_INFO_THREE_ARG)
 	#if not in Cache
-	set (INIT_DISASSEMBLE_INFO_THREE_ARG OFF CACHE BOOL "Does the INIT_DISASSEMBLE_INFO macro require three arguments")
     	FILE (WRITE check_init_disassemble_args.c "#include \"dis-asm.h\"
 extern int main() {struct disassemble_info info;INIT_DISASSEMBLE_INFO(info, stdout, fprintf);}" )
-    	COMPILE (INIT_DISASSEMBLE_INFO_THREE_ARG ${CMAKE_CURRENT_SOURCE_DIR}/check_init_disassemble_args.c)
+    	TRY_COMPILE (INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/check_init_disassemble_args.c CMAKE_FLAGS "-DCMAKE_C_LINK_EXECUTABLE=echo" COMPILE_DEFINITIONS -I${BINUTILS_INCLUDE_DIR} OUTPUT_VARIABLE LOG2)
     	FILE (REMOVE check_init_disassemble_args.c)
+	message (STATUS "Checking to see that the INIT_DISASSEMBLE_INFO macro requires three arguments :${INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS}")
+	set (INIT_DISASSEMBLE_INFO_THREE_ARG ${INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS} CACHE BOOL "Does the INIT_DISASSEMBLE_INFO macro require three arguments")
     endif()
+    CHECK_LIBRARY_EXISTS(opcodes print_insn_sparc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_SPARC)
+    CHECK_LIBRARY_EXISTS(opcodes print_insn_big_powerpc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_BIG_POWERPC)
+    CHECK_LIBRARY_EXISTS(opcodes print_insn_ia64 "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_IA64)
+    CHECK_LIBRARY_EXISTS(opcodes print_insn_i386 "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_I386)
+    CHECK_LIBRARY_EXISTS(opcodes print_insn_arm "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_ARM)
+    CHECK_LIBRARY_EXISTS(opcodes print_insn_little_arm "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_LITTLE_ARM)
+
 endif()
 
-
-CHECK_INCLUDE_FILES(dis-asm.h HAVE_DIS_ASM_H)
 
 CREATE_LIBTOOL_FILE(dill /lib)
 
