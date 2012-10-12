@@ -599,26 +599,18 @@ arm_pldst(dill_stream s, int type, int ls, int dest, int src1, int src2)
     }
 }
 
-static int arm5_hidden_modi(int a, int b)
-{ return a % b; }
-static long arm5_hidden_mod(long a, long b)
-{ return a % b; }
-static unsigned long arm5_hidden_umod(unsigned long a, unsigned long b)
-{ return a % b; }
-static unsigned int arm5_hidden_umodi(unsigned int a, unsigned int b)
-{ return a % b; }
-static double arm5_hidden_ultod(unsigned long a)
-{ return (double) a; }
-static float arm5_hidden_ultof(unsigned long a)
-{ return (float) a; }
-static unsigned long arm5_hidden_dtoul(double a)
-{ return (unsigned long) a; }
-static unsigned int arm5_hidden_dtou(double a)
-{ return (unsigned int) a; }
-static unsigned long arm5_hidden_ftoul(float a)
-{ return (unsigned long) a; }
-static unsigned int arm5_hidden_ftou(float a)
-{ return (unsigned int) a; }
+extern int arm5_hidden_modi(int a, int b);
+extern long arm5_hidden_mod(long a, long b);
+extern unsigned long arm5_hidden_umod(unsigned long a, unsigned long b);
+extern unsigned int arm5_hidden_umodi(unsigned int a, unsigned int b);
+extern double arm5_hidden_ultod(unsigned long a);
+extern float arm5_hidden_ultof(unsigned long a);
+extern unsigned long arm5_hidden_dtoul(double a);
+extern unsigned int arm5_hidden_dtou(double a);
+extern unsigned long arm5_hidden_ftoul(float a);
+extern unsigned int arm5_hidden_ftou(float a);
+extern unsigned long arm5_hidden_udiv(unsigned long a, unsigned long b);
+extern long arm5_hidden_div(long a, long b);
 
 extern void arm_mod(dill_stream s, int sign, int type_long, int dest, 
 		      int src1, int src2)
@@ -651,11 +643,6 @@ extern void arm_modi(dill_stream s, int data1, int data2, int dest, int src1,
     arm_set(s, _v1, imm);
     arm_mod(s, data1, data2, dest, src1, _v1);
 }
-
-static unsigned long arm5_hidden_udiv(unsigned long a, unsigned long b)
-{ return a / b; }
-static long arm5_hidden_div(long a, long b)
-{ return a / b; }
 
 extern void arm_div(dill_stream s, int unsign, int junk, int dest, int src1,
 		      int src2)
@@ -1229,36 +1216,7 @@ arm_PLT_emit(dill_stream s)
 static void
 arm_call_link(dill_stream s)
 {
-    call_t *t = &s->p->call_table;
-    int i;
-
-    for(i=0; i< t->call_count; i++) {
-	int *call_addr = (int*) ((unsigned long)s->p->code_base + 
-				 t->call_locs[i].loc);
-	if (t->call_locs[i].mach_info == NULL) {
-	    /* no PLT */
-	    int call_offset = (unsigned long)t->call_locs[i].xfer_addr -
-		(unsigned long)call_addr;
-	
-	    /* compensate for arm PC lookahead */
-	    call_offset = call_offset - 8;
-	    /* div addr diff by 4 for arm offset value */
-	    call_offset = call_offset >> 2;
-	    *call_addr &= 0xff000000;
-	    *call_addr |= (call_offset & 0xffffff);
-	} else {
-	    /* call through PLT */
-	    unsigned long PLT_addr = (unsigned long)s->p->code_base + 
-				      (unsigned long)t->call_locs[i].mach_info;
-	    int call_offset = PLT_addr - (unsigned long)call_addr;
-	    
-	    /* compensate for arm PC lookahead */
-	    call_offset = call_offset - 8;
-	    call_offset = call_offset >> 2;
-	    *call_addr &= 0xff000000;
-	    *call_addr |= (call_offset & 0x00ffffff);
-	}
-    }
+    x86_rt_call_link(s->p->code_base, &s->p->call_table);
 }
 
 
