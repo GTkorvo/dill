@@ -64,7 +64,7 @@
 #cmakedefine HAVE_UNISTD_H
 
 /* Define if the host processor is ARM */
-#cmakedefine HOST_ARM5
+#cmakedefine HOST_ARM
 
 /* Define if the host processor is an ia64 */
 #cmakedefine HOST_IA64

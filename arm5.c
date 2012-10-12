@@ -619,19 +619,19 @@ extern void arm_mod(dill_stream s, int sign, int type_long, int dest,
     if (sign == 1) {
 	/* signed case */
 	if (type_long) {
-	    return_reg = dill_scalll(s, (void*)arm5_hidden_mod, "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)arm5_hidden_mod, "arm5_hidden_mod", "%l%l", src1, src2);
 	    dill_movl(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scalli(s, (void*)arm5_hidden_modi, "%i%i", src1, src2);
+	    return_reg = dill_scalli(s, (void*)arm5_hidden_modi, "arm5_hidden_modi", "%i%i", src1, src2);
 	    dill_movi(s, dest, return_reg);
 	}
     } else {
 	/* unsigned case */
 	if (type_long) {
-	    return_reg = dill_scalll(s, (void*)arm5_hidden_umod, "%l%l", src1, src2);
+	    return_reg = dill_scalll(s, (void*)arm5_hidden_umod, "arm5_hidden_umod", "%l%l", src1, src2);
 	    dill_movul(s, dest, return_reg);
 	} else {
-	    return_reg = dill_scallu(s, (void*)arm5_hidden_umodi, "%u%u", src1, src2);
+	    return_reg = dill_scallu(s, (void*)arm5_hidden_umodi, "arm5_hidden_umodi", "%u%u", src1, src2);
 	    dill_movu(s, dest, return_reg);
 	}
     }
@@ -651,7 +651,7 @@ extern void arm_div(dill_stream s, int unsign, int junk, int dest, int src1,
     void *routine = (void*) &arm5_hidden_div;
     if (unsign) routine = (void*) &arm5_hidden_udiv;
 
-    return_reg = dill_scalll(s, routine, "%l%l", src1, src2);
+    return_reg = dill_scalll(s, routine, "routine", "%l%l", src1, src2);
     dill_movl(s, dest, return_reg);
 }
 
@@ -741,7 +741,7 @@ arm_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    arm_saverestore_floats(s, 0);
-	    ret = dill_scallu(s, (void*)arm5_hidden_ftou, "%f", src);
+	    ret = dill_scallu(s, (void*)arm5_hidden_ftou, "arm5_hidden_ftou", "%f", src);
 	    arm_saverestore_floats(s, 1);
 	    arm_mov(s, DILL_UL, 0, dest, ret);
 	}
@@ -751,7 +751,7 @@ arm_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    arm_saverestore_floats(s, 0);
-	    ret = dill_scallul(s, (void*)arm5_hidden_ftoul, "%f", src);
+	    ret = dill_scallul(s, (void*)arm5_hidden_ftoul, "arm5_hidden_ftoul", "%f", src);
 	    arm_saverestore_floats(s, 1);
 	    arm_mov(s, DILL_UL, 0, dest, ret);
 	}
@@ -767,7 +767,7 @@ arm_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    arm_saverestore_floats(s, 0);
-	    ret = dill_scallu(s, (void*)arm5_hidden_dtou, "%d", src);
+	    ret = dill_scallu(s, (void*)arm5_hidden_dtou, "arm5_hidden_dtou", "%d", src);
 	    arm_saverestore_floats(s, 1);
 	    arm_mov(s, DILL_U, 0, dest, ret);
 	}
@@ -776,7 +776,7 @@ arm_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    arm_saverestore_floats(s, 0);
-	    ret = dill_scallul(s, (void*)arm5_hidden_dtoul, "%d", src);
+	    ret = dill_scallul(s, (void*)arm5_hidden_dtoul, "arm5_hidden_dtoul", "%d", src);
 	    arm_saverestore_floats(s, 1);
 	    arm_mov(s, DILL_UL, 0, dest, ret);
 	}
@@ -790,7 +790,7 @@ arm_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    arm_saverestore_floats(s, 0);
-	    ret = dill_scalld(s, (void*)arm5_hidden_ultod, "%l", src);
+	    ret = dill_scalld(s, (void*)arm5_hidden_ultod, "arm5_hidden_ultod", "%l", src);
 	    arm_saverestore_floats(s, 1);
 	    arm_mov(s, DILL_D, 0, dest, ret);
 	}
@@ -804,7 +804,7 @@ arm_convert(dill_stream s, int from_type, int to_type,
         {
 	    int ret;
 	    arm_saverestore_floats(s, 0);
-	    ret = dill_scallf(s, (void*)arm5_hidden_ultof, "%l", src);
+	    ret = dill_scallf(s, (void*)arm5_hidden_ultof, "arm5_hidden_ultof", "%l", src);
 	    arm_saverestore_floats(s, 1);
 	    arm_mov(s, DILL_D, 0, dest, ret);
 	}
@@ -908,7 +908,7 @@ extern void arm_jump_to_reg(dill_stream s, unsigned long reg)
     arm_dproc(s, MOV, 0, _pc, reg, reg);
 }
 
-extern void arm_jump_to_imm(dill_stream s, unsigned long imm)
+extern void arm_jump_to_imm(dill_stream s, void * imm)
 {
 
 }
@@ -1046,10 +1046,11 @@ extern void arm_pushpi(dill_stream s, int type, void *value)
     internal_push(s, type, 1, &value);
 }
 
-extern int arm_calli(dill_stream s, int type, void *xfer_address, char *name)
+extern int arm_calli(dill_stream s, int type, void *xfer_address, const char *name)
 {
     int caller_side_ret_reg = _a1;
 
+    (void) name;
     /* save temporary registers */
     dill_mark_call_location(s, name, xfer_address);
     INSN_OUT(s, COND(AL)|CLASS(5)|(1<<24)/*link*/);
@@ -1153,13 +1154,13 @@ extern void arm_reti(dill_stream s, int data1, int data2, long imm)
 static void
 arm_data_link(dill_stream s)
 {
-    struct branch_table *t = &s->p->branch_table;
+  /*    struct branch_table *t = &s->p->branch_table;
     int i;
     for (i=0; i < t->data_mark_count; i++) {
 	int label = t->data_marks[i].label;
 	void *label_addr = t->label_locs[label] + (char*)s->p->code_base;
 	*t->data_marks[i].addr = (long) label_addr;
-    }
+	}*/
 }
 
 static void
@@ -1216,7 +1217,7 @@ arm_PLT_emit(dill_stream s)
 static void
 arm_call_link(dill_stream s)
 {
-    x86_rt_call_link(s->p->code_base, &s->p->call_table);
+    arm5_rt_call_link(s->p->code_base, &s->p->call_table);
 }
 
 
@@ -1298,7 +1299,7 @@ arm_emit_save(dill_stream s)
     arm_savei(s, -ar_size);
 
     for(i=0; i< t->ret_count; i++) {
-	s->p->cur_ip = (int*)((char *)s->p->code_base + t->ret_locs[i]);
+	s->p->cur_ip = (char*)((char *)s->p->code_base + t->ret_locs[i]);
 	if (float_count > 0) {
 	    int n1 = (float_count & 0x2) >> 1;
 	    int n0 = (float_count &0x1);

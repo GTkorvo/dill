@@ -48,7 +48,7 @@ dill_package_entry(char* package)
 extern char * sparc_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * x86_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg);
-extern char * arm_package_stitch(char *code, call_t *t, dill_pkg pkg);
+extern char * arm5_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * ia64_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * powerpc_package_stitch(char *code, call_t *t, dill_pkg pkg);
 
@@ -92,7 +92,7 @@ dill_package_stitch(char *pkg, dill_extern_entry* extra_externs)
 #if defined(HOST_IA64)
     char *p = ia64_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
-#if defined(HOST_ARM5)
+#if defined(HOST_ARM)
     char *p = arm5_package_stitch(code, &t, (dill_pkg) pkg);
 #endif
 #if defined(HOST_POWERPC)

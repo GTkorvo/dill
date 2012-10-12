@@ -36,7 +36,7 @@ if (("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86") OR
     endif (CMAKE_SIZEOF_VOID_P MATCHES "8")
 elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.*")
     set (NATIVE_ARCH arm5)
-    set (HOST_ARM5 1)
+    set (HOST_ARM 1)
     set (TEST_PERL_FLAGS -max_arg=4)
     set (ARCH_FILE arm5)
 else()

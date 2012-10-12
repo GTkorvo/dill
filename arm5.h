@@ -95,9 +95,9 @@ extern void
 arm_lea(dill_stream s, int junk, int junk1, int dest, int src, long imm);
 extern void arm_jump_to_label(dill_stream s, unsigned long label);
 extern void arm_jump_to_reg(dill_stream s, unsigned long reg);
-extern void arm_jump_to_imm(dill_stream s, unsigned long imm);
+extern void arm_jump_to_imm(dill_stream s, void *imm);
 extern void arm_jal(dill_stream s, int return_addr_reg, int target);
-extern int arm_calli(dill_stream s, int type, void *xfer_address);
+extern int arm_calli(dill_stream s, int type, void *xfer_address, const char *name);
 extern int arm_callr(dill_stream s, int type, int src);
 extern void arm_push(dill_stream s, int type, int reg);
 extern void arm_pushi(dill_stream s, int type, long value);

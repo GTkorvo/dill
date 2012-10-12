@@ -85,15 +85,6 @@ arm5_package_stitch(char *code, call_t *t, dill_pkg pkg)
     char *tmp = code;
     dill_lookup_xfer_addrs(t, &arm5_xfer_recs[0]);
     arm5_rt_call_link(code, t);
-#ifdef USE_MMAP_CODE_SEG
-#ifndef MAP_ANONYMOUS
-#define MAP_ANONYMOUS MAP_ANON
-#endif
-    tmp = (void*)mmap(0, pkg->code_size,
-		      PROT_EXEC | PROT_READ | PROT_WRITE, 
-		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
-    memcpy(tmp, code, pkg->code_size);
-#endif
     return tmp + pkg->entry_offset;
 }
 
