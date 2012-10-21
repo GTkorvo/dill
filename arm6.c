@@ -22,7 +22,17 @@ s->p->cur_ip = (void*)(((long)s->p->cur_ip)+4);\
  #define COND(x)	((unsigned)((x)&0xf) << 28)
  #define CLASS(x)	(((x)&0x7) << 25)
  #define OPCODE(x)	(((x)&0xf) << 21) /* opcode field */
+ #define p(x)		(((x)&0x1) << 23)
+ #define D(x)		(((x)&0x1) << 22)
+ #define q(x)		(((x)&0x1) << 21)
+ #define r(x)		(((x)&0x1) << 20)
  #define S(x)		(((x)&0x1) << 20) /* update cond codes? */
+ #define FN(x)		(((x)&0xf) << 16) /* Fn field */
+ #define FD(x)		(((x)&0xf) << 12) /* Fn field */
+ #define cp_num(x)	(((x)&0xf) << 8) /* cpu */
+ #define N(x)		(((x)&0x1) << 7)
+ #define s(x)		(((x)&0x1) << 6)
+ #define M(x)		(((x)&0x1) << 5)
  #define RN(x)		(((x)&0xf) << 16) /* Rn field */
  #define RD(x)		(((x)&0xf) << 12) /* Rd field */
  #define RM(x)		(((x)&0xf) << 0) /* Rm field */
@@ -36,8 +46,8 @@ s->p->cur_ip = (void*)(((long)s->p->cur_ip)+4);\
 #define arm6_savei(s, imm) arm6_dproci(s, SUB, 0, _sp, _sp, ar_size);
 #define arm6_andi(s, dest, src, imm) arm6_dproci(s, AND, 0, dest, src, imm)
 #define arm6_movi(s, dest, src) arm6_dproc(s, MOV, 0, dest, 0, src) 
-#define arm6_movf(s, dest, src) arm6_fproc2(s, 0x1, 0, dest, src)
-#define arm6_movd(s, dest, src) arm6_fproc2(s, 0x1, 1, dest, src)
+#define arm6_movf(s, dest, src) arm6_fproc2(s, 0, 0, dest, src)
+#define arm6_movd(s, dest, src) arm6_fproc2(s, 0, 1, dest, src)
 #define arm6_lshi(s, dest, src,imm) arm6_dproci(s, MOV, LLshift, dest, src, imm)
 #define arm6_rshi(s,dest,src,imm) arm6_dproci(s, MOV, LRshift, dest, src, imm)
 #define arm6_rshai(s,dest,src,imm) arm6_dproci(s, MOV, ARshift, dest, src, imm)
@@ -194,14 +204,13 @@ int src;
     }
 }
 
-extern void arm6_fproc2(s, arm6_op, fd, dest, src)
+extern void arm6_fproc2(s, op,fd, dest, src)
 dill_stream s;
-int arm6_op;
 int fd;
 int dest;
 int src;
 {
-    INSN_OUT(s, COND(AL)|CLASS(0x7)|((arm6_op&0x1e)<<19)|(arm6_op&0x1)<<15|(dest&0x7)<<12|0x1<<8|(fd&1)<<7|(src&7));
+  INSN_OUT(s, COND(AL)|CLASS(0x7)|p(1)|D(dest&1)|q(1)|r(1)|FN(op)|FD(dest>>1)|(0xa+fd)<<8|s(1)|M(src&1)|((src>>1)&0xf));
 }
 
 extern int
@@ -331,7 +340,7 @@ int dest;
 int src1;
 int src2;
 {
-    INSN_OUT(s, COND(AL)|CLASS(0x7)|((arm6_op&0x1e)<<19)|(arm6_op&0x1)<<15|(src1&0x7)<<16|(dest&0x7)<<12|0x1<<8|(fd&1)<<7|(src2&0x7));
+  INSN_OUT(s, COND(AL)|CLASS(0x7)|D(dest&0x1)|p(arm6_op>>3)|q(arm6_op>>2)|r(arm6_op>>2)|s(arm6_op)|(arm6_op&0x1)<<15|((src1>>1)&0xf)<<16|((dest>>1)&0xf)<<12|(0xa+(fd))<<8|(src1&1)<<7|(src2>>1)&0xf|(src2&0x1)<<5);
 }
 
 extern void arm6_dproci(s, op, shift_code, dest, src1, imm)
@@ -495,7 +504,7 @@ arm6_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 #define ARM6_LDSTHI(s,u,ls,rn,rd,sh,offset) INSN_OUT(s, COND(AL)|CLASS(0)|(1<<24)|((u&1)<<23)|(1<<22)|(ls&1)<<20|RN(rn)|RD(rd)|(1<<7)|((sh&0x3)<<5)|(1<<4)|(0xf&offset)|((offset&0xf0)<<4))
 
 /* float version */
-#define ARM6_LDSTFI(s,u,fd,ls,rn,rd,offset) INSN_OUT(s, COND(AL)|CLASS(6)|(1<<24)|((u&1)<<23)|(ls&1)<<20|RN(rn)|(fd&1)<<15|RD(rd)|(0x1<<8)|(0xff&(offset>>2)))
+#define ARM6_LDSTFI(s,u,fd,ls,rn,rd,offset) INSN_OUT(s, COND(AL)|CLASS(6)|(1<<24)|((u&1)<<23)|(ls&1)<<20|RN(rn)|(fd&1)<<15|RD(rd>>1)|((0xa+(fd))<<8)|(0xff&(offset>>2)))
 
 extern void
 arm6_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset)
@@ -1291,7 +1300,7 @@ arm6_emit_save(dill_stream s)
     if (float_count > 0) {
 	int n1 = (float_count & 0x2) >> 1;
 	int n0 = (float_count &0x1);
-	INSN_OUT(s, COND(AL)|CLASS(6)|1<<24|n1<<22|1<<21|RN(_sp)|n0<<15|_f4<<12|0x2<<8|0x6); /*sfm*/
+	INSN_OUT(s, COND(AL)|CLASS(6)|1<<24|n1<<22|1<<21|RN(_sp)|n0<<15|_f4<<12|0xb<<8|0x6); /*sfm*/
     } else {
 	arm6_nop(s);
     }
@@ -1304,7 +1313,7 @@ arm6_emit_save(dill_stream s)
 	    int n1 = (float_count & 0x2) >> 1;
 	    int n0 = (float_count &0x1);
 	    int offset = 4 * 12 + 14*4 - 4;
-	    INSN_OUT(s, COND(AL)|CLASS(6)|1<<24|n1<<22|1<<20|RN(_r11)|n0<<15|_f4<<12|0x2<<8|offset>>2);  /* lfm */
+	    INSN_OUT(s, COND(AL)|CLASS(6)|1<<24|n1<<22|1<<20|RN(_r11)|n0<<15|_f4<<12|0xb<<8|offset>>2);  /* lfm */
 	}
         INSN_OUT(s, COND(AL)|CLASS(4)|1<<24/*p*/|1<<20/*l*/|RN(_r11)|1<<_r11|1<<_sp|1<<_pc|mask);
     }
@@ -1428,9 +1437,15 @@ arm6_reg_init(dill_stream s)
 	(bit_R(_a1)|bit_R(_a2)|bit_R(_a3)|bit_R(_a4));
     s->p->var_f.init_avail[0] = 0;
     s->p->var_f.members[0] = s->p->var_f.init_avail[0];
-    s->p->tmp_f.init_avail[0] = (bit_R(_f0)|bit_R(_f1)|bit_R(_f2)|bit_R(_f3)|
-				 bit_R(_f4)|bit_R(_f5)|bit_R(_f6)|bit_R(_f7));
-
+    /* in reality, there are 32 single precision regs, overlapping 16 
+     * double-precision regs.  DILL isn't quite smart enough to handle 
+     * overlapping registers, so we allocate only the even ones.  _f2 if 
+     * used as a double-precision corresponds to ARM register D1.
+     */
+    s->p->tmp_f.init_avail[0] = (bit_R(_f0)|bit_R(_f2)|bit_R(_f4)|bit_R(_f6)|
+				 bit_R(_f8)|bit_R(_f10)|bit_R(_f12)|bit_R(_f14)|
+				 bit_R(_f16)|bit_R(_f18)|bit_R(_f20)|bit_R(_f22)|
+				 bit_R(_f24)|bit_R(_f26)|bit_R(_f28)|bit_R(_f30));
     s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
 
@@ -1491,7 +1506,7 @@ arm6_init_disassembly_info(dill_stream s, void * ptr)
     i->buffer_length = MAXLENGTH;
 #ifdef HAVE_PRINT_INSN_ARM
     return 1;
-#elif HAVE_PRINT_INSN_LITTLE_ARM
+#elif defined(HAVE_PRINT_INSN_LITTLE_ARM)
     return 1;
 #else
     return 0;
@@ -1503,7 +1518,7 @@ arm6_print_insn(dill_stream s, void *info_ptr, void *insn)
 {
 #ifdef HAVE_PRINT_INSN_ARM
     return print_insn_arm((unsigned long) insn, (disassemble_info*)info_ptr);
-#elif HAVE_PRINT_INSN_LITTLE_ARM
+#elif defined(HAVE_PRINT_INSN_LITTLE_ARM)
     return print_insn_little_arm((unsigned long) insn, (disassemble_info*)info_ptr);
 #else
     return 0;

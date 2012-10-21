@@ -26,16 +26,16 @@ sub upperc {
 &arith_insn("lsh", "i u ul l", "arm6_dproc", "MOV", LLshift);
 &arith_insn("rsh", "i l", "arm6_dproc", "MOV", ARshift);
 &arith_insn("rsh", "u ul", "arm6_dproc", "MOV", LRshift);
-&arith_insn("add", "f", "arm6_fproc", "0x0", "0x0");
-&arith_insn("add", "d", "arm6_fproc", "0x0", "0x1");
+&arith_insn("add", "f", "arm6_fproc", "0x6", "0x0");
+&arith_insn("add", "d", "arm6_fproc", "0x6", "0x1");
 &arith_insn("sub", "f", "arm6_fproc", "0x4", "0x0");
 &arith_insn("sub", "d", "arm6_fproc", "0x4", "0x1");
 &arith_insn("mul", "f", "arm6_fproc", "0x2", "0x0");
 &arith_insn("mul", "d", "arm6_fproc", "0x2", "0x1");
 &arith_insn("div", "f", "arm6_fproc", "0x8", "0x0");
 &arith_insn("div", "d", "arm6_fproc", "0x8", "0x1");
-&arith2_insn("neg", "f", "arm6_fproc2", "0x3", "0x0");
-&arith2_insn("neg", "d", "arm6_fproc2", "0x3", "0x1");
+&arith2_insn("neg", "f", "arm6_fproc2", "0x1", "0x0");
+&arith2_insn("neg", "d", "arm6_fproc2", "0x1", "0x1");
 
 &arithi_insn("add", "i u ul l p", "arm6_dproci", "ADD", "0");
 &arithi_insn("sub", "i u ul l p", "arm6_dproci", "SUB", "0");
