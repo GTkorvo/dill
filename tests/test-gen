@@ -300,13 +300,14 @@ print<<EOF;
         union {
 	   $type{$t} val;
 	   char c[8];
+	   int  i[2];
         }u;
 	$type{$t}(*func)($type{$t});
 	dill_reg	rd$t;
 	dill_exec_handle h;
 
 	/* reg <- (BSWAP) reg */
-	if (verbose) printf(" - bswap\\n");
+	if (verbose) printf(" - bswap$t\\n");
         dill_start_proc(s, "bswap",  DILL_$upt, "%$t");
 		if(!dill_raw_getreg(s, &rd$t, $type_enum{$t}, DILL_TEMP))
 			dill_fatal("out of registers!");
@@ -350,6 +351,10 @@ print<<EOF;
 	dill_free_handle(h);
 	if (expected_result != result) {
 	    printf("Failed test for bswap$t, got $c_print_formats{$t}, expected $c_print_formats{$t} for ($type{$t}) $c_print_formats{$t}\\n", $cast1 result, $cast1 expected_result, $cast2 s1$t);
+	    u.val = expected_result;
+	    printf("expected %x %x ", u.i[0], u.i[1]);
+	    u.val = result;
+	    printf("got  %x %x \\n", u.i[0], u.i[1]);
 	    dill_errors++;
 	    dill_dump(s);
 	}

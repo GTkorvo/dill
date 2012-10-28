@@ -46,8 +46,8 @@ s->p->cur_ip = (void*)(((long)s->p->cur_ip)+4);\
 #define arm6_savei(s, imm) arm6_dproci(s, SUB, 0, _sp, _sp, ar_size);
 #define arm6_andi(s, dest, src, imm) arm6_dproci(s, AND, 0, dest, src, imm)
 #define arm6_movi(s, dest, src) arm6_dproc(s, MOV, 0, dest, 0, src) 
-#define arm6_movf(s, dest, src) arm6_fproc2(s, 0, 0, dest, src)
-#define arm6_movd(s, dest, src) arm6_fproc2(s, 0, 1, dest, src)
+#define arm6_movf(s, dest, src) arm6_fproc2(s, 0, 0, 0, dest, src)
+#define arm6_movd(s, dest, src) arm6_fproc2(s, 0, 1, 0, dest, src)
 #define arm6_lshi(s, dest, src,imm) arm6_dproci(s, MOV, LLshift, dest, src, imm)
 #define arm6_rshi(s,dest,src,imm) arm6_dproci(s, MOV, LRshift, dest, src, imm)
 #define arm6_rshai(s,dest,src,imm) arm6_dproci(s, MOV, ARshift, dest, src, imm)
@@ -84,12 +84,10 @@ arm6_bswap(dill_stream s, int type, int data2, int dest, int src)
 	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|0<<20|FN(dest>>1)|N(dest)|RD(_r0)|cp_num(0xa)|1<<4);/*fmsr*/
 	break;
     case DILL_D: 
-      INSN_OUT(s, COND(AL)| CLASS(6)|OPCODE(2)|FN(_r1)|RD(_r0)|cp_num(0xa)|1<<4|(src>>1)|(src&1)<<5);/*fmsrr*/
+	INSN_OUT(s, COND(AL)| CLASS(6)|OPCODE(2)|r(1)|FN(_r1)|RD(_r0)|cp_num(0xb)|1<<4|(src>>1)|(src&1)<<5);/*fmrrd*/
 	int_arm6_bswap(s, DILL_L, _r0);
 	int_arm6_bswap(s, DILL_L, _r1);
-	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|0<<20|FN(dest>>1)|N(dest
-)|RD(_r1)|cp_num(0xa)|1<<4);/*fmrs*/
-	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|0<<20|FN(dest>>1)|N(dest+1)|RD(_r0)|cp_num(0xa)|1<<4);/*fmrs*/
+	INSN_OUT(s, COND(AL)| CLASS(6)|OPCODE(2)|FN(_r0)|RD(_r1)|cp_num(0xb)|1<<4|(dest>>1)|(dest&1)<<5);/*fmrrd*/
 	break;
     }
 }
@@ -206,13 +204,25 @@ int src;
     }
 }
 
-extern void arm6_fproc2(s, op,fd, dest, src)
+extern void arm6_negf(s, op,fd, dest, src)
 dill_stream s;
+int op;
 int fd;
 int dest;
 int src;
 {
-  INSN_OUT(s, COND(AL)|CLASS(0x7)|p(1)|D(dest&1)|q(1)|r(1)|FN(op)|FD(dest>>1)|(0xa+fd)<<8|s(1)|M(src&1)|((src>>1)&0xf));
+    arm6_fproc2(s, op, fd, 0, dest, src);
+}
+
+extern void arm6_fproc2(s, op,fd, n, dest, src)
+dill_stream s;
+int op;
+int fd;
+int n;
+int dest;
+int src;
+{
+  INSN_OUT(s, COND(AL)|CLASS(0x7)|p(1)|D(dest&1)|q(1)|r(1)|FN(op)|N(n)|FD(dest>>1)|(0xa+fd)<<8|s(1)|M(src&1)|((src>>1)&0xf));
 }
 
 extern int
@@ -342,7 +352,7 @@ int dest;
 int src1;
 int src2;
 {
-  INSN_OUT(s, COND(AL)|CLASS(0x7)|D(dest&0x1)|p(arm6_op>>3)|q(arm6_op>>2)|r(arm6_op>>2)|s(arm6_op)|(arm6_op&0x1)<<15|((src1>>1)&0xf)<<16|((dest>>1)&0xf)<<12|(0xa+(fd))<<8|(src1&1)<<7|(src2>>1)&0xf|(src2&0x1)<<5);
+  INSN_OUT(s, COND(AL)|CLASS(0x7)|D(dest&0x1)|p(arm6_op>>3)|q(arm6_op>>2)|r(arm6_op>>1)|s(arm6_op)|(arm6_op&0x1)<<15|((src1>>1)&0xf)<<16|((dest>>1)&0xf)<<12|(0xa+(fd))<<8|(src1&1)<<7|(src2>>1)&0xf|(src2&0x1)<<5);
 }
 
 extern void arm6_dproci(s, op, shift_code, dest, src1, imm)
@@ -391,9 +401,11 @@ arm6_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list arg
 	     dill_reg *arglist)
 {
     int i;
-    int max_in_reg = _a4;
     arm6_mach_info ami = (arm6_mach_info) s->p->mach_info;
     int cur_arg_offset = 0;
+    int next_core_register = _r0;
+    int next_float_register = _f0;
+
     /* emit start insns */
     INSN_OUT(s, 0xFF000000);
     INSN_OUT(s, 0xFF000000);
@@ -417,17 +429,31 @@ arm6_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list arg
     /* load params from regs */
     for (i = 0; i < arg_count; i++) {
 	switch (args[i].type) {
-	case DILL_F: case DILL_D:
+	case DILL_D:
+	    if (next_float_register % 2) {
+		/* double is only even regs, skip one */
+	        next_float_register++;
+	    }
+	case DILL_F:
 	    /* falling through */
-	default:
-	    if (cur_arg_offset < 4 * ami->stack_align) {
-		args[i].is_register = 1;
-		args[i].in_reg = _r0 + cur_arg_offset/ami->stack_align;
-		args[i].out_reg = _r0 + cur_arg_offset/ami->stack_align;
-		max_in_reg = args[i].in_reg;
+	    if (next_float_register <= _f31) {
+	        args[i].is_register = 1;
+		args[i].in_reg = next_float_register;
+		args[i].out_reg = next_float_register;
 	    } else {
 		args[i].is_register = 0;
 	    }
+	    next_float_register += ((args[i].type == DILL_D) ? 2 : 1);
+	    break;
+	default:
+	    if (next_core_register < _a4) {
+		args[i].is_register = 1;
+		args[i].in_reg = next_core_register;
+		args[i].out_reg = next_core_register;
+	    } else {
+		args[i].is_register = 0;
+	    }
+	    next_core_register++;
 	    break;
 	}
 	args[i].offset = cur_arg_offset;
@@ -436,8 +462,8 @@ arm6_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list arg
     
     for (i = 0; i < arg_count; i++) {
 	int tmp_reg;
-	if (i < 4) {
-	    /* only first 4 moved into registers */
+	if (args[i].is_register) {
+	    /* only some moved into registers */
 	    if (!dill_raw_getreg(s, &tmp_reg, args[i].type, DILL_VAR)) {
 		/* not enough regs for this, store it to the stack */
 		int real_offset = - args[i].offset - 4*4; 
@@ -454,7 +480,7 @@ arm6_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list arg
 		if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
 		    arm6_movi(s, tmp_reg, args[i].in_reg);
 		} else if (args[i].type == DILL_F) {	    /* must be float */
-		    arm6_movi2f(s, tmp_reg, args[i].in_reg);
+		    arm6_movf(s, tmp_reg, args[i].in_reg);
 		} else {
 		    /* arm boundary condition, half in register */
 		    if (args[i].offset == 3*4) {
@@ -464,7 +490,7 @@ arm6_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list arg
 			arm6_ploadi(s, DILL_F, 0, tmp_reg, _fp, real_offset);
 			arm6_ploadi(s, DILL_F, 0, tmp_reg+1, _fp, real_offset+4);
 		    } else {
-			arm6_movi2d(s, tmp_reg, args[i].in_reg);
+			arm6_movd(s, tmp_reg, args[i].in_reg);
 		    }
 		}
 	    } else {
@@ -742,12 +768,12 @@ arm6_convert(dill_stream s, int from_type, int to_type,
 	arm6_movi(s, dest,src);
 	break;
     case CONV(DILL_F,DILL_D):
-	arm6_movd(s, dest, src);
+        arm6_fproc2(s, 0b0111, 0, 1, dest, src);  /* fcvtds */
 	break;
     case CONV(DILL_F,DILL_L):
     case CONV(DILL_F,DILL_I):
-        arm6_fproc2(s, 0b1101, 0, src, src);  /* ftosis */
-	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|1<<20|FN(dest>>1)|N(dest)|RD(src)|cp_num(0xa)|1<<4);/*fmsr*/
+	arm6_fproc2(s, 0b1101, 0, 1, src, src);  /* ftosis */
+	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|1<<20|FN(src>>1)|N(src)|RD(dest)|cp_num(0xa)|1<<4);/*fmrs*/
 	break;
     case CONV(DILL_F,DILL_U):
         {
@@ -769,12 +795,12 @@ arm6_convert(dill_stream s, int from_type, int to_type,
 	}
 	break;
     case CONV(DILL_D,DILL_F):
-	arm6_movf(s, dest, src);
+	arm6_fproc2(s, 0b0111, 1, 1, dest, src);  /* fcvtds */
 	break;
     case CONV(DILL_D,DILL_L):
     case CONV(DILL_D,DILL_I):
-	arm6_fproc2(s, 0b1101, 1, src, src);  /* ftosid */
-	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|1<<20|FN(dest>>1)|N(dest)|RD(src)|cp_num(0xa)|1<<4);/*fmsr*/
+	arm6_fproc2(s, 0b1101, 1, 1, src, src);  /* ftosid */
+	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|1<<20|FN(src>>1)|N(src)|RD(dest)|cp_num(0xa)|1<<4);/*fmsr*/
 	break;
     case CONV(DILL_D,DILL_U):
         {
@@ -797,7 +823,7 @@ arm6_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_I,DILL_D):
     case CONV(DILL_L,DILL_D):
 	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|0<<20|FN(dest>>1)|N(dest)|RD(src)|cp_num(0xa)|1<<4);/*fmsr*/
-	arm6_fproc2(s, 0x8, 1, dest, dest);  /* fsitod */
+	arm6_fproc2(s, 0x8, 1, 1, dest, dest);  /* fsitod */
 	break;
     case CONV(DILL_U,DILL_D):
     case CONV(DILL_UL,DILL_D): 
@@ -812,7 +838,7 @@ arm6_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_I,DILL_F):
     case CONV(DILL_L,DILL_F):
 	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|0<<20|FN(dest>>1)|N(dest)|RD(src)|cp_num(0xa)|1<<4);/*fmsr*/
-	arm6_fproc2(s, 0x8, 0, dest, dest);  /* fsitos */
+	arm6_fproc2(s, 0x8, 0, 1, dest, dest);  /* fsitos */
 	break;
     case CONV(DILL_U,DILL_F):
     case CONV(DILL_UL,DILL_F):
@@ -887,7 +913,7 @@ arm6_branch(dill_stream s, int op, int type, int src1, int src2, int label)
     switch(type) {
     case DILL_D:
     case DILL_F:
-	arm6_fproc2(s, 0b0100, (type == DILL_D), src1, src2);  /* fcmps */
+	arm6_fproc2(s, 0b0100, (type == DILL_D), 0, src1, src2);  /* fcmps */
 	INSN_OUT(s, COND(AL)|0b111011110001<<16|0b1111101000010000); /* fmstat */
 	dill_mark_branch_location(s, label);
 	INSN_OUT(s, COND(op_conds[op])|CLASS(0x5)|/*disp */0);/* b*/
@@ -913,9 +939,9 @@ arm6_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
     switch(type) {
     case DILL_D:
     case DILL_F:
-	arm6_fproc2(s, 0b0100, (type == DILL_D), src1, src2);  /* fcmps */
+	arm6_fproc2(s, 0b0100, (type == DILL_D), 0, src1, src2);  /* fcmps */
 	INSN_OUT(s, COND(AL)|0b111011110001<<16|0b1111101000010000); /* fmstat */
-	INSN_OUT(s, COND(op_conds[op])|CLASS(0x0)|OPCODE(op)|S(setcc)|RN(src1)|RD(dest)|IMM(1, 0));
+	INSN_OUT(s, COND(op_conds[op])|CLASS(0x0)|OPCODE(MOV)|S(setcc)|RN(src1)|RD(dest)|IMM(1, 0));
 	break;
     case DILL_U:
     case DILL_UL:
@@ -1187,6 +1213,33 @@ extern void arm6_ret(dill_stream s, int data1, int data2, int src)
 	break;
     }
     arm6_simple_ret(s);
+}
+
+extern void arm6_retf(dill_stream s, int data1, int data2, double imm)
+{
+    union {
+	float f;
+	int i;
+    } a;
+    union {
+	double d;
+	int i[2];
+	long l;
+    } b;
+  
+    switch(data1) {
+    case DILL_F:
+	a.f = imm;
+	arm6_set(s, _r0, a.i);
+	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|0<<20|FN(_f0>>1)|N(_f0)|RD(_r0)|cp_num(0xa)|1<<4);/*fmsr*/
+	break;
+    case DILL_D:
+	b.d = imm;
+	arm6_set(s, _r0, b.i[0]);
+	arm6_set(s, _r1, b.i[1]);
+	INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|0<<20|FN(_f0>>1)|N(_f0)|RD(_r0)|cp_num(0xa)|1<<4);/*fmsr*/
+	break;
+    }
 }
 
 extern void arm6_reti(dill_stream s, int data1, int data2, long imm)
@@ -1498,9 +1551,7 @@ arm6_reg_init(dill_stream s)
      * overlapping registers, so we allocate only the even ones.  _f2 if 
      * used as a double-precision corresponds to ARM register D1.
      */
-    s->p->tmp_f.init_avail[0] = (bit_R(_f0)|bit_R(_f2)|bit_R(_f4)|bit_R(_f6)|
-				 bit_R(_f8)|bit_R(_f10)|bit_R(_f12)|bit_R(_f14)|
-				 bit_R(_f16)|bit_R(_f18)|bit_R(_f20)|bit_R(_f22)|
+    s->p->tmp_f.init_avail[0] = (bit_R(_f16)|bit_R(_f18)|bit_R(_f20)|bit_R(_f22)|
 				 bit_R(_f24)|bit_R(_f26)|bit_R(_f28)|bit_R(_f30));
     s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }

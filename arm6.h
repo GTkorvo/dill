@@ -7,7 +7,8 @@ extern void arm6_dproc(dill_stream s, int op, int shift_code, int dest, int src1
 extern void arm6_dproc2(dill_stream s, int op3, int op, int dest, int src);
 extern void arm6_dproci(dill_stream s, int op, int shift_code, int dest, int src1, long imm);
 extern void arm6_fproc(dill_stream s, int op3, int op, int dest, int src1, int src2);
-extern void arm6_fproc2(dill_stream s, int op3, int op, int dest, int src);
+extern void arm6_fproc2(dill_stream s, int op3, int fd, int n, int dest, int src);
+extern void arm6_negf(dill_stream s, int op3, int fd, int dest, int src);
 extern void arm6_fproci(dill_stream s, int op3, int op, int dest, int src1, long imm);
 
 enum {
@@ -56,6 +57,7 @@ extern void arm6_end(dill_stream s);
 extern void *arm6_clone_code(dill_stream s, void *base, int size);
 extern void arm6_ret(dill_stream s, int data1, int data2, int src);
 extern void arm6_reti(dill_stream s, int data1, int data2, long imm);
+extern void arm6_retf(dill_stream s, int data1, int data2, double imm);
 extern int arm6_getreg(dill_stream s, dill_reg *reg_p, int type, int class);
 extern int arm6_putreg(dill_stream s, dill_reg reg, int type);
 extern void
