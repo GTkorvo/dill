@@ -36,6 +36,7 @@ sub upperc {
 &arith_insn("div", "d", "arm6_fproc", "0x8", "0x1");
 &arith2_insn("neg", "f", "arm6_fproc2", "0x1", "0x0");
 &arith2_insn("neg", "d", "arm6_fproc2", "0x1", "0x1");
+&arith2_insn("bswap", "s us i u ul l f d", "arm6_bswap", "T", "0");
 
 &arithi_insn("add", "i u ul l p", "arm6_dproci", "ADD", "0");
 &arithi_insn("sub", "i u ul l p", "arm6_dproci", "SUB", "0");
@@ -51,8 +52,10 @@ sub upperc {
 &arithi_insn("lsh", "i l u ul", "arm6_dproci", "MOV", "LLshift");
 &arithi_insn("rsh", "i l", "arm6_dproci", "MOV", "ARshift");
 &arithi_insn("rsh", "u ul", "arm6_dproci", "MOV", "LRshift");
-&branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "arm6_branch");
-&branchi_insn( "eq ge gt le lt ne", "i u ul l p", "arm6_branchi");
+&branch_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "arm6_branch");
+&branchi_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "arm6_branchi");
+&compare_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "arm6_compare");
+&comparei_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "arm6_comparei");
 
 print COUT "jmp_table ${mach}_jump_table;\n";
 print COUT "static void gen_arm6_jump_table()\n";
@@ -62,6 +65,7 @@ print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
 print COUT $jmp_a2_assigns;
 print COUT $jmp_b_assigns;
+print COUT $jmp_c_assigns;
 print COUT "\t  ${mach}_jump_table->proc_start = (dill_mach_proc_start) arm6_proc_start;\n";
 print COUT "\t  ${mach}_jump_table->end = arm6_end;\n";
 print COUT "\t  ${mach}_jump_table->type_align = arm6_type_align;\n";
@@ -92,6 +96,7 @@ print COUT "\t  ${mach}_jump_table->pushpi = arm6_pushpi;\n";
 print COUT "\t  ${mach}_jump_table->calli = arm6_calli;\n";
 print COUT "\t  ${mach}_jump_table->callr = arm6_callr;\n";
 print COUT "\t  ${mach}_jump_table->local = arm6_local_op;\n";
+print COUT "\t  ${mach}_jump_table->setp = arm6_setp;\n";
 print COUT "\t  ${mach}_jump_table->save_restore = arm6_save_restore_op;\n";
 #print COUT "\t  ${mach}_jump_table->lea = arm6_lea;\n";
 print COUT "\t  ${mach}_jump_table->init_disassembly = arm6_init_disassembly_info;\n";
@@ -136,9 +141,16 @@ sub arith_insn {
 
 sub arith2_insn {
     local ($op, $type_list, $subr, $code1, $code2) = @_;
+    local $pcode1 = $code1;
+    if ($code1 eq "T") {
+	$pcode1 = "DILL_". &upperc(${_});
+    }
     foreach(split(' ', $type_list)) {
+	if ($code1 eq "T") {
+	    $pcode1 = "DILL_". &upperc(${_});
+	}
 	$jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->jmp_a2[dill_jmp_${op}${_}] = $subr;\n";
-	$jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->a2_data[dill_jmp_${op}${_}].data1 = $code1;\n";
+	$jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->a2_data[dill_jmp_${op}${_}].data1 = $pcode1;\n";
 	$jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->a2_data[dill_jmp_${op}${_}].data2 = $code2;\n";
     }
 }
@@ -170,6 +182,28 @@ sub branchi_insn {
 	$op = $_;
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_bi[dill_jmp_b${op}${_}] = $subr;\n";
+	}
+    }
+}
+
+sub compare_insn {
+    local($ops, $types, $subr) = @_;
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->jmp_c[dill_jmp_c${op}${_}] = $subr;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data1 = dill_${op}_code;\n";
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->c_data[dill_jmp_c${op}${_}].data2 = DILL_". &upperc(${_}). ";\n";
+	}
+    }
+}
+
+sub comparei_insn {
+    local($ops, $types, $subr) = @_;
+    foreach (split(' ', $ops)) {
+	$op = $_;
+	foreach (split(' ', $types)) {
+	    $jmp_c_assigns = $jmp_c_assigns . "\t  ${mach}_jump_table->jmp_ci[dill_jmp_c${op}${_}] = $subr;\n";
 	}
     }
 }
