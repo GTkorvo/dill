@@ -62,6 +62,8 @@ extern void
 arm6_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
 arm6_pload(dill_stream s, int type, int junk, int dest, int src1, int src2);
+extern void 
+arm6_bswap(dill_stream s, int data1, int data2, int dest, int src);
 extern void
 arm6_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset);
 extern void
@@ -89,11 +91,17 @@ arm6_mov(dill_stream s, int type, int junk, int dest, int src);
 extern void
 arm6_pset(dill_stream s, int type, int junk, int dest, long imm);
 extern void
+arm6_setp(dill_stream s, int type, int junk, int dest, void *imm);
+extern void
 arm6_setf(dill_stream s, int type, int junk, int dest, double imm);
 extern void
 arm6_branch(dill_stream s, int op, int type, int src1, int src2, int label);
 extern void
 arm6_branchi(dill_stream s, int op, int type, int src, long imm, int label);
+extern void
+arm6_compare(dill_stream s, int op, int type, int dest, int src1, int src2);
+extern void
+arm6_comparei(dill_stream s, int op, int type, int dest, int src, long imm);
 extern void 
 arm6_lea(dill_stream s, int junk, int junk1, int dest, int src, long imm);
 extern void arm6_jump_to_label(dill_stream s, unsigned long label);
