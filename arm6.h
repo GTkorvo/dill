@@ -43,6 +43,8 @@ typedef struct arm6_mach_info {
     int fp_save_end;
     int conversion_word;
     int cur_arg_offset;
+    int next_core_register;
+    int next_float_register;
     int save_insn_offset;
     int max_arg_size;
 } *arm6_mach_info;
