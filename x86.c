@@ -1691,7 +1691,7 @@ static void push_init(dill_stream s)
 extern void x86_push(dill_stream s, int type, int reg)
 {
     x86_mach_info smi = (x86_mach_info) s->p->mach_info;
-    if ((type == DILL_V) && (reg == -1)) {
+    if ((type == DILL_V) && (reg <= -1)) {
 	push_init(s);
     } else if ((type == DILL_F) || (type == DILL_D)) {
         x86_pstorei(s, DILL_D, 0, reg, ESP, smi->cur_arg_offset);

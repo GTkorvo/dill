@@ -2331,7 +2331,7 @@ static void push_init(dill_stream s)
 
 extern void x86_64_push(dill_stream s, int type, int reg)
 {
-    if ((type == DILL_V) && (reg == -1)) {
+    if ((type == DILL_V) && (reg <= -1)) {
 	push_init(s);
     } else {
 	internal_push(s, type, 0, &reg);

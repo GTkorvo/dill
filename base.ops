@@ -388,6 +388,7 @@ sub push {
     local($types) = @_;
     print HOUT "#define dill_push_arg(s, type, reg) (s->j->push)(s, type, reg)\n";
     print HOUT "#define dill_push_init(s) (s->j->push)(s, DILL_V, -1)\n";
+    print HOUT "#define dill_push_varidiac_init(s, non_var_arg_count) (s->j->push)(s, DILL_V, -2-(non_var_arg_count))\n";
     foreach (split(' ', $types)) {
 	$type = $_;
 	print HOUT "#define dill_push_arg${type}(s, reg) (s->j->push)(s, DILL_" . &upperc($type) . ", reg)\n";
