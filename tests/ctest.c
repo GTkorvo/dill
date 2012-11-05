@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
     if (!no_float) {
 	dill_start_simple_proc(c, "foo", DILL_V);
-	dill_push_init(c);
+	dill_push_varidiac_init(c, 1);
 	if (!dill_do_reverse_vararg_push(c)) {
 	    dill_push_argpi(c, "Hello: %e %e %e %e %e %e %e %e %e %e\n");
 	    dill_push_argdi(c, 10.0);
