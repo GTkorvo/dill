@@ -67,7 +67,7 @@
 #cmakedefine HOST_ARM5
 
 /* Define if the host processor is ARM6 */
-#cmakedefine HOST_ARM6
+#cmakedefine HOST_ARM6 @HOST_ARM6@
 
 /* Define if the host processor is an ia64 */
 #cmakedefine HOST_IA64
