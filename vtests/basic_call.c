@@ -275,7 +275,7 @@ void f () {
      dill_setd(s, a, dp);
      dill_seti(s, b, ip);
      dill_setp(s, d, pp);
-     dill_push_init(s);
+     dill_push_varidiac_init(s, 1);
      if (!dill_do_reverse_vararg_push(s)) {
 	 dill_push_argpi(s, (void*)"values are %d, %g, %s\n");
 	 dill_push_argi(s, b);
