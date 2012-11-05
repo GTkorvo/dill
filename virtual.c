@@ -262,7 +262,7 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     case iclass_push:
     {
 	int typ = insn->insn_code & 0xf;
-	if (insn->opnds.a1.src == 0xffff) {
+	if ((short)insn->opnds.a1.src < 0) {
 	    printf("pushinit");
 	} else {
 	    printf("push%s %c%d", dill_type_names[typ], 
@@ -904,7 +904,7 @@ insn_uses(virtual_insn *insn, int *used)
 	break;
     }
     case iclass_push:
-	if (insn->opnds.a1.src != 0xffff) 
+	if ((short)insn->opnds.a1.src >= 0)
 	    used[0] = insn->opnds.a1.src;
 	break;
     case iclass_pushi:
@@ -999,7 +999,7 @@ replace_insn_src(virtual_insn *insn, int replace_vreg, int new_vreg)
     case iclass_call:
 	break;
     case iclass_push:
-	if (insn->opnds.a1.src != 0xffff) 
+	if ((short)insn->opnds.a1.src >= 0)
 	    if (replace_vreg == insn->opnds.a1.src) {
 		insn->opnds.a1.src = new_vreg; return;};
 	break;
@@ -1086,7 +1086,7 @@ insn_use_test(virtual_insn *insn, int vreg)
 	break;
     }
     case iclass_push:
-	if (insn->opnds.a1.src != 0xffff) 
+	if ((short)insn->opnds.a1.src >= 0)
 	    if (vreg == insn->opnds.a1.src) return 1;
 	break;
     case iclass_pushi:
@@ -1212,7 +1212,7 @@ build_bb_body(dill_stream c, virtual_insn *insn, int i, virtual_insn *insns)
 	break;
     }
     case iclass_push:
-	if (insn->opnds.a1.src != 0xffff) 
+	if ((short)insn->opnds.a1.src >= 0) 
 	    bb_uses(c, bb, insn->opnds.a1.src);
 	break;
     case iclass_special:
@@ -1437,7 +1437,7 @@ do_use_def_count(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	break;
     }
     case iclass_push:
-	if (insn->opnds.a1.src != 0xffff) 
+	if ((short)insn->opnds.a1.src >= 0)
 	    set_used(c, insn->opnds.a1.src);
 	break;
     case iclass_pushi:
@@ -2533,7 +2533,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		int typ = ip->insn_code & 0xf;
 		int src1_vreg = ip->opnds.a1.src;
 		int src1_preg;
-		if (ip->opnds.a1.src != 0xffff) {
+		if ((short)ip->opnds.a1.src >= 0) {
 		    /* neg 1 used to signal push init */
 		    src1_preg = preg_of(c, bb, src1_vreg);
 		    if (src1_preg == -1) {
@@ -3354,11 +3354,12 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    case iclass_push:
 	    {
 		int typ = ip->insn_code & 0xf;
-		if (ip->opnds.a1.src == 0xffff) {
+		if ((short)ip->opnds.a1.src <= 0) {
 		    pushpop_inuse_regs(c, 0, ip);
-		    pused[0] = -1;
+		    dill_push_arg(c, typ, (short)ip->opnds.a1.src);
+		} else {
+		    dill_push_arg(c, typ, pused[0]);
 		}
-		dill_push_arg(c, typ, pused[0]);
 	    }
 	    break;
 	    case iclass_pushi:{
