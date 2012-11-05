@@ -2,6 +2,10 @@
 #include <string.h>
 #include "dill.h"
 #include "dill_internal.h"
+#include "sys/mman.h"
+#ifdef HAVE_MEMORY_H
+#include "memory.h"
+#endif
 #include "arm6.h"
 #include <string.h>
 
@@ -79,12 +83,45 @@ arm6_rt_call_link(char *code, call_t *t)
     }
 }
 
+/* Clear the instruction cache from `beg' to `end'.  This makes an
+   inline system call to SYS_cacheflush.  */
+#define CLEAR_INSN_CACHE(BEG, END)                                      \
+{                                                                       \
+  register unsigned long _beg __asm ("a1") = (unsigned long) (BEG);     \
+  register unsigned long _end __asm ("a2") = (unsigned long) (END);     \
+  register unsigned long _flg __asm ("a3") = 0;                         \
+  __asm __volatile ("swi 0x9f0002               @ sys_cacheflush"       \
+                    : "=r" (_beg)                                       \
+                    : "0" (_beg), "r" (_end), "r" (_flg));              \
+}
+/*
+ *  Cache flush code grabbed from a Dec 1999 posting on libc-hacker 
+ *  mailing list
+ */
+static void
+arm6_flush(void *base, void *limit)
+{
+#ifdef HOST_ARM6
+    CLEAR_INSN_CACHE(base, limit);
+#endif
+}    
+
 extern char *
 arm6_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
     char *tmp = code;
     dill_lookup_xfer_addrs(t, &arm6_xfer_recs[0]);
     arm6_rt_call_link(code, t);
+    arm6_flush(code, code+pkg->code_size);
+#ifdef USE_MMAP_CODE_SEG
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+    tmp = (void*)mmap(0, pkg->code_size,
+		      PROT_EXEC | PROT_READ | PROT_WRITE, 
+		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+    memcpy(tmp, code, pkg->code_size);
+#endif
     return tmp + pkg->entry_offset;
 }
 
