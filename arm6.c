@@ -1136,13 +1136,27 @@ static void internal_push(dill_stream s, int type, int immediate,
 		    int i[2];
 		} b;
 		arm6_mach_info ami = (arm6_mach_info) s->p->mach_info;
-		if (type == DILL_F) {
-		    a.f = *(double*)value_ptr;
-		    arm6_set(s, arg.out_reg, a.i);
+		if (arg.is_immediate) {
+		    if (type == DILL_F) {
+			a.f = *(double*)value_ptr;
+			arm6_set(s, arg.out_reg, a.i);
+		    } else {
+			b.d =  *(double*)value_ptr;
+			arm6_set(s, arg.out_reg, b.i[0]);
+			arm6_set(s, arg.out_reg+1, b.i[1]);
+		    }
 		} else {
-		    b.d =  *(double*)value_ptr;
-		    arm6_set(s, arg.out_reg, b.i[0]);
-		    arm6_set(s, arg.out_reg+1, b.i[1]);
+		    switch(type) {
+		    case DILL_D:
+			INSN_OUT(s, COND(AL)| 0b11000101<<20|FN(arg.out_reg+1)|RD(arg.out_reg)|cp_num(0xb)|1<<4|(*(int*)value_ptr)>>1);/*fmsrrd*/
+			break;
+		    case DILL_F:
+			INSN_OUT(s, COND(AL)| CLASS(7)|OPCODE(0)|1<<20|FN(*(int*)value_ptr>>1)|N(*(int*)value_ptr)|RD(arg.out_reg)|cp_num(0xa)|1<<4);/*fmrs*/
+			arm6_movf(s, arg.out_reg, *(int*)value_ptr);
+			break;
+		    default:
+			assert(0);
+		    }
 		}
 	    } else {
 		if (arg.is_immediate) {
@@ -1282,6 +1296,9 @@ arm6_simple_ret(dill_stream s)
     arm6_nop(s);
     arm6_nop(s);
     arm6_nop(s);
+    arm6_nop(s);
+    arm6_nop(s);
+    arm6_nop(s);
 }
 
 extern void arm6_ret(dill_stream s, int data1, int data2, int src)
@@ -1395,7 +1412,7 @@ arm6_branch_link(dill_stream s)
  * then jump_through_reg for each routine.  Later, during call linkage, 
  * we'll call to the PLT entry rather than directly to the routine.
  */
-static void
+extern void
 arm6_PLT_emit(dill_stream s)
 {
     call_t *t = &s->p->call_table;
