@@ -415,7 +415,7 @@ arm6_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list arg
     arm6_movi(s, _r12, _sp);
     /* stmdb sp!, {r11, r12, lr, pc} */
     INSN_OUT(s, COND(AL)|CLASS(4)|1<<24/*p*/|RN(_sp)|1<<_r11|1<<_r12|1<<_link|1<<_pc);
-    arm6_dproci(s, SUB, 0, _sp, _sp, 14*4 + 8 *3*4); /* instead of write back */
+    arm6_dproci(s, SUB, 0, _sp, _sp, 14*4 ); /* instead of write back */
     arm6_nop(s);  /* placeholder for float save */
     arm6_dproci(s, SUB, 0, _r11, _r12, 4);
     ami->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
@@ -448,7 +448,7 @@ arm6_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list arg
 	    next_float_register += ((args[i].type == DILL_D) ? 2 : 1);
 	    break;
 	default:
-	    if (next_core_register < _a4) {
+	    if (next_core_register < _r4) {
 		args[i].is_register = 1;
 		args[i].in_reg = next_core_register;
 		args[i].out_reg = next_core_register;
@@ -1046,19 +1046,40 @@ static void internal_push(dill_stream s, int type, int immediate,
 	}
 	break;
     case DILL_D:
-        if (ami->next_float_register % 2) {
-	    /* double is only even regs, skip one */
-	    ami->next_float_register++;
+	if (ami->varidiac_call) {
+	    if (ami->next_core_register % 2) {
+		/* double is only even regs, skip one */
+		ami->next_core_register++;
+		ami->cur_arg_offset += 4;
+	    }
+	} else {
+	    if (ami->next_float_register % 2) {
+		/* double is only even regs, skip one */
+		ami->next_float_register++;
+		ami->cur_arg_offset += 4;
+	    }
 	}
 	/* falling through */
     case DILL_F: 
-        if (ami->next_float_register < _f16) {
-	    arg.is_register = 1;
-	    arg.in_reg = ami->next_float_register;
-	    arg.out_reg = ami->next_float_register;
-	    ami->next_float_register++;
+	if (!ami->varidiac_call) {
+	    if (ami->next_float_register < _f16) {
+		arg.is_register = 1;
+		arg.in_reg = ami->next_float_register;
+		arg.out_reg = ami->next_float_register;
+		ami->next_float_register++;
+	    } else {
+		arg.is_register = 0;
+	    }
 	} else {
-	    arg.is_register = 0;
+	    if (ami->next_core_register < _r4) {
+		arg.is_register = 1;
+		arg.in_reg = ami->next_core_register;
+		arg.out_reg = ami->next_core_register;
+		ami->next_core_register++;
+		if (arg.type == DILL_D) ami->next_core_register++;/* two, or split */
+	    } else {
+		arg.is_register = 0;
+	    }
 	}
 	break;
     default:
@@ -1104,18 +1125,39 @@ static void internal_push(dill_stream s, int type, int immediate,
 		arm6_mov(s, type, 0, arg.out_reg, *(int*) value_ptr);
 	    }
 	} else {
-	    if (arg.is_immediate) {
-	        arm6_setf(s, type, 0, arg.out_reg, *(double*)value_ptr);
+	    if (ami->varidiac_call) {
+		union {
+		    float f;
+		    int i;
+		} a;
+		union {
+		    double d;
+		    long l;
+		    int i[2];
+		} b;
+		arm6_mach_info ami = (arm6_mach_info) s->p->mach_info;
+		if (type == DILL_F) {
+		    a.f = *(double*)value_ptr;
+		    arm6_set(s, arg.out_reg, a.i);
+		} else {
+		    b.d =  *(double*)value_ptr;
+		    arm6_set(s, arg.out_reg, b.i[0]);
+		    arm6_set(s, arg.out_reg+1, b.i[1]);
+		}
 	    } else {
-	        switch(type) {
-		case DILL_D:
-		    arm6_movd(s, arg.out_reg, *(int*)value_ptr);
-		    break;
-		case DILL_F:
-		    arm6_movf(s, arg.out_reg, *(int*)value_ptr);
-		    break;
-		default:
-		    assert(0);
+		if (arg.is_immediate) {
+		    arm6_setf(s, type, 0, arg.out_reg, *(double*)value_ptr);
+		} else {
+		    switch(type) {
+		    case DILL_D:
+			arm6_movd(s, arg.out_reg, *(int*)value_ptr);
+			break;
+		    case DILL_F:
+			arm6_movf(s, arg.out_reg, *(int*)value_ptr);
+			break;
+		    default:
+			assert(0);
+		    }
 		}
 	    }
 	}
@@ -1128,12 +1170,17 @@ static void push_init(dill_stream s)
     ami->cur_arg_offset = 0;
     ami->next_core_register = _r0;
     ami->next_float_register = _f0;
+    ami->varidiac_call = 0;
 }
 
 extern void arm6_push(dill_stream s, int type, int reg)
 {
+    arm6_mach_info ami = (arm6_mach_info) s->p->mach_info;
     if ((type == DILL_V) && (reg <= -1)) {
 	push_init(s);
+	if (reg <= -2) {
+	    ami->varidiac_call = 1;
+	}
     } else {
 	internal_push(s, type, 0, &reg);
     }
@@ -1232,6 +1279,9 @@ arm6_simple_ret(dill_stream s)
     dill_mark_ret_location(s);
     INSN_OUT(s, COND(AL)|CLASS(4)|1<<24/*p*/|1<<20/*l*/|RN(_r11)|1<<_r11|1<<_sp|1<<_pc);
     arm6_nop(s);  /* ldmea may slide back here if we have to restore floats */
+    arm6_nop(s);
+    arm6_nop(s);
+    arm6_nop(s);
 }
 
 extern void arm6_ret(dill_stream s, int data1, int data2, int src)
@@ -1435,18 +1485,16 @@ arm6_emit_save(dill_stream s)
 	    int_count++;
 	}
     }
-    for (reg = _f4; reg <= _f7; reg++) {
+    for (reg = _f16; reg <= _f30; reg++) {
 	if (dill_wasused(&s->p->tmp_f, reg)) {
-	    float_count = reg - _f4 + 1;
+	    float_count = reg - _f16 + 2;
 	}
     }
     s->p->cur_ip = (char*)s->p->code_base + ami->save_insn_offset - 16;
     INSN_OUT(s, COND(AL)|CLASS(4)|1<<24/*p*/|RN(_sp)| mask|1<<_r11|1<<_r12|1<<_link|1<<_pc;);
-    s->p->cur_ip = ((char*)s->p->cur_ip) + 4; /* skip sub of sp*/
+    s->p->cur_ip = (char*)s->p->code_base + ami->save_insn_offset - 8;
     if (float_count > 0) {
-	int n1 = (float_count & 0x2) >> 1;
-	int n0 = (float_count &0x1);
-	INSN_OUT(s, COND(AL)|CLASS(6)|1<<24|n1<<22|1<<21|RN(_sp)|n0<<15|_f4<<12|0xb<<8|0x6); /*sfm*/
+	INSN_OUT(s, COND(AL)|CLASS(6)|1<<24|1<<21|RN(_sp)|(_f8)<<12|0b1011<<8|float_count); /*sfm*/
     } else {
 	arm6_nop(s);
     }
@@ -1455,11 +1503,14 @@ arm6_emit_save(dill_stream s)
 
     for(i=0; i< t->ret_count; i++) {
 	s->p->cur_ip = (char*)((char *)s->p->code_base + t->ret_locs[i]);
+	arm6_dproci(s, ADD, 0, _sp, _sp, ar_size);
 	if (float_count > 0) {
-	    int n1 = (float_count & 0x2) >> 1;
-	    int n0 = (float_count &0x1);
 	    int offset = 4 * 12 + 14*4 - 4;
-	    INSN_OUT(s, COND(AL)|CLASS(6)|1<<24|n1<<22|1<<20|RN(_r11)|n0<<15|_f4<<12|0xb<<8|offset>>2);  /* lfm */
+	    INSN_OUT(s, COND(AL)|CLASS(6)|1<<23|1<<21|1<<20|RN(_sp)|(_f8)<<12|0b1011<<8|float_count); /*lfm*/
+	    arm6_dproci(s, ADD, 0, _sp, _sp, 4*14);
+
+	} else {
+	    arm6_dproci(s, ADD, 0, _sp, _sp, ar_size + 4*14);
 	}
         INSN_OUT(s, COND(AL)|CLASS(4)|1<<24/*p*/|1<<20/*l*/|RN(_r11)|1<<_r11|1<<_sp|1<<_pc|mask);
     }
@@ -1479,6 +1530,16 @@ dill_stream s;
     arm6_data_link(s);
     arm6_emit_save(s);
     arm6_flush(s->p->code_base, s->p->code_limit);
+}
+
+extern void
+arm6_package_end(s)
+dill_stream s;
+{
+    arm6_nop(s);
+    arm6_simple_ret(s);
+    arm6_branch_link(s);
+    arm6_emit_save(s);
 }
 
 extern void *
