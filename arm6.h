@@ -45,6 +45,7 @@ typedef struct arm6_mach_info {
     int cur_arg_offset;
     int next_core_register;
     int next_float_register;
+    int varidiac_call;
     int save_insn_offset;
     int max_arg_size;
 } *arm6_mach_info;
@@ -56,6 +57,7 @@ extern void arm6_set(dill_stream s, int r, long imm);
 extern void arm6_proc_start(dill_stream s, char *subr_name, int arg_count, 
 			 arg_info_list args, dill_reg *arglist);
 extern void arm6_end(dill_stream s);
+extern void arm6_package_end(dill_stream s);
 extern void *arm6_clone_code(dill_stream s, void *base, int size);
 extern void arm6_ret(dill_stream s, int data1, int data2, int src);
 extern void arm6_reti(dill_stream s, int data1, int data2, long imm);
