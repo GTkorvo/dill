@@ -3354,7 +3354,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    case iclass_push:
 	    {
 		int typ = ip->insn_code & 0xf;
-		if ((short)ip->opnds.a1.src <= 0) {
+		if ((short)ip->opnds.a1.src < 0) {
 		    pushpop_inuse_regs(c, 0, ip);
 		    dill_push_arg(c, typ, (short)ip->opnds.a1.src);
 		} else {
