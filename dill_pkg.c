@@ -27,6 +27,7 @@ unpack_package(char *package, call_t *t, char **code_p)
     if (pkg->pkg_version != 1) printf("Not valid package version\n");
     t->call_alloc = t->call_count = pkg->symbol_count;
     t->call_locs = malloc(sizeof(t->call_locs[0]) * pkg->symbol_count);
+    memset(t->call_locs, 0, sizeof(t->call_locs[0]) * pkg->symbol_count);
     for (count = 0; count<pkg->symbol_count; count++) {
 	int call_len;
 	t->call_locs[count].loc = *((int*)p);
