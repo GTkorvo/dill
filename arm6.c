@@ -1411,9 +1411,11 @@ arm6_branch_link(dill_stream s)
  * away from malloc'd memory.  We emit a PLT that is basically a set_reg, 
  * then jump_through_reg for each routine.  Later, during call linkage, 
  * we'll call to the PLT entry rather than directly to the routine.
+ * If creating a package, emit a PLT entry for every routine because we 
+ * don't know what the offsets will be when the code is stitched together.
  */
 extern void
-arm6_PLT_emit(dill_stream s)
+arm6_PLT_emit(dill_stream s, int package)
 {
     call_t *t = &s->p->call_table;
     int i;
@@ -1426,12 +1428,12 @@ arm6_PLT_emit(dill_stream s)
         /* div addr diff by 4 for arm offset value */
 	call_offset = call_offset >> 2;
 	call_offset = call_offset >> 24;
-	if ((call_offset != 0) && (call_offset != -1)) {
+	if (((call_offset != 0) && (call_offset != -1)) || package) {
 	    t->call_locs[i].mach_info = (void*)
 		((long)s->p->cur_ip - (long)s->p->code_base);
-	    arm6_set(s, _v1, (unsigned long)t->call_locs[i].xfer_addr);
-	    arm6_dproc(s, MOV, 0, _pc, _v1, _v1);
-	    /*	    arm6_nop(s);*/
+	    arm6_pldsti(s, DILL_P, 1, _v1, _pc, 0);
+	    arm6_movi(s, _pc, _v1);
+	    arm6_nop(s);  /* place where addr will be loaded */
 	}
     }
 }
@@ -1541,7 +1543,7 @@ dill_stream s;
 {
     arm6_nop(s);
     arm6_simple_ret(s);
-    arm6_PLT_emit(s);   /* must be done before linking */
+    arm6_PLT_emit(s, 0);   /* must be done before linking */
     arm6_branch_link(s);
     arm6_call_link(s);
     arm6_data_link(s);
@@ -1555,6 +1557,7 @@ dill_stream s;
 {
     arm6_nop(s);
     arm6_simple_ret(s);
+    arm6_PLT_emit(s, 1);
     arm6_branch_link(s);
     arm6_emit_save(s);
 }

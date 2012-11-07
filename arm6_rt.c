@@ -16,7 +16,7 @@ extern long arm6_hidden_mod(long a, long b)
 extern unsigned long arm6_hidden_umod(unsigned long a, unsigned long b)
 { return a % b; }
 extern unsigned int arm6_hidden_umodi(unsigned int a, unsigned int b)
-{ return a % b; }
+{ printf("alled hidden umodi\n");return a % b; }
 extern double arm6_hidden_ultod(unsigned long a)
 { return (double) a; }
 extern float arm6_hidden_ultof(unsigned long a)
@@ -49,11 +49,26 @@ static xfer_entry arm6_xfer_recs[] = {
     {"arm6_hidden_div", arm6_hidden_div},
     {(char*)0, (void*)0}};
 
+static void
+arm6_rt_set_PLT_locs(call_t* t, dill_pkg pkg)
+{
+    /* 
+     * Must set mach_info with PLT entry location.  
+     * One entry per call, stacked at the end of the code block 
+     */
+    int i;
+    int PLT_offset = pkg->code_size - 3 * 4;  /* 3 insn per PLT entry */
+    for (i=t->call_count-1; i>=0; i--) {
+	t->call_locs[i].mach_info = (void*)PLT_offset;
+	PLT_offset -= 3 * 4;
+    }
+}
+
 extern void
 arm6_rt_call_link(char *code, call_t *t)
 {
     int i;
-
+    
     for(i=0; i< t->call_count; i++) {
 	int *call_addr = (int*) ((unsigned long)code + 
 				 t->call_locs[i].loc);
@@ -73,12 +88,14 @@ arm6_rt_call_link(char *code, call_t *t)
 	    unsigned long PLT_addr = (unsigned long)code + 
 				      (unsigned long)t->call_locs[i].mach_info;
 	    int call_offset = PLT_addr - (unsigned long)call_addr;
-	    
+
 	    /* compensate for arm PC lookahead */
 	    call_offset = call_offset - 8;
 	    call_offset = call_offset >> 2;
 	    *call_addr &= 0xff000000;
 	    *call_addr |= (call_offset & 0x00ffffff);
+	    PLT_addr += 8;
+	    *(unsigned long*)PLT_addr = (unsigned long)t->call_locs[i].xfer_addr;
 	}
     }
 }
@@ -111,8 +128,7 @@ arm6_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
     char *tmp = code;
     dill_lookup_xfer_addrs(t, &arm6_xfer_recs[0]);
-    arm6_rt_call_link(code, t);
-    arm6_flush(code, code+pkg->code_size);
+    arm6_rt_set_PLT_locs(t, pkg);
 #ifdef USE_MMAP_CODE_SEG
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
@@ -122,6 +138,8 @@ arm6_package_stitch(char *code, call_t *t, dill_pkg pkg)
 		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
     memcpy(tmp, code, pkg->code_size);
 #endif
+    arm6_rt_call_link(tmp, t);
+    arm6_flush(code, tmp+pkg->code_size);
     return tmp + pkg->entry_offset;
 }
 
