@@ -16,6 +16,7 @@ extern long arm6_hidden_mod(long a, long b)
 extern unsigned long arm6_hidden_umod(unsigned long a, unsigned long b)
 { return a % b; }
 extern unsigned int arm6_hidden_umodi(unsigned int a, unsigned int b)
+{ return a % b; }
 extern double arm6_hidden_ultod(unsigned long a)
 { return (double) a; }
 extern float arm6_hidden_ultof(unsigned long a)
