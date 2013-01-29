@@ -39,6 +39,7 @@ void a () {
     if (result != 41) {
 	printf("A failed.  Expected 41, got %d\n", result);
     }
+    dill_free_exec_context(ec);
     dill_free_stream(s);
     dill_free_handle(handle);
 }
@@ -69,6 +70,7 @@ void b () {
     if (result != 41) {
 	printf("B failed.  Expected 41, got %d\n", result);
     }
+    dill_free_exec_context(ec);
     dill_free_stream(s);
     dill_free_handle(handle);
 }

@@ -47,6 +47,7 @@ while ($_ = $ARGV[0]) {
 
 &setmovret("c uc s us i u ul l $FT $DT");
 
+print COUT "    dill_free_stream(c);\n";
 print COUT "    return failed;\n}\n";
 
 
@@ -138,6 +139,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_, source2_$_);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    $result_if {
 		printf("Failed dill_$dill_op${_} test, expected $c_pformat, got $c_pformat, for $c_pformat $print_op $c_pformat\\n",
 		       expected_result, result, source1_$_, source2_$_);
@@ -210,6 +213,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_, source2_l);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$dill_op${_} test, expected $c_pformat, got $c_pformat, for $c_pformat $c_op %ld\\n",
 		       $print_cast{$_} expected_result, $print_cast{$_} result, $print_cast{$_} source1_$_, source2_l);
@@ -271,6 +276,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$dill_op${_} test, expected $c_pformat, got $c_pformat, for $c_op $c_pformat\\n",
 		       expected_result, result, source1_$_);
@@ -362,6 +369,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$dill_op${_}i (immediate) test, expected $c_pformat, got $c_pformat, for $c_pformat $print_op $c_pformat\\n",
 		       expected_result, result, source1_$_, source2_$_);
@@ -432,6 +441,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$dill_op${_}i (immediate) test, expected $c_pformat, got $c_pformat, for $c_pformat $c_op %ld\\n",
 		       $print_cast{$_} expected_result, $print_cast{$_} result, $print_cast{$_} source1_$_, source2_l);
@@ -514,6 +525,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_, source2_$_);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$full_op test, expected %d, got %d, for $c_pformat $c_op $c_pformat\\n",
 		       expected_result, result, $print_cast{$_} source1_$_, $print_cast{$_} source2_$_);
@@ -597,6 +610,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$full_op test, expected %d, got %d, for $c_pformat $c_op $c_pformat\\n",
 		       expected_result, result, $print_cast{$_} source1_$_, $print_cast{$_} source2_$_);
@@ -676,6 +691,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_, source2_$_);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$full_op test, expected %d, got %d, for $c_pformat $c_op $c_pformat\\n",
 		       expected_result, result, $print_cast{$_} source1_$_, $print_cast{$_} source2_$_);
@@ -746,6 +763,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$from);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    $result_if {
 		printf("Failed dill_$full_op test, expected $c_to_pformat, got $c_to_pformat, for ($c_to_type) $c_from_pformat\\n",
 		       $print_cast{$to} expected_result, $print_cast{$to} result, $print_cast{$from} source1_$from);
@@ -811,6 +830,8 @@ sub load {
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, p);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$dill_op${_}i test, expected $c_pformat, got $c_pformat, for loading $c_pformat at offset %ld\\n",
 		       expected_result, result, source1_$_, offset);
@@ -848,6 +869,8 @@ EOF
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, p);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$dill_op${_} test, expected $c_pformat, got $c_pformat, for loading $c_pformat\\n",
 		       expected_result, result, source1_$_);
@@ -913,6 +936,8 @@ sub store {
 
 	    ec = dill_get_exec_context(c);
 	    proc(ec, p, source1_$_);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$dill_op${_}$imm test, expected $c_pformat, got $c_pformat, for storing $c_pformat\\n",
 		       expected_result, result, source1_$_);
@@ -950,6 +975,8 @@ EOF
 
 	    ec = dill_get_exec_context(c);
 	    proc(ec, p, source1_$_);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed dill_$dill_op${_} test, expected $c_pformat, got $c_pformat, for storing $c_pformat\\n",
 		       expected_result, result, source1_$_);
@@ -1002,6 +1029,8 @@ print COUT<<EOF;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec);
+	    dill_free_handle(h);
+	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
 		printf("Failed set/mov/ret ${_} test, expected $c_pformat, got $c_pformat\\n",
 		       expected_result, result);

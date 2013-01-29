@@ -76,6 +76,7 @@ void a () {
 
      ec = dill_get_exec_context(s);
      printf("**18=%d\n", (*ip)(ec, 1, 2));
+     dill_free_exec_context(ec);
      dill_free_stream(s);
      dill_free_handle(handle);
 }

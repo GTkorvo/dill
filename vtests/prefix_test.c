@@ -100,6 +100,7 @@ int a () {
 
      result = (*ip)();
      dill_free_stream(s);
+     dill_free_handle(handle);
      if (result != 135) printf("Result not 135, %d\n",result);
      return result == 135;
 }
@@ -141,6 +142,7 @@ int c ()
 
      ret = (*ip)();
      dill_free_stream(s);
+     dill_free_handle(h);
      return ret == 3;
 }
 

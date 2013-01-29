@@ -62,5 +62,6 @@ main(int argc, char **argv)
 	failure = 4;
     }
     dill_free_stream(s);
+    dill_free_handle(handle);
     return failure;
 }

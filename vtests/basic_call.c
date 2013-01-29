@@ -97,6 +97,7 @@ void a () {
      if (verbose) dill_dump(s);
 
      printf("**135=%d\n", (*ip)());
+     dill_free_handle(handle);
      dill_free_stream(s);
 }
 
@@ -117,6 +118,7 @@ void b () {
      if (verbose) dill_dump(s);
 
      printf("**3=%d\n", (*(int (*)(int, int))(long)((*pp)()))(1,2));
+     dill_free_handle(h);
      dill_free_stream(s);
 }
 
@@ -151,6 +153,7 @@ void c () {
      if (verbose) dill_dump(s);
 
      printf("**3=%d\n", (*ip)());
+     dill_free_handle(h);
      dill_free_stream(s);
 }
 
@@ -183,6 +186,7 @@ void d () {
      if (verbose) dill_dump(s);
 
      printf("**3=%d\n", (*ip)());
+     dill_free_handle(h);
      dill_free_stream(s);
 }
 
@@ -255,6 +259,7 @@ void e () {
      if (verbose) dill_dump(s);
 
      printf("**48=%d\n", (*ip)(gg,1,2,3,4,5,6,7,8,9));
+     dill_free_handle(handle);
      dill_free_stream(s);
 }
 
@@ -296,6 +301,7 @@ void f () {
 
      printf("expect: values are %d, %g, %s\n", ip, dp, pp);
      proc();
+     dill_free_handle(h);
      dill_free_stream(s);
 }
 
@@ -353,6 +359,7 @@ void g () {
 
      printf("expect: values are %g, %g, %g, %g, %g, %g, %g, %g\n", da, db, dd, de, df, dg, dh, di);
      proc();
+     dill_free_handle(h);
      dill_free_stream(s);
 }
 #endif
