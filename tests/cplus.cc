@@ -75,6 +75,7 @@ int dcg_calls(C*c)
   dill_reg this_reg;
   dill_reg ret_reg;
   int (*proc)();
+  int result;
 
   p = &C::sub; // prepare to call C::sub
   void * th = get_this_ptr(&p, c);
@@ -102,7 +103,10 @@ int dcg_calls(C*c)
   dill_reti(s, ret_reg);
   h = dill_finalize(s);
   proc = (int(*)()) dill_get_fp(h);
-  return proc();
+  result = proc();
+  dill_free_handle(h);
+  dill_free_stream(s);
+  return result;
 };
 
 int main(int argc, char **argv)

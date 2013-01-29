@@ -996,6 +996,7 @@ print<<EOF;
 	printf("No errors!\\n");
 	return 0;
     }
+    dill_free_stream(s);
 
     printf("*** %d Errors! on loop %d ****\\n", dill_errors, loop_count -1);
     printf("s1i %d, s2i %d, s1u %x, s2u %x\\n", s1i,s2i,s1u,s2u);

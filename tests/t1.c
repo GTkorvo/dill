@@ -22,6 +22,7 @@ int main(int argc, char **argv)
 	result = func();
 	dill_free_handle(h);
 
+	dill_free_stream(s);
 	if (result != 5) {
 	    printf("Test 1 failed, got %d instead of 5\n", result);
 	    exit(1);
