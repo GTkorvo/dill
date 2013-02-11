@@ -13,6 +13,10 @@ include(CreateLibtoolFile)
 include(Compile)
 include(FindCERCSProject)
 
+file (STRINGS "${CMAKE_SOURCE_DIR}/version.c" VERSION_TEXT REGEX "^static.*")
+STRING(REGEX REPLACE ".*Version ([0-9]+.[0-9]+.[0-9]+).*" "\\1" VERSION_TEXT "${VERSION_TEXT}")
+STRING(REGEX REPLACE "([0-9]+)[0-9.]*$" "\\1" MAJOR_VERSION_STRING ${VERSION_TEXT})
+
 set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c version.c)
 
 IF( NOT CMAKE_BUILD_TYPE )
@@ -73,8 +77,9 @@ foreach(_arch ${ARCHITECTURES})
     COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
     DEPENDS ${_arch}.ops
   ) 
-  list(APPEND arch_files "dill_${_arch}.c" "${_arch}.c"})
+  list(APPEND arch_files "dill_${_arch}.c" "${_arch}.c" "${_arch}_rt.c")
 endforeach()
+list(REMOVE_ITEM arch_files virtual_rt.c)
 
 add_custom_command(
   OUTPUT "dill.h" "dill.c"
@@ -85,6 +90,7 @@ add_custom_command(
 OPTION(MULTI_TARGET  "Build all available target architectures" OFF)
 
 if (MULTI_TARGET)
+  message (STATUS "arch files is ${arch_files}")
     set (SRC_LIST ${SRC_LIST} ${arch_files})
 elseif (DEFINED NATIVE_ARCH) 
    set (SRC_LIST ${SRC_LIST} dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
@@ -114,6 +120,7 @@ if (BUILD_DYNAMIC)
   SET_TARGET_PROPERTIES(dill PROPERTIES LT_SHOULDNOTLINK "no")
   if (BUILD_DYNAMIC)
     set_target_properties(dill PROPERTIES STATIC_LIB "libdill.a")
+    SET_TARGET_PROPERTIES(dill  PROPERTIES VERSION "${VERSION_TEXT}" SOVERSION "${MAJOR_VERSION_STRING}")
   endif (BUILD_DYNAMIC)
   LIST(APPEND INSTALL_TARGETS dill)
 endif (BUILD_DYNAMIC)
@@ -126,6 +133,7 @@ if (BUILD_STATIC)
   # This conflicts with the "foo.lib" import library corresponding to "foo.dll",
   # so we add a "lib" prefix (which is default on other platforms anyway):
   SET_TARGET_PROPERTIES(dill-static PROPERTIES PREFIX "lib")
+  SET_TARGET_PROPERTIES(dill-static  PROPERTIES VERSION "${VERSION_TEXT}" SOVERSION "${MAJOR_VERSION_STRING}")
   LIST(APPEND INSTALL_TARGETS dill-static)
 endif (BUILD_STATIC)
 
