@@ -92,8 +92,8 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     case iclass_loadstorei:
     {
 	int typ = insn->insn_code & 0xf;
-	int store = (insn->insn_code & 0x10) && 0x10;
-	int bswap = (insn->insn_code & 0x20) && 0x20;
+	int store = (insn->insn_code & 0x10) == 0x10;
+	int bswap = (insn->insn_code & 0x20) == 0x20;
         printf("%s%s%si %c%d, %c%d, %ld", bswap ? "bs" : "",
 	       store == 0 ? "ld" : "st", 
 	       dill_type_names[typ], OPND(insn->opnds.a3i.dest),
@@ -4113,7 +4113,7 @@ do_com_sub_exp(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
     }
     root_is_load = (((root_insn->class_code == iclass_loadstorei) ||
 		     (root_insn->class_code == iclass_loadstore)) &&
-		    (((root_insn->insn_code & 0x10) && 0x10) == 0));
+		    (((root_insn->insn_code & 0x10) == 0x10) == 0));
     for (k = loc + 1; ((k <= bb->end) && (!stop)); k++) {
 	virtual_insn *ip = &((virtual_insn *)insns)[k];
 	int replace_vreg = insn_defines(ip);
