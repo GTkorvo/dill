@@ -12,6 +12,7 @@ include(CheckTypeSize)
 include(CreateLibtoolFile)
 include(Compile)
 include(FindCERCSProject)
+include(AddLibtoolLibrary)
 
 file (STRINGS "${CMAKE_SOURCE_DIR}/version.c" VERSION_TEXT REGEX "^static.*")
 STRING(REGEX REPLACE ".*Version ([0-9]+.[0-9]+.[0-9]+).*" "\\1" VERSION_TEXT "${VERSION_TEXT}")
@@ -114,29 +115,6 @@ else ()
 		       NO LIBRARY WILL BE BUILT")
 endif()
 
-set (INSTALL_TARGETS)
-if (BUILD_DYNAMIC)
-  add_library(dill SHARED ${SRC_LIST} dill.h)
-  SET_TARGET_PROPERTIES(dill PROPERTIES LT_SHOULDNOTLINK "no")
-  if (BUILD_DYNAMIC)
-    set_target_properties(dill PROPERTIES STATIC_LIB "libdill.a")
-    SET_TARGET_PROPERTIES(dill  PROPERTIES VERSION "${VERSION_TEXT}" SOVERSION "${MAJOR_VERSION_STRING}")
-  endif (BUILD_DYNAMIC)
-  LIST(APPEND INSTALL_TARGETS dill)
-endif (BUILD_DYNAMIC)
-if (BUILD_STATIC)
-  add_library(dill-static STATIC ${SRC_LIST} dill.h)
-  # The library target "dill" already has a default OUTPUT_NAME of "dill", so we don't need to change it.
-  # The library target "dill-static" has a default OUTPUT_NAME of "dill-static", so change it.
-  SET_TARGET_PROPERTIES(dill-static PROPERTIES OUTPUT_NAME "dill")
-  # Now the library target "foo-static" will be named "foo.lib" with MS tools.
-  # This conflicts with the "foo.lib" import library corresponding to "foo.dll",
-  # so we add a "lib" prefix (which is default on other platforms anyway):
-  SET_TARGET_PROPERTIES(dill-static PROPERTIES PREFIX "lib")
-  SET_TARGET_PROPERTIES(dill-static  PROPERTIES VERSION "${VERSION_TEXT}" SOVERSION "${MAJOR_VERSION_STRING}")
-  LIST(APPEND INSTALL_TARGETS dill-static)
-endif (BUILD_STATIC)
-
 CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
 
 CHECK_INCLUDE_FILES(stdarg.h STDC_HEADERS)
@@ -146,19 +124,13 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 set (NO_DISASSEMBLER TRUE)
 if (ENABLE_DISASSEMBLY)
-#    FIND_PACKAGE (BinUtils)
     FIND_CERCS_PROJECT(binutils LIBRARY opcodes INCLUDES dis-asm.h REQUIRED)
     if (NOT BINUTILS_LIBRARIES)
 	message(FATAL_ERROR "libopcodes not found, You need to install binutils for disassembler support.")
     else()
 	INCLUDE_DIRECTORIES(${BINUTILS_INCLUDE_DIR})
 	LINK_DIRECTORIES(${BINUTILS_LIB_DIR})
-	if (BUILD_DYNAMIC)
-	  TARGET_LINK_LIBRARIES(dill ${BINUTILS_LIBRARIES})
-	endif (BUILD_DYNAMIC)
-	if (BUILD_STATIC)
-	  TARGET_LINK_LIBRARIES(dill-static opcodes)
-	endif (BUILD_STATIC)
+	SET(TARGET_DEP_LIBS ${BINUTILS_LIBRARIES} opcodes)
 	set (NO_DISASSEMBLER FALSE)
     endif()
     if(NOT DEFINED INIT_DISASSEMBLE_INFO_THREE_ARG)
@@ -180,7 +152,7 @@ extern int main() {struct disassemble_info info;INIT_DISASSEMBLE_INFO(info, stdo
 endif()
 
 
-CREATE_LIBTOOL_FILE(dill /lib)
+add_libtool_library(NAME dill SRC_LIST ${SRC_LIST} dill.h DEP_LIBS ${TARGET_DEP_LIBS})
 
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.h DESTINATION include)
 install(TARGETS ${INSTALL_TARGETS}

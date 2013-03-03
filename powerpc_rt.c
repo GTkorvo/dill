@@ -26,7 +26,7 @@ extern unsigned int dill_powerpc_hidden_ftou(float a)
 extern long dill_powerpc_hidden_udiv(unsigned long a, unsigned long b)
 { return a / b; }
 
-extern xfer_entry powerpc_xfer_recs[] = {
+static xfer_entry powerpc_xfer_recs[] = {
     {"dill_powerpc_hidden_modi", (void*)dill_powerpc_hidden_modi},
     {"dill_powerpc_hidden_mod", (void*)dill_powerpc_hidden_mod},
     {"dill_powerpc_hidden_umodi", (void*)dill_powerpc_hidden_umodi},

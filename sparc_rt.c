@@ -26,7 +26,7 @@ extern unsigned int dill_sparc_hidden_ftou(float a)
 extern long dill_sparc_hidden_udiv(unsigned long a, unsigned long b)
 { return a / b; }
 
-extern xfer_entry sparc_xfer_recs[] = {
+static xfer_entry sparc_xfer_recs[] = {
     {"dill_sparc_hidden_modi", (void*)dill_sparc_hidden_modi},
     {"dill_sparc_hidden_mod", (void*)dill_sparc_hidden_mod},
     {"dill_sparc_hidden_umodi", (void*)dill_sparc_hidden_umodi},
