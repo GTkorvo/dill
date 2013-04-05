@@ -66,8 +66,7 @@ IF ((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Li
     set (USE_MMAP_CODE_SEG 1)
 ENDIF()
 
-option(BUILD_STATIC "enable building the static library" ON)
-option(BUILD_DYNAMIC "enable building the dynamic library" ON)
+option(BUILD_SHARED_STATIC "enable building the shared or the static library" "BOTH")
 option(ENABLE_DISASSEMBLY "enable binutils-based disassembly (default is OFF)"
          OFF)
 
@@ -172,8 +171,7 @@ MESSAGE( STATUS )
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
 MESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
-MESSAGE( STATUS "BUILD_STATIC = ${BUILD_STATIC}" )
-MESSAGE( STATUS "BUILD_DYNAMIC = ${BUILD_DYNAMIC}" )
+MESSAGE( STATUS "BUILD_SHARED_STATIC = ${BUILD_SHARED_STATIC}" )
 MESSAGE( STATUS "ENABLE_DISASSEMBLY = ${ENABLE_DISASSEMBLY}" )
 MESSAGE( STATUS "MULTI_TARGET = ${MULTI_TARGET}" )
 MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )

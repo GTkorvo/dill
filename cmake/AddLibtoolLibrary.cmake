@@ -6,7 +6,7 @@
 #   NAME library
 #   SRC_LIST  list
 #   [NO_LIBTOOL]
-#   [BUILD_STATIC_SHARED type]
+#   [BUILD_SHARED_STATIC type]
 #   [DEP_LIBS  list]
 #   )
 #  
@@ -14,7 +14,7 @@
 #  NAME is the name of the library to create
 #  SRC_LIST is a list of source files to include
 #  NO_LIBTOOL disables creation of the .la file
-#  BUILD_STATIC_SHARED specifies to build STATIC libraries, SHARED libraries or BOTH
+#  BUILD_SHARED_STATIC specifies to build STATIC libraries, SHARED libraries or BOTH
 #  DEP_LIBS is a list of dependency libraries to add
 #
 #
@@ -57,7 +57,6 @@ FUNCTION (ADD_LIBTOOL_LIBRARY)
     set (BUILD_SHARED FALSE)
     set (BUILD_STATIC TRUE)
   else ()
-    message(STATUS "BUILD_SHARED_STATIC has unknown value ${ARG_BUILD_SHARED_STATIC}, defaulting to BOTH")
     set (ARG_BUILD_SHARED_STATIC "BOTH")
     set (BUILD_STATIC TRUE)
     set (BUILD_SHARED TRUE)
