@@ -66,7 +66,9 @@ IF ((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Li
     set (USE_MMAP_CODE_SEG 1)
 ENDIF()
 
-option(BUILD_SHARED_STATIC "enable building the shared or the static library" "BOTH")
+IF(NOT DEFINED BUILD_SHARED_STATIC)
+  SET( BUILD_SHARED_STATIC "BOTH")
+ENDIF(NOT DEFINED BUILD_SHARED_STATIC)
 option(ENABLE_DISASSEMBLY "enable binutils-based disassembly (default is OFF)"
          OFF)
 
