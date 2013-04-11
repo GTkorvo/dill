@@ -1,13 +1,13 @@
 #
-#  FIND_CERCS_PROJECT -  Tue Aug 21 18:39:10 EDT 2012
+#  FIND_CERCS_PROJECT -  Thu Apr 11 13:49:00 EDT 2013
 #
 #  Use this macro like this:
 # FIND_CERCS_PROJECT(project_name 
 #   LIBRARY library
 #   INCLUDES header1 header2 ...
 #   [REQUIRED]
-#   [STATIC]
-#   [DYNAMIC]
+#   [STATIC]	<not implemented yet>
+#   [DYNAMIC]	<not implemented yet>
 #   [USE_INSTALLED]
 #   [VERBOSE]
 #   [QUIET]
@@ -54,16 +54,10 @@ FUNCTION (FIND_CERCS_PROJECT ARG_PROJECT)
     endif()
     set (LIB_SEARCH_PATH)
     set (INC_SEARCH_PATH)
-    if (${ARG_STATIC}) 
-      set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-    endif (${ARG_STATIC}) 
-    if (${ARG_DYNAMIC}) 
-      set(CMAKE_FIND_LIBRARY_SUFFIXES .so)
-    endif (${ARG_DYNAMIC}) 
     if (NOT ${ARG_USE_INSTALLED} )
       if ( NOT ("${CercsArch}" STREQUAL ""))
-	list (APPEND LIB_SEARCH_PATH ../${PROJECT_NAME}/${CercsArch} ../../${PROJECT_NAME}/${CercsArch} $ENV{HOME}/${CercsArch}/lib )
-	list (APPEND INC_SEARCH_PATH ../${PROJECT_NAME}/${CercsArch} ../../${PROJECT_NAME}/${CercsArch} $ENV{HOME}/${CercsArch}/include )
+	list (APPEND LIB_SEARCH_PATH ../${PROJECT_NAME}/${CercsArch} ../../${PROJECT_NAME}/${CercsArch} $ENV{HOME}/${CercsArch}/${PROJECT_NAME}/lib $ENV{HOME}/${CercsArch}/lib )
+	list (APPEND INC_SEARCH_PATH ../${PROJECT_NAME}/${CercsArch} ../../${PROJECT_NAME}/${CercsArch} $ENV{HOME}/${CercsArch}/${PROJECT_NAME}/include )
       endif()
       list (APPEND LIB_SEARCH_PATH ../${PROJECT_NAME}  ../../${PROJECT_NAME} ../${PROJECT_NAME}/build ../../${PROJECT_NAME}/build  $ENV{HOME}/lib  )
       list (APPEND INC_SEARCH_PATH ../${PROJECT_NAME}  ../../${PROJECT_NAME} ../${PROJECT_NAME}/build ../../${PROJECT_NAME}/build  $ENV{HOME}/include  )
@@ -93,7 +87,7 @@ FUNCTION (FIND_CERCS_PROJECT ARG_PROJECT)
       endif()
     endif()
     foreach (INCLUDE ${ARG_INCLUDES})
-      STRING(REGEX REPLACE "[./-]" "_" INCLUDE_NAME ${INCLUDE})
+      STRING(REGEX REPLACE "[.]" "_" INCLUDE_NAME ${INCLUDE})
       STRING(TOUPPER "HAVE_${INCLUDE_NAME}" INCLUDE_VAR)
       if (${ARG_VERBOSE})
 	message(STATUS "Searching for ${INCLUDE} in ${SEARCH_PATH}")
