@@ -23,7 +23,7 @@ endforeach()
 
 TARGET_LINK_LIBRARIES(dill_regress m)
 SET_TARGET_PROPERTIES(dill_regress PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")
-if (NOT ${TARGET_CNL})
+if (NOT DEFINED TARGET_CNL OR NOT ${TARGET_CNL})
   ADD_EXECUTABLE(cplus cplus.cc)
   TARGET_LINK_LIBRARIES(cplus dill )
   ADD_TEST(dill_cplus cplus)
