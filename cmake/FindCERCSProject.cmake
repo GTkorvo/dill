@@ -1,5 +1,5 @@
 #
-#  FIND_CERCS_PROJECT -  Thu Apr 11 13:57:06 EDT 2013
+#  FIND_CERCS_PROJECT -  Mon Jun 10 12:43:34 EDT 2013
 #
 #  Use this macro like this:
 # FIND_CERCS_PROJECT(project_name 
@@ -66,6 +66,8 @@ FUNCTION (FIND_CERCS_PROJECT ARG_PROJECT)
       list (APPEND LIB_SEARCH_PATH ../${PROJECT_NAME}  ../../${PROJECT_NAME} ../${PROJECT_NAME}/build ../../${PROJECT_NAME}/build  $ENV{HOME}/lib  )
       list (APPEND INC_SEARCH_PATH ../${PROJECT_NAME}  ../../${PROJECT_NAME} ../${PROJECT_NAME}/build ../../${PROJECT_NAME}/build  $ENV{HOME}/include  )
     endif (NOT ${ARG_USE_INSTALLED} )
+    list (APPEND LIB_SEARCH_PATH ${CMAKE_INSTALL_PREFIX}/lib)
+    list (APPEND INC_SEARCH_PATH ${CMAKE_INSTALL_PREFIX}/include)
     IF(EXISTS /users/c/chaos)
       if ( NOT ("${CercsArch}" STREQUAL ""))
 	list (APPEND LIB_SEARCH_PATH /users/c/chaos/${CercsArch}/${PROJECT_NAME}/lib /users/c/chaos/${CercsArch}/lib)
