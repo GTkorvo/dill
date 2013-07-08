@@ -1,5 +1,5 @@
 #
-#  ADD_LIBTOOL_LIBRARY -  Fri Apr  5 19:11:19 EDT 2013
+#  ADD_LIBTOOL_LIBRARY -  Mon Jul  8 13:19:42 EDT 2013
 #
 #  Use this macro like this:
 # ADD_LIBTOOL_LIBRARY(project_name 
@@ -27,6 +27,7 @@ FUNCTION (ADD_LIBTOOL_LIBRARY)
   set(multiValueArgs SRC_LIST DEP_LIBS LINK_LIBS)
   CMAKE_PARSE_ARGUMENTS(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+  set(VERSION_TEXT "")
   if (EXISTS "${CMAKE_SOURCE_DIR}/version.c")
     file (STRINGS "${CMAKE_SOURCE_DIR}/version.c" VERSION_TEXT REGEX "^static.*")
   endif (EXISTS "${CMAKE_SOURCE_DIR}/version.c")
@@ -38,7 +39,9 @@ FUNCTION (ADD_LIBTOOL_LIBRARY)
   else (${VERSION_TEXT} MATCHES ".*${NAME}.*") 
     set(VERSION_TEXT "")
   endif (${VERSION_TEXT} MATCHES ".*${NAME}.*") 
-
+  IF( ANDROID)
+    set(VERSION_TEXT "")
+  ENDIF( ANDROID)
   if ("${ARG_BUILD_SHARED_STATIC}" STREQUAL "") 
     if (DEFINED BUILD_SHARED_STATIC)
       string(TOUPPER ${BUILD_SHARED_STATIC} BUILD_SHARED_STATIC) 
