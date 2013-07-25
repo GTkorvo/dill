@@ -114,6 +114,7 @@ extern void dill_x86_init(dill_stream s);
 extern void dill_x86_64_init(dill_stream s);
 extern void dill_arm5_init(dill_stream s);
 extern void dill_arm6_init(dill_stream s);
+extern void dill_arm7_init(dill_stream s);
 extern void dill_powerpc_init(dill_stream s);
 extern void dill_ia64_init(dill_stream s);
 #if defined(EMULATION_ONLY)
@@ -159,6 +160,12 @@ set_mach_reset(dill_stream s, char *arch)
 #if defined(MULTI_TARGET) || defined(HOST_ARM6)
     if (strcmp(arch, "arm6") == 0) {
 	s->p->mach_reset = dill_arm6_init;
+	return 1;
+    }
+#endif
+#if defined(MULTI_TARGET) || defined(HOST_ARM7)
+    if (strcmp(arch, "arm7") == 0) {
+	s->p->mach_reset = dill_arm7_init;
 	return 1;
     }
 #endif

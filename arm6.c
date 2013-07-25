@@ -1460,11 +1460,13 @@ arm6_call_link(dill_stream s)
  *  Cache flush code grabbed from a Dec 1999 posting on libc-hacker 
  *  mailing list
  */
+extern void __clear_cache(char*, char *);
+
 static void
 arm6_flush(void *base, void *limit)
 {
 #ifdef HOST_ARM6
-    CLEAR_INSN_CACHE(base, limit);
+  __clear_cache(base, limit);
 #endif
 }    
 

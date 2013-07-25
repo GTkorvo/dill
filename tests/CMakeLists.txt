@@ -17,7 +17,7 @@ ADD_CUSTOM_COMMAND(
 )
 foreach (TEST ${TESTS} )
     ADD_EXECUTABLE(dill_${TEST} ${TEST}.c)
-    TARGET_LINK_LIBRARIES(dill_${TEST} dill )
+    TARGET_LINK_LIBRARIES(dill_${TEST} dill ${DIS_LIBS})
     ADD_TEST(dill_${TEST} dill_${TEST} ${TEST_PERL_FLAGS})
 endforeach()
 
@@ -25,12 +25,12 @@ TARGET_LINK_LIBRARIES(dill_regress m)
 SET_TARGET_PROPERTIES(dill_regress PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")
 if (NOT DEFINED TARGET_CNL OR NOT ${TARGET_CNL})
   ADD_EXECUTABLE(cplus cplus.cc)
-  TARGET_LINK_LIBRARIES(cplus dill )
+  TARGET_LINK_LIBRARIES(cplus dill ${DIS_LIBS})
   ADD_TEST(dill_cplus cplus)
   SET_TARGET_PROPERTIES(cplus PROPERTIES LINKER_LANGUAGE CXX)
 endif()
 ADD_EXECUTABLE(stest stest.c)
-TARGET_LINK_LIBRARIES(stest dill )
+TARGET_LINK_LIBRARIES(stest dill ${DIS_LIBS})
 ADD_TEST(dill_stest stest)
 
 set_tests_properties (dill_call-test

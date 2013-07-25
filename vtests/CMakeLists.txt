@@ -12,7 +12,7 @@ ADD_CUSTOM_COMMAND(
 
 foreach (TEST ${TESTS} )
     ADD_EXECUTABLE(v${TEST} ${TEST}.c)
-    TARGET_LINK_LIBRARIES(v${TEST} dill )
+    TARGET_LINK_LIBRARIES(v${TEST} dill ${DIS_LIBS})
     ADD_TEST(vtest_${TEST} "v${TEST}")
 endforeach()
 
