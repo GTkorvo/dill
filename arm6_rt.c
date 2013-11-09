@@ -34,6 +34,9 @@ extern unsigned long arm6_hidden_udiv(unsigned long a, unsigned long b)
 extern long arm6_hidden_div(long a, long b)
 { return a / b; }
 
+#define COND(x)	((unsigned)((x)&0xf) << 28)
+#define CLASS(x)	(((x)&0x7) << 25)
+
 static xfer_entry arm6_xfer_recs[] = {
     {"arm6_hidden_modi", arm6_hidden_modi},
     {"arm6_hidden_mod", arm6_hidden_mod},
@@ -76,13 +79,19 @@ arm6_rt_call_link(char *code, call_t *t)
 	    /* no PLT */
 	    int call_offset = (unsigned long)t->call_locs[i].xfer_addr -
 		(unsigned long)call_addr;
-	
+	    int thumb_target = (((unsigned long)t->call_locs[i].xfer_addr & 0x1) == 0x1);
+	    int bit1;
 	    /* compensate for arm PC lookahead */
 	    call_offset = call_offset - 8;
 	    /* div addr diff by 4 for arm offset value */
+	    bit1 = (call_offset & 0x2) >> 1;
 	    call_offset = call_offset >> 2;
 	    *call_addr &= 0xff000000;
 	    *call_addr |= (call_offset & 0xffffff);
+	    if (thumb_target) {
+	      *call_addr &= 0x00ffffff; /*  kill top bit */
+	      *call_addr |= (COND(0xf)|CLASS(5)|bit1<<24);  /* blx */
+	    }
 	} else {
 	    /* call through PLT */
 	    unsigned long PLT_addr = (unsigned long)code + 

@@ -48,6 +48,7 @@ typedef struct arm6_mach_info {
     int varidiac_call;
     int save_insn_offset;
     int max_arg_size;
+    int hard_float;
 } *arm6_mach_info;
 
 extern int arm6_type_align[];
