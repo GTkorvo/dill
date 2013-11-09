@@ -134,6 +134,9 @@
 /* Define if byteorder is bigendian */
 #cmakedefine WORDS_BIGENDIAN
 
+/* Define if using ARM hardware float ABIs for parameter passing */
+#define ARM_HARD_FLOAT  @ARM_HARD_FLOAT@
+
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus

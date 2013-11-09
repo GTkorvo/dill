@@ -70,6 +70,40 @@ IF ((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Li
     set (USE_MMAP_CODE_SEG 1)
 ENDIF()
 
+set (HARDFP_AVAILABLE 0)
+# Determine float ABI of ARM Linux
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_program(READELF readelf)
+    if (READELF MATCHES "NOTFOUND")
+        message(WARNING "readelf not found; float ABI detection disabled")
+    else (READELF MATCHES "NOTFOUND")
+        find_library(MATH_LIBRARY m /usr/lib)
+        execute_process(
+            COMMAND ${READELF} -A ${MATH_LIBRARY}
+            OUTPUT_VARIABLE ELF_ARCH
+            ERROR_QUIET)
+        if (ELF_ARCH MATCHES "Tag_ABI_VFP_args: VFP registers")
+            message("Hard-float detected")
+
+            # Test compilation with -mfloat-abi=hard using an arbitrary libc function
+            # (typically fails with "fatal error: bits/predefs.h: No such file or directory"
+            # if hard-float dev libraries are not installed)
+            include(CMakePushCheckState)
+            cmake_push_check_state()
+            set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mfloat-abi=hard")
+            include(CheckSymbolExists)
+            check_symbol_exists(exit stdlib.h HARDFP_AVAILABLE)
+            if (NOT HARDFP_AVAILABLE)
+                message(FATAL_ERROR "hard-float dev libraries required (e.g. 'apt-get install libc6-dev-armel' on Debian/Ubuntu)")
+            endif (NOT HARDFP_AVAILABLE)
+            cmake_pop_check_state()
+
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfloat-abi=hard")
+        endif ()
+    endif (READELF MATCHES "NOTFOUND")
+endif (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+set(ARM_HARD_FLOAT ${HARDFP_AVAILABLE})
+
 IF(NOT DEFINED BUILD_SHARED_STATIC)
   SET( BUILD_SHARED_STATIC "BOTH")
 ENDIF(NOT DEFINED BUILD_SHARED_STATIC)
