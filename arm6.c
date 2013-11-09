@@ -1727,8 +1727,6 @@ arm6_reg_init(dill_stream s)
     s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
 
-#define ARM_HARD_FLOAT 0
-
 extern void*
 gen_arm6_mach_info(s, v9)
 dill_stream s;
