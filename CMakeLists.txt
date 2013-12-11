@@ -14,7 +14,7 @@ include(Compile)
 include(FindCERCSProject)
 include(AddLibtoolLibrary)
 
-file (STRINGS "${CMAKE_SOURCE_DIR}/version.c" VERSION_TEXT REGEX "^static.*")
+file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/version.c" VERSION_TEXT REGEX "^static.*")
 STRING(REGEX REPLACE ".*Version ([0-9]+.[0-9]+.[0-9]+).*" "\\1" VERSION_TEXT "${VERSION_TEXT}")
 STRING(REGEX REPLACE "([0-9]+)[0-9.]*$" "\\1" MAJOR_VERSION_STRING ${VERSION_TEXT})
 
@@ -126,14 +126,14 @@ if (MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
 	set (EMU_LIB avcall)
     endif(EMULATION_POSSIBLE)
     if ((NOT MULTI_TARGET) AND (NOT NATIVE_CG))
-        message ( STATUS Configure has detected no native dynamic code generation support 
+        message ( STATUS "Configure has detected no native dynamic code generation support 
 	for this architecture (\"$NATIVE_ARCH\").  However, the avcall
-	library was found, so library configure for emulation will be built.)
+	library was found, so library configure for emulation will be built.")
 	set (EMULATION_ONLY true)
     endif()
 else ()
     message ( FATAL_ERROR "Configure has detected no native dynamic code generation support 
-	for this architecture ("$NATIVE_ARCH"), -DMULTI_TARGET=ON 
+	for this architecture (\"$NATIVE_ARCH\"), -DMULTI_TARGET=ON 
 	was not specified, and no emulation is possible (avcall library 
 	not found)
 		       NO LIBRARY WILL BE BUILT")
