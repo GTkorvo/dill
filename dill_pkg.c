@@ -81,30 +81,24 @@ dill_package_stitch(char *pkg, dill_extern_entry* extra_externs)
     }
 #if defined(HOST_X86)
     char *p = x86_package_stitch(code, &t, (dill_pkg) pkg);
-#endif
-#if defined(HOST_SPARC)
+#elif defined(HOST_SPARC)
     char *p = sparc_package_stitch(code, &t, (dill_pkg) pkg);
-#endif
-#if defined(HOST_SPARCV9)
+#elif defined(HOST_SPARCV9)
     char *p = sparc_package_stitch(code, &t, (dill_pkg) pkg);
-#endif
-#if defined(HOST_X86_64)
+#elif defined(HOST_X86_64)
     char *p = x86_64_package_stitch(code, &t, (dill_pkg) pkg);
-#endif
-#if defined(HOST_IA64)
+#elif defined(HOST_IA64)
     char *p = ia64_package_stitch(code, &t, (dill_pkg) pkg);
-#endif
-#if defined(HOST_ARM5)
+#elif defined(HOST_ARM5)
     char *p = arm5_package_stitch(code, &t, (dill_pkg) pkg);
-#endif
-#if defined(HOST_ARM6)
+#elif defined(HOST_ARM6)
     char *p = arm6_package_stitch(code, &t, (dill_pkg) pkg);
-#endif
-#if defined(HOST_ARM7)
+#elif defined(HOST_ARM7)
     char *p = arm7_package_stitch(code, &t, (dill_pkg) pkg);
-#endif
-#if defined(HOST_POWERPC)
+#elif defined(HOST_POWERPC)
     char *p = powerpc_package_stitch(code, &t, (dill_pkg) pkg);
+#else
+    char *p = NULL;
 #endif
     free(t.call_locs);
     handle->fp = (void(*)()) p;

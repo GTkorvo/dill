@@ -4,10 +4,10 @@
 #undef BFD_BYTE
 
 /* Define to 1 if the emulator should be built */
-#undef BUILD_EMULATOR
+#cmakedefine BUILD_EMULATOR
 
 /* Define if dill should attempt to DCG */
-#undef EMULATION_ONLY
+#cmakedefine EMULATION_ONLY
 
 /* Define to 1 if you have the <dis-asm.h> header file. */
 #cmakedefine HAVE_DIS_ASM_H
