@@ -64,6 +64,7 @@ elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.*")
 else()
 message (STATUS "NO CG for Processor ${CMAKE_SYSTEM_PROCESSOR}")
     set (NATIVE_CG false)
+    set (NATIVE_ARCH UNSUPPORTED)
 endif()
 
 IF ((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
@@ -89,6 +90,10 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
 endif (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
 set(ARM_HARD_FLOAT ${HARDFP_AVAILABLE})
 
+find_package (LibFFI)
+IF (LIBFFI_FOUND) 
+  set (EMULATION_POSSIBLE true)
+ENDIF (LIBFFI_FOUND) 
 IF(NOT DEFINED BUILD_SHARED_STATIC)
   SET( BUILD_SHARED_STATIC "BOTH")
 ENDIF(NOT DEFINED BUILD_SHARED_STATIC)
@@ -117,19 +122,23 @@ OPTION(MULTI_TARGET  "Build all available target architectures" OFF)
 if (MULTI_TARGET)
   message (STATUS "arch files is ${arch_files}")
     set (SRC_LIST ${SRC_LIST} ${arch_files})
-elseif (DEFINED NATIVE_ARCH) 
+elseif (NOT "${NATIVE_ARCH}" STREQUAL "UNSUPPORTED") 
    set (SRC_LIST ${SRC_LIST} dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
 endif (MULTI_TARGET)
 
+set (NATIVE_CG false)
 if (MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
     if (EMULATION_POSSIBLE)
-	set (EMU_LIB avcall)
+	set (EMU_LIB ${LIBFFI_LIBRARY})
+	INCLUDE_DIRECTORIES(${LIBFFI_INCLUDE_DIR})
     endif(EMULATION_POSSIBLE)
     if ((NOT MULTI_TARGET) AND (NOT NATIVE_CG))
         message ( STATUS "Configure has detected no native dynamic code generation support 
-	for this architecture (\"$NATIVE_ARCH\").  However, the avcall
+	for this architecture (\"$NATIVE_ARCH\").  However, the libffi
 	library was found, so library configure for emulation will be built.")
 	set (EMULATION_ONLY true)
+	set (BUILD_EMULATOR true)
+	LIST(APPEND TARGET_DEP_LIBS ${EMU_LIB})
     endif()
 else ()
     message ( FATAL_ERROR "Configure has detected no native dynamic code generation support 
@@ -154,7 +163,7 @@ if (ENABLE_DISASSEMBLY)
     else()
 	INCLUDE_DIRECTORIES(${BINUTILS_INCLUDE_DIR})
 	LINK_DIRECTORIES(${BINUTILS_LIB_DIR})
-	SET(TARGET_DEP_LIBS ${BINUTILS_LIBRARIES} opcodes)
+	LIST(APPEND TARGET_DEP_LIBS ${BINUTILS_LIBRARIES} opcodes)
 	set(DIS_LIBS ${TARGET_DEP_LIBS})
 	set (NO_DISASSEMBLER FALSE)
     endif()
@@ -176,8 +185,7 @@ extern int main() {struct disassemble_info info;INIT_DISASSEMBLE_INFO(info, stdo
 
 endif()
 
-
-add_libtool_library(NAME dill SRC_LIST ${SRC_LIST} dill.h DEP_LIBS ${TARGET_DEP_LIBS})
+add_libtool_library(NAME dill SRC_LIST ${SRC_LIST} dill.h DEP_LIBS ${TARGET_DEP_LIBS} LINK_LIBS ${TARGET_DEP_LIBS})
 
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.h DESTINATION include)
 install(TARGETS ${INSTALL_TARGETS}
