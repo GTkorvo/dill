@@ -18,7 +18,6 @@ static void run_emulation(dill_exec_ctx ec);
 #include "vm_include.c"
 #ifdef BUILD_EMULATOR
 #include <ffi.h>
-#endif
 
 static
 void emu_func(ffi_cif *cif, void*vret, void* args[], void *client_data)
@@ -408,7 +407,6 @@ static void run_emulation(dill_exec_ctx ec)
 	    break;
 	case iclass_call:
 	{
-#ifdef BUILD_EMULATOR
 	    int i;
 	    void* imm = ip->opnds.bri.imm_a;
 	    int ret_reg = ip->opnds.bri.src;
@@ -530,7 +528,6 @@ static void run_emulation(dill_exec_ctx ec)
 			     ret_type, args) == FFI_OK) {
 		ffi_call(&cif, func, ret_addr, values);
 	    }
-#endif
 	}
 	    break;
 
@@ -584,6 +581,4 @@ static void run_emulation(dill_exec_ctx ec)
 	ip++;
     }
 }
-
-
-
+#endif
