@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 
-set (TESTS basic_call general t1 opt branch pkg_test multi_test prefix_test)
+set (TESTS basic_call general t1 opt branch prefix_test)
+
+if (NATIVE_CG)
+  list (APPEND TESTS pkg_test multi_test )
+endif (NATIVE_CG)
 
 INCLUDE_DIRECTORIES(BEFORE ${dill_BINARY_DIR} ${dill_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 

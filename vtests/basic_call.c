@@ -108,7 +108,7 @@ void b () {
      
      dill_stream s = dill_create_stream();
 
-     dill_start_proc(s, "b_gen", DILL_I, "%i%i");
+     dill_start_proc(s, "b_gen", DILL_P, "%i%i");
      f = dill_getreg(s, DILL_P);
      dill_setp(s, f, (void *)gg);
      dill_retp(s, f);

@@ -36,7 +36,7 @@ void emu_func(ffi_cif *cif, void*vret, void* args[], void *client_data)
     if (!ec->p) {
 	ec->p = malloc(param_count * sizeof(struct reg_type));
     }
-    for (i= 1; i < param_count; i++) {
+    for (i= 0; i < param_count; i++) {
 	switch (c->p->c_param_args[i].type) {
 	case DILL_C:
 	    ec->p[i].u.c.c = *((char **)args)[i];
@@ -243,7 +243,10 @@ static void run_emulation(dill_exec_ctx ec)
     dill_stream c = ec->dc;
     void *insns = c->p->code_base;
     virtual_insn *ip = &((virtual_insn *)insns)[0];
-
+    virtual_mach_info vmi = (virtual_mach_info)c->p->mach_info;
+    if (vmi->prefix_code_start != -1) {
+	ip = (virtual_insn*)((char*)insns + (vmi->prefix_code_start * sizeof(virtual_insn)));
+    }
     while (1) {
 	struct reg_type *pused[3];
 	struct reg_type *pdest;
@@ -408,21 +411,20 @@ static void run_emulation(dill_exec_ctx ec)
 	case iclass_call:
 	{
 	    int i;
-	    void* imm = ip->opnds.bri.imm_a;
 	    int ret_reg = ip->opnds.bri.src;
 	    int reg = ip->insn_code & 0x10;
 	    int typ = ip->insn_code & 0xf;
-	    ffi_type **args;
-	    void **values;
+	    ffi_type **args = malloc(sizeof(args[0])*ec->out_param_count);
+	    void **values = malloc(sizeof(values[0])*ec->out_param_count);
 	    void *func;
 	    ffi_type *ret_type;
 	    void *ret_addr = NULL;
 	    ffi_cif cif;
 	    pused[0] = PREG(ec, ret_reg);
 	    if (reg != 0) {
-		func = PREG(ec, (long)imm)->u.p.p;
+		func = PREG(ec, (long)ip->opnds.bri.imm_l)->u.p.p;
 	    } else {
-		func = (void*)imm;
+		func = (void*)ip->opnds.bri.imm_a;
 	    }
 	    switch(typ) {
 	    case DILL_C:
@@ -524,7 +526,7 @@ static void run_emulation(dill_exec_ctx ec)
 		    break;
 		}
 	    }
-	    if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 1,
+	    if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, ec->out_param_count,
 			     ret_type, args) == FFI_OK) {
 		ffi_call(&cif, func, ret_addr, values);
 	    }
@@ -535,7 +537,7 @@ static void run_emulation(dill_exec_ctx ec)
 	{
 	    int typ = ip->insn_code & 0xf;
 	    int r0 = ip->opnds.a1.src;
-	    if (ip->opnds.a1.src == 0xffff) {
+	    if ((short)ip->opnds.a1.src < 0) {
 		ec->out_param_count = 0;
 		ec->out_params = malloc(sizeof(ec->out_params[0]));
 	    } else {
@@ -546,12 +548,18 @@ static void run_emulation(dill_exec_ctx ec)
 	    }
 	}
 	break;
-	case iclass_pushi:
+	case iclass_pushi: {
+	    int typ = ip->insn_code & 0xf;
 	    ec->out_params = realloc(ec->out_params, sizeof(ec->out_params[0]) * (ec->out_param_count + 1));
-	    ec->out_params[ec->out_param_count].typ = DILL_L;
-	    ec->out_params[ec->out_param_count].val.u.l.l = ip->opnds.a3i.u.imm;
+	    ec->out_params[ec->out_param_count].typ = typ;
+	    if (typ == DILL_P) {
+		ec->out_params[ec->out_param_count].val.u.p.p = ip->opnds.a3i.u.imm_a;
+	    } else {
+		ec->out_params[ec->out_param_count].val.u.l.l = ip->opnds.a3i.u.imm;
+	    }
 	    ec->out_param_count++;
 	    break;
+	}
 	case iclass_pushf:
 	    ec->out_params = realloc(ec->out_params, sizeof(ec->out_params[0]) * (ec->out_param_count + 1));
 	    ec->out_params[ec->out_param_count].typ = DILL_D;
@@ -575,10 +583,13 @@ static void run_emulation(dill_exec_ctx ec)
 	case iclass_mark_label:
 	    break;
 	default:
-	    printf("Unhandled insn in emulator, %d\n", ip->class_code);
+	    printf("Unhandled insn in emulator, %p - %d\n", ip, ip->class_code);
 	    break;
 	}
 	ip++;
+	if (ip >= c->p->cur_ip) {
+	    ip = &((virtual_insn *)insns)[0];
+	}
     }
 }
 #endif
