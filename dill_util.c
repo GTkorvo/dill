@@ -106,6 +106,12 @@ reset_context(dill_stream s)
     dill_branch_init(s);
     dill_call_init(s);
     dill_ret_init(s);
+    if (s->p->emu_args) free(s->p->emu_args);
+    if (s->p->cifp) free(s->p->cifp);
+    if (s->p->closure) ffi_closure_free(s->p->closure);
+    s->p->emu_args = NULL;
+    s->p->cifp = NULL;
+    s->p->closure = NULL;
 }
 
 extern void dill_sparc_init(dill_stream s);
@@ -208,6 +214,9 @@ dill_free_stream(dill_stream s)
     if (s->p->vregs) free(s->p->vregs);
     if (s->p->virtual.mach_info) free(s->p->virtual.mach_info);
     if (s->p->native.mach_info) free(s->p->native.mach_info);
+    if (s->p->emu_args) free(s->p->emu_args);
+    if (s->p->cifp) free(s->p->cifp);
+    if (s->p->closure) ffi_closure_free(s->p->closure);
     free(s->p);
     s->p = NULL;
     free(s);
@@ -223,6 +232,7 @@ dill_cross_init(char *arch)
     struct branch_table *bt;
     struct call_table *ct;
     struct ret_table *rt;
+    memset(s, 0, sizeof(struct dill_stream_s));
     s->p = (private_ctx) malloc(sizeof(struct dill_private_ctx));
     memset(s->p, 0, sizeof(struct dill_private_ctx));
     if (env == NULL) {
@@ -425,6 +435,7 @@ dill_finalize(dill_stream s)
     (s->j->end)(s);
     s->p->save_param_count = s->p->c_param_count;
     s->p->c_param_count = 0;
+    memset(handle, 0, sizeof(*handle));
     handle->fp = (void(*)())s->p->fp;
     handle->ref_count = 1;
     handle->size = 0;
@@ -447,6 +458,13 @@ dill_get_handle(dill_stream s)
     handle->ref_count = 1;
     handle->size = size;
     handle->code_base = native_base;
+    /* below used for libffi emulation */
+    handle->emu_args = s->p->emu_args;
+    handle->cifp = s->p->cifp;
+    handle->closure = s->p->closure;
+    s->p->emu_args = NULL;
+    s->p->cifp = NULL;
+    s->p->closure = NULL;
     return handle;
 }
 
@@ -466,6 +484,7 @@ dill_free_handle(dill_exec_handle handle)
     }
     handle->code_base = NULL;
     handle->size = 0;
+    free_emulator_handler_bits(handle);
     free(handle);
 }
 

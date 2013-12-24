@@ -4425,6 +4425,7 @@ virtual_do_end(dill_stream s, int package)
 #ifdef BUILD_EMULATOR
 	setup_VM_proc(s);
 #endif
+	free_bbs(vmi);
 	s->p->mach_reset = dill_virtual_init;
     } else if (dill_foreign_cg) {
 	(dill_foreign_cg)(s, (virtual_insn *)s->p->code_base, (virtual_insn *)s->p->cur_ip);

@@ -123,17 +123,18 @@ int available_size;
     return c->p->fp;
 }
 
-     /* Acts like puts with the file given at time of enclosure. */
-     void puts_binding(ffi_cif *cif, unsigned int *ret, void* args[],
-                       FILE *stream)
-     {
-	 printf("We're in the puts binding, args %p, %d, %d\n", *((char***)args)[0], *((int**)args)[1], *((int**)args)[2]);
-     }
+void
+free_emulator_handler_bits(dill_exec_handle handle)
+{
+    if (handle->emu_args) free(handle->emu_args);
+    if (handle->cifp) free(handle->cifp);
+    if (handle->closure) ffi_closure_free(handle->closure);
+}
 
 void
 setup_VM_proc(dill_stream c)
 {
-     ffi_cif *cifp = malloc(sizeof(ffi_cif));
+    ffi_cif *cifp = malloc(sizeof(ffi_cif));
     ffi_type **args = NULL;
     ffi_closure *closure;
     void *func;
@@ -236,6 +237,9 @@ setup_VM_proc(dill_stream c)
 	return;
     }
     c->p->fp = func;
+    c->p->emu_args = args;
+    c->p->cifp = cifp;
+    c->p->closure = closure;
 }
 
 static void run_emulation(dill_exec_ctx ec)
@@ -587,7 +591,7 @@ static void run_emulation(dill_exec_ctx ec)
 	    break;
 	}
 	ip++;
-	if (ip >= c->p->cur_ip) {
+	if (ip >= (virtual_insn *)c->p->cur_ip) {
 	    ip = &((virtual_insn *)insns)[0];
 	}
     }

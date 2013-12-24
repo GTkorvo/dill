@@ -131,6 +131,11 @@ struct dill_private_ctx {
     vreg_info *vregs;
     int v_tmps[DILL_B][3];
     int used_frame;
+
+    /* below used for libffi emulation */
+    void*emu_args;
+    void*cifp;
+    void*closure;
 };
 
 struct reg_type {
@@ -265,5 +270,9 @@ struct dill_exec_s {
     void *code_base;
     int size;
     void (*fp)();
+    /* below used for libffi emulation */
+    void*emu_args;
+    void*cifp;
+    void*closure;
 };
 
