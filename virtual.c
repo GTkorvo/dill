@@ -4423,6 +4423,8 @@ virtual_do_end(dill_stream s, int package)
 
     if (do_emulation) {
 #ifdef BUILD_EMULATOR
+	/* do a return, just in case it's missing */
+	if (vmi->prefix_code_start == -1) dill_retii(s,0);
 	setup_VM_proc(s);
 #endif
 	free_bbs(vmi);
