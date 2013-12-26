@@ -29,7 +29,7 @@ sub upperc {
 &convert( "c d f i l s u ul us uc", "c uc s us i u ul l");
 &convert( "c uc s us d f i l u ul", "f d");
 &convert( "p ul", "ul p");
-&load_store("c d f i l s u ul us uc");
+&load_store("c d f i l s u ul us uc p");
 
 print VMOUT "void emulate_arith3(int code, struct reg_type *dest, struct reg_type *src1, struct reg_type *src2)\n";
 print VMOUT "{\n    switch(code) {\n$vm_a3_code    }\n}\n";
@@ -48,7 +48,7 @@ print VMOUT "#define CONV(x,y) ((x<<4)+y)\n";
 print VMOUT "void emulate_convert(int code, struct reg_type *dest, struct reg_type *src)\n";
 print VMOUT "{\n    switch(code) {\n$vm_cvt_code        default: printf(\"convert missed case %x \\n\", code); break;}\n}\n";
 print VMOUT "int emulate_loadi(int code, struct reg_type *dest, struct reg_type *src, long imm)\n";
-print VMOUT "{\n    switch(code) {\n$vm_loadi_code    }return 0;\n}\n";
+print VMOUT "{\n    switch(code) {\n$vm_loadi_code    default: printf(\"loadi missed case %x \\n\", code); break;}return 0;\n}\n";
 
 print VMOUT "int emulate_storei(int code, struct reg_type *dest, struct reg_type *src, long imm)\n";
 print VMOUT "{\n    switch(code) {\n$vm_storei_code    }return 0;\n}\n";
