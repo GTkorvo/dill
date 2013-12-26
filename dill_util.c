@@ -488,7 +488,9 @@ dill_free_handle(dill_exec_handle handle)
     }
     handle->code_base = NULL;
     handle->size = 0;
+#ifdef BUILD_EMULATOR
     free_emulator_handler_bits(handle);
+#endif
     free(handle);
 }
 
