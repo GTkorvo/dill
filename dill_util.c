@@ -126,7 +126,15 @@ extern void dill_arm7_init(dill_stream s);
 extern void dill_powerpc_init(dill_stream s);
 extern void dill_ia64_init(dill_stream s);
 #if defined(EMULATION_ONLY)
-static void null_init(dill_stream s) {}
+static void null_init(dill_stream s) 
+{
+    extern int virtual_type_align[];
+    extern int virtual_type_size[];
+    s->j = malloc(sizeof(*s->j));
+    memset(s->j, 0, sizeof(*s->j));
+    s->j->type_size = virtual_type_size;
+    s->j->type_align = virtual_type_align;
+}
 #endif
 
 static int
@@ -320,6 +328,11 @@ dill_create_stream()
     return s;
 }
     
+
+#ifndef EMULATION_ONLY
+EXTERN void
+dill_native_dcg(){}
+#endif
 
 EXTERN dill_stream
 dill_create_raw_stream()
