@@ -108,7 +108,9 @@ reset_context(dill_stream s)
     dill_ret_init(s);
     if (s->p->emu_args) free(s->p->emu_args);
     if (s->p->cifp) free(s->p->cifp);
+#ifdef BUILD_EMULATOR
     if (s->p->closure) ffi_closure_free(s->p->closure);
+#endif
     s->p->emu_args = NULL;
     s->p->cifp = NULL;
     s->p->closure = NULL;
@@ -216,7 +218,9 @@ dill_free_stream(dill_stream s)
     if (s->p->native.mach_info) free(s->p->native.mach_info);
     if (s->p->emu_args) free(s->p->emu_args);
     if (s->p->cifp) free(s->p->cifp);
+#ifdef BUILD_EMULATOR
     if (s->p->closure) ffi_closure_free(s->p->closure);
+#endif
     free(s->p);
     s->p = NULL;
     free(s);
