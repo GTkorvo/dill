@@ -591,7 +591,7 @@ static void run_emulation(dill_exec_ctx ec)
 	    break;
 	}
 	ip++;
-	if (ip >= (virtual_insn *)c->p->cur_ip) {
+	if (ip >= (virtual_insn *)c->p->virtual.cur_ip) {
 	    ip = &((virtual_insn *)insns)[0];
 	}
     }
