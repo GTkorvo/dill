@@ -173,7 +173,7 @@ set_mach_reset(dill_stream s, char *arch)
 	return 1;
     }
 #endif
-#if defined(MULTI_TARGET) || defined(HOST_ARM6)
+#if defined(MULTI_TARGET) || defined(HOST_ARM6)|| defined(HOST_ARM7)
     if (strcmp(arch, "arm6") == 0) {
 	s->p->mach_reset = dill_arm6_init;
 	return 1;
@@ -181,7 +181,7 @@ set_mach_reset(dill_stream s, char *arch)
 #endif
 #if defined(MULTI_TARGET) || defined(HOST_ARM7)
     if (strcmp(arch, "arm7") == 0) {
-	s->p->mach_reset = dill_arm7_init;
+	s->p->mach_reset = dill_arm6_init;
 	return 1;
     }
 #endif

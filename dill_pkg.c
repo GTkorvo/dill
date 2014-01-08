@@ -94,7 +94,7 @@ dill_package_stitch(char *pkg, dill_extern_entry* extra_externs)
 #elif defined(HOST_ARM6)
     char *p = arm6_package_stitch(code, &t, (dill_pkg) pkg);
 #elif defined(HOST_ARM7)
-    char *p = arm7_package_stitch(code, &t, (dill_pkg) pkg);
+    char *p = arm6_package_stitch(code, &t, (dill_pkg) pkg);
 #elif defined(HOST_POWERPC)
     char *p = powerpc_package_stitch(code, &t, (dill_pkg) pkg);
 #else

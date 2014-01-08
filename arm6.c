@@ -1247,9 +1247,15 @@ extern int arm6_calli(dill_stream s, int type, void *xfer_address, const char *n
     int caller_side_ret_reg = _a1;
     (void) name;
     /* save temporary registers */
+#ifdef HOST_ARM6
     dill_mark_call_location(s, name, xfer_address);
     INSN_OUT(s, COND(AL)|CLASS(5)|(1<<24)/*link*/);
-    /*    arm6_nop(s);*/
+#else
+    /* killing r12 here */
+    arm6_set(s, _r12, (long) xfer_address);
+    /* blx (register) */
+    INSN_OUT(s, 0xe12fff30|RM(_r12));
+#endif
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
         if (ami->hard_float == 0) {
@@ -1473,6 +1479,7 @@ arm6_PLT_emit(dill_stream s, int package)
         /* div addr diff by 4 for arm offset value */
 	call_offset = call_offset >> 2;
 	call_offset = call_offset >> 24;
+#ifdef HOST_ARM6
 	if (((call_offset != 0) && (call_offset != -1)) || package) {
 	    t->call_locs[i].mach_info = (void*)
 		((long)s->p->cur_ip - (long)s->p->code_base);
@@ -1480,6 +1487,7 @@ arm6_PLT_emit(dill_stream s, int package)
 	    arm6_movi(s, _pc, _v1);
 	    arm6_nop(s);  /* place where addr will be loaded */
 	}
+#endif
     }
 }
 
@@ -1510,7 +1518,7 @@ extern void __clear_cache(char*, char *);
 static void
 arm6_flush(void *base, void *limit)
 {
-#ifdef HOST_ARM6
+#if defined(HOST_ARM6) || defined(HOST_ARM7)
   __clear_cache(base, limit);
 #endif
 }    
@@ -1686,6 +1694,15 @@ dill_stream s;
 int r;
 long val;
 {
+#if defined(HOST_ARM7)
+    /* movw */
+    INSN_OUT(s, COND(AL)|3<<24|((val>>12)&0xf)<<16| RD(r)| val&0xfff);
+    if ((val & 0xffff0000) != 0) {
+	int imm = (val >> 16) & 0xffff;
+	/* movt */
+	INSN_OUT(s, COND(AL)|3<<24|4<<20|((imm>>12)&0xf)<<16| RD(r)| imm&0xfff);
+    }
+#else
     arm6_dproci(s, MOV, 0, r, 0, val & 0xff);
     if ((val & 0xff00) != 0) {
 	int imm = (val >> 8) & 0xff;
@@ -1702,6 +1719,7 @@ long val;
 	/* or in the byte */
 	INSN_OUT(s, COND(AL)|CLASS(0x0)|OPCODE(ORR)|S(0)|RN(r)|RD(r)|IMM(imm, 24));
     }
+#endif
 }
 
 #define bit_R(x) ((unsigned long)1<<x)

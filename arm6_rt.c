@@ -129,7 +129,7 @@ extern void __clear_cache(char*, char *);
 static void
 arm6_flush(void *base, void *limit)
 {
-#ifdef HOST_ARM6
+#if defined(HOST_ARM6) || defined(HOST_ARM7)
     __clear_cache(base, limit);
 #endif
 }    

@@ -25,7 +25,7 @@ void *get_xfer_ptr( method_pointer m, void *object_ptr)
     cptr = m->u.call_ptr;
 #if defined(NOTDEF)
     if (m->vflag != 0) {  /* vflag indicates virtual on some archs*/
-#elif defined(HOST_ARM6)
+#elif defined(HOST_ARM6) || defined(HOST_ARM7)
     if ((m->delta & 0x1) == 1) {  /* odd delta indicates virtual on some archs*/
 #else
     if ((m->u.vtindex & 0x1) == 1) {   /* METHOD_PTR IS ODD - virtual */
