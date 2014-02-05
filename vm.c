@@ -79,28 +79,28 @@ void emu_func(ffi_cif *cif, void*vret, void* args[], void *client_data)
     /* do return */
     switch(c->p->ret_type) {
     case DILL_C:
-	*((char *)vret) = (PREG(ec, ec->ret_reg)->u.c.c);
+	*((long *)vret) = (PREG(ec, ec->ret_reg)->u.c.c);
 	break;
     case DILL_UC:
-	*((unsigned char *)vret) = (PREG(ec, ec->ret_reg)->u.uc.uc);
+	*((ffi_arg *)vret) = (PREG(ec, ec->ret_reg)->u.uc.uc);
 	break;
     case DILL_S:
-	*((short *)vret) = (PREG(ec, ec->ret_reg)->u.s.s);
+	*((ffi_sarg *)vret) = (PREG(ec, ec->ret_reg)->u.s.s);
 	break;
     case DILL_US:
-	*((unsigned short *)vret) = (PREG(ec, ec->ret_reg)->u.us.us);
+	*((ffi_arg *)vret) = (PREG(ec, ec->ret_reg)->u.us.us);
 	break;
     case DILL_I:
-	*((int *)vret) = (PREG(ec, ec->ret_reg)->u.i.i);
+	*((ffi_sarg *)vret) = (PREG(ec, ec->ret_reg)->u.i.i);
 	break;
     case DILL_U:
-	*((unsigned int *)vret) = (PREG(ec, ec->ret_reg)->u.u.u);
+	*((ffi_arg *)vret) = (PREG(ec, ec->ret_reg)->u.u.u);
 	break;
     case DILL_L:
-	*((long *)vret) = (PREG(ec, ec->ret_reg)->u.l.l);
+	*((ffi_sarg *)vret) = (PREG(ec, ec->ret_reg)->u.l.l);
 	break;
     case DILL_UL:
-	*((unsigned long *)vret) = (PREG(ec, ec->ret_reg)->u.ul.ul);
+	*((ffi_arg *)vret) = (PREG(ec, ec->ret_reg)->u.ul.ul);
 	break;
     case DILL_F:
 	*((float *)vret) = (PREG(ec, ec->ret_reg)->u.f.f);
