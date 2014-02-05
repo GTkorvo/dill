@@ -251,6 +251,7 @@ static void run_emulation(dill_exec_ctx ec)
     if (vmi->prefix_code_start != -1) {
 	ip = (virtual_insn*)((char*)insns + (vmi->prefix_code_start * sizeof(virtual_insn)));
     }
+    int varidiac_call = 0;
     while (1) {
 	struct reg_type *pused[3];
 	struct reg_type *pdest;
@@ -424,6 +425,7 @@ static void run_emulation(dill_exec_ctx ec)
 	    ffi_type *ret_type;
 	    void *ret_addr = NULL;
 	    ffi_cif cif;
+	    int ret;
 	    pused[0] = PREG(ec, ret_reg);
 	    if (reg != 0) {
 		func = PREG(ec, (long)ip->opnds.bri.imm_l)->u.p.p;
@@ -530,8 +532,16 @@ static void run_emulation(dill_exec_ctx ec)
 		    break;
 		}
 	    }
-	    if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, ec->out_param_count,
-			     ret_type, args) == FFI_OK) {
+	    if (varidiac_call <= -2) {
+	      ret = ffi_prep_cif_var(&cif, FFI_DEFAULT_ABI, 
+				     -(varidiac_call +2),
+				     ec->out_param_count,
+				     ret_type, args);
+	    } else {
+	        ret = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, ec->out_param_count,
+				 ret_type, args);
+	    }
+	    if (ret == FFI_OK) {
 		ffi_call(&cif, func, ret_addr, values);
 	    }
 	}
@@ -542,8 +552,13 @@ static void run_emulation(dill_exec_ctx ec)
 	    int typ = ip->insn_code & 0xf;
 	    int r0 = ip->opnds.a1.src;
 	    if ((short)ip->opnds.a1.src < 0) {
+	        /* this is really push init, with varidiac status in src */
 		ec->out_param_count = 0;
 		ec->out_params = malloc(sizeof(ec->out_params[0]));
+		varidiac_call = 0;
+		if (((short)ip->opnds.a1.src) <= -2) {
+		    varidiac_call = (short)ip->opnds.a1.src;
+		}
 	    } else {
 		ec->out_params = realloc(ec->out_params, sizeof(ec->out_params[0]) * (ec->out_param_count + 1));
 		ec->out_params[ec->out_param_count].typ = typ;
