@@ -433,27 +433,27 @@ static void run_emulation(dill_exec_ctx ec)
 	    switch(typ) {
 	    case DILL_C:
 		ret_type = &ffi_type_sint8;
-		ret_addr = &pused[0]->u.c.c;
+		ret_addr = &pused[0]->u.l.l;
 		break;
 	    case DILL_UC:
 		ret_type = &ffi_type_uint8;
-		ret_addr = &pused[0]->u.uc.uc;
+		ret_addr = &pused[0]->u.ul.ul;
 		break;
 	    case DILL_S:
 		ret_type = &ffi_type_sint16;
-		ret_addr = &pused[0]->u.s.s;
+		ret_addr = &pused[0]->u.l.l;
 		break;
 	    case DILL_US:
 		ret_type = &ffi_type_uint16;
-		ret_addr = &pused[0]->u.us.us;
+		ret_addr = &pused[0]->u.ul.ul;
 		break;
 	    case DILL_I:
 		ret_type = &ffi_type_sint32;
-		ret_addr = &pused[0]->u.i.i;
+		ret_addr = &pused[0]->u.l.l;
 		break;
 	    case DILL_U:
 		ret_type = &ffi_type_uint32;
-		ret_addr = &pused[0]->u.u.u;
+		ret_addr = &pused[0]->u.ul.ul;
 		break;
 	    case DILL_L:
 		ret_type = &ffi_type_sint64;
