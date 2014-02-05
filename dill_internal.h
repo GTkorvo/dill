@@ -148,7 +148,7 @@ struct reg_type {
 	    char junk1, junk2, junk3, junk4, junk5, junk6, junk7;
 #endif
 #endif
-	    char c;
+	    signed char c;
 	} c;
 	struct {
 #ifdef WORDS_BIGENDIAN
