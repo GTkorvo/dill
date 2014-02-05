@@ -231,7 +231,7 @@ sub compare_insn {
 sub convert {
     local($from_types, $to_types) = @_;
     %src_cast = ('pul', '(long)', 'ulp', '(void*)');
-    %convert_right = ('c', '((char)(0xff & src->u.l.l))', 's', '((short)(0xffff & src->u.l.l))', 'i', '((int)(0xffffffff & src->u.l.l))', 'uc', '((unsigned char)(0xff & src->u.l.l))', 'us', '((unsigned short)(0xffff & src->u.l.l))', 'u', '((unsigned int)(0xffffffff & src->u.l.l))', 'l', 'src->u.l.l', 'ul', '(unsigned long)src->u.ul.ul', 'd', 'src->u.d.d', 'f', 'src->u.f.f', 'p', 'src->u.l.l');
+    %convert_right = ('c', 'src->u.c.c', 's', '((short)(0xffff & src->u.s.s))', 'i', '((int)(0xffffffff & src->u.i.i))', 'uc', '((unsigned char)(0xff & src->u.uc.uc))', 'us', '((unsigned short)(0xffff & src->u.us.us))', 'u', '((unsigned int)(0xffffffff & src->u.u.u))', 'l', 'src->u.l.l', 'ul', '(unsigned long)src->u.ul.ul', 'd', 'src->u.d.d', 'f', 'src->u.f.f', 'p', 'src->u.l.l');
     foreach (split(' ', $from_types)) {
 	$from = $_;
 	foreach (split(' ', $to_types)) {
