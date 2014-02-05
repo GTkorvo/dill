@@ -13,6 +13,8 @@ include(CreateLibtoolFile)
 include(Compile)
 include(FindCERCSProject)
 include(AddLibtoolLibrary)
+include(TestBigEndian)
+
 
 file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/version.c" VERSION_TEXT REGEX "^static.*")
 STRING(REGEX REPLACE ".*Version ([0-9]+.[0-9]+.[0-9]+).*" "\\1" VERSION_TEXT "${VERSION_TEXT}")
@@ -25,6 +27,7 @@ IF( NOT CMAKE_BUILD_TYPE )
 ENDIF()
 
 CHECK_TYPE_SIZE("void*" CMAKE_SIZEOF_VOID_P)
+CHECK_TYPE_SIZE("long" SIZEOF_LONG)
 set (NATIVE_CG true)
 if (("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86") OR
 	("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64"))
@@ -71,6 +74,7 @@ IF ((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Li
     set (USE_MMAP_CODE_SEG 1)
 ENDIF()
 
+TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
 set (HARDFP_AVAILABLE 0)
 # Determine float ABI of ARM Linux
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")

@@ -119,7 +119,7 @@
 #cmakedefine NO_INLINED_BFD_PROCS
 
 /* The number of bytes in type long */
-#cmakedefine SIZEOF_LONG
+#define SIZEOF_LONG @SIZEOF_LONG@
 
 /* Define to 1 if you have the ANSI C header files. */
 #cmakedefine STDC_HEADERS
