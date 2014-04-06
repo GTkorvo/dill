@@ -1,4 +1,4 @@
-#ifndef _X86__64_H
+#ifndef _X86_64_H
 #define _X86_64_H
 
 #define BYTE_OUT1(c, insn1) \
