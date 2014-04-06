@@ -7,18 +7,12 @@
 #endif
 #include "x86.h"
 
-extern long dill_x86_64_hidden_mod(long a, long b)
-{ return a % b; }
-extern long dill_x86_64_hidden_umod(unsigned long a, unsigned long b)
-{ return a % b; }
 extern double dill_x86_64_hidden_ULtoD(unsigned long a)
 { return (double) a; }
 extern unsigned long dill_x86_64_hidden_DtoUL(double a)
 { unsigned long l = a; return l; }
 
 static xfer_entry x86_64_xfer_recs[5] = {
-    {"dill_x86_64_hidden_mod", dill_x86_64_hidden_mod},
-    {"dill_x86_64_hidden_umod", dill_x86_64_hidden_umod},
     {"dill_x86_64_hidden_ULtoD", dill_x86_64_hidden_ULtoD},
     {"dill_x86_64_hidden_DtoUL", dill_x86_64_hidden_DtoUL},
     {(char*)0, (void*)0}};

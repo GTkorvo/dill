@@ -1423,32 +1423,8 @@ x86_64_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
     }
 }
 
-extern long dill_x86_64_hidden_mod(long a, long b);
-extern long dill_x86_64_hidden_umod(unsigned long a, unsigned long b);
 extern double dill_x86_64_hidden_ULtoD(unsigned long a);
 extern unsigned long dill_x86_64_hidden_DtoUL(double a);
-
-extern void x86_64_mod(dill_stream s, int data1, int data2, int dest, int src1, 
-		      int src2)
-{
-    int return_reg;
-    if (data1 == 1) {
-	/* signed case */
-	return_reg = dill_scalll(s, (void*)dill_x86_64_hidden_mod, "dill_x86_64_hidden_mod", "%l%l", src1, src2);
-	dill_movl(s, dest, return_reg);
-    } else {
-	/* unsigned case */
-	return_reg = dill_scalll(s, (void*)dill_x86_64_hidden_umod, "dill_x86_64_hidden_umod", "%l%l", src1, src2);
-	dill_movul(s, dest, return_reg);
-    }
-}
-
-extern void x86_64_modi(dill_stream s, int data1, int data2, int dest, int src1, 
-		      long imm)
-{
-    x86_64_seti(s, _temp_reg, imm);
-    x86_64_mod(s, data1, data2, dest, src1, _temp_reg);
-}
 
 extern void x86_64_div(dill_stream s, int op3, int op, int dest, int src1, 
 		      int src2)
@@ -1664,21 +1640,23 @@ int src2;
     if ((type == DILL_UL) || (type == DILL_L)) {
 	rex = REX_W;
     }
-    /* make src1 be EAX */
+    /*  Well, this is awkward.  divi must use EDX and EAX for src1, destroying both */
+
+    /* save eax and edx, (unless one is the dest) */
     if (dest != EAX) {
 	x86_64_push_reg(s, EAX);
     }
     if (dest != EDX) {
 	x86_64_push_reg(s, EDX);
     }
-	
-    if (src1 != EAX) {
-	x86_64_movl(s, EAX, src1);
-    }
-    if (src2 == EDX) {
+    if ((src2 == EAX) || (src2 == EDX)) {
+	/* we'll move src2 to EBP */
 	tmp_src2 = EBP;
 	x86_64_push_reg(s, EBP);
 	x86_64_movl(s, EBP, src2);
+    }
+    if (src1 != EAX) {
+	x86_64_movl(s, EAX, src1);
     }
     if (type == DILL_I) {
 	BYTE_OUT1(s, 0x99);   /* cltd  (altern  cdq) */
@@ -1691,7 +1669,7 @@ int src2;
     }
     if (tmp_src2 > RDI) rex |= REX_B;
     BYTE_OUT2R(s, rex, 0xf7, ModRM(0x3, sign ? 0x7 : 0x6, tmp_src2));
-    if (src2 == EDX) {
+    if ((src2 == EDX) || (src2 == EAX)) {
 	x86_64_pop_reg(s, EBP);
     }
     if (div && (dest != EAX)) {
@@ -2798,7 +2776,7 @@ x86_64_count_insn(dill_stream s, int start, int end)
     }
     i.buffer_length = MAXLENGTH;
     count = 0;
-    insn_ptr = i.buffer + start;
+    insn_ptr = (char*) (i.buffer + start);
     while((long)insn_ptr < (long)i.buffer + end) {
 	insn_ptr += print_insn_i386((bfd_vma)insn_ptr, &i);
 	count++;
