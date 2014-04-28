@@ -53,7 +53,8 @@ s->p->cur_ip = (void*)(((long)s->p->cur_ip)+4);\
 #define arm6_rshai(s,dest,src,imm) arm6_dproci(s, MOV, ARshift, dest, src, imm)
 
 #define arm6_nop(s) arm6_movi(s, _r0, _r0)
-
+#define arm6_raw_push(s, reg) INSN_OUT(s, COND(AL)|CLASS(2)|1<<24|1<<21|9<<16|reg<<12|4)
+#define arm6_raw_pop(s, reg) INSN_OUT(s, COND(AL)|CLASS(2)|1<<23|1<<20|9<<16|reg<<12|4)
 #define IREG 0
 #define FREG 1
 
@@ -677,10 +678,31 @@ extern unsigned int arm6_hidden_ftou(float a);
 extern unsigned long arm6_hidden_udiv(unsigned long a, unsigned long b);
 extern long arm6_hidden_div(long a, long b);
 
+#define FIX_SRC2_POSTFIX     \
+if (tmp_src2 != -1) {\
+      arm6_raw_pop(s, tmp_src2);\
+    }
+
+#define FIX_SRC2_PREFIX	     \
+    int tmp_src2 = -1;\
+    /*  \
+     * DILL lets us use ret_reg in operators in some circumstances, so src1 \
+     * or src2 might be ret_reg.  This is a problem if it's src2 and we do \
+     * a call.\
+     */\
+    if (src2 == _a1) {\
+      tmp_src2 = _a4; /* arbitrary */\
+      if (src1 == tmp_src2) tmp_src2 = _a3;\
+      arm6_raw_push(s, tmp_src2);\
+      dill_movl(s, tmp_src2, _a1);\
+      src2 = tmp_src2;\
+    }
+
 extern void arm6_mod(dill_stream s, int sign, int type_long, int dest, 
 		      int src1, int src2)
 {
     int return_reg;
+    FIX_SRC2_PREFIX;
     if (sign == 1) {
 	/* signed case */
 	if (type_long) {
@@ -700,6 +722,7 @@ extern void arm6_mod(dill_stream s, int sign, int type_long, int dest,
 	    dill_movu(s, dest, return_reg);
 	}
     }
+    FIX_SRC2_POSTFIX;
 }
 
 extern void arm6_modi(dill_stream s, int data1, int data2, int dest, int src1, 
@@ -716,7 +739,9 @@ extern void arm6_div(dill_stream s, int unsign, int junk, int dest, int src1,
     void *routine = (void*) &arm6_hidden_div;
     if (unsign) routine = (void*) &arm6_hidden_udiv;
 
+    FIX_SRC2_PREFIX;
     return_reg = dill_scalll(s, routine, "routine", "%l%l", src1, src2);
+    FIX_SRC2_POSTFIX;
     dill_movl(s, dest, return_reg);
 }
 
