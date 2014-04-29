@@ -53,8 +53,8 @@ s->p->cur_ip = (void*)(((long)s->p->cur_ip)+4);\
 #define arm6_rshai(s,dest,src,imm) arm6_dproci(s, MOV, ARshift, dest, src, imm)
 
 #define arm6_nop(s) arm6_movi(s, _r0, _r0)
-#define arm6_raw_push(s, reg) INSN_OUT(s, COND(AL)|CLASS(2)|1<<24|1<<21|9<<16|reg<<12|4)
-#define arm6_raw_pop(s, reg) INSN_OUT(s, COND(AL)|CLASS(2)|1<<23|1<<20|9<<16|reg<<12|4)
+#define arm6_raw_push(s, reg) INSN_OUT(s, COND(AL)|CLASS(2)|1<<24|1<<21|0xd<<16|reg<<12|4)
+#define arm6_raw_pop(s, reg) INSN_OUT(s, COND(AL)|CLASS(2)|1<<23|1<<20|0xd<<16|reg<<12|4)
 #define IREG 0
 #define FREG 1
 
