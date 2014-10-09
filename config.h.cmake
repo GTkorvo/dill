@@ -137,6 +137,9 @@
 /* Define if using ARM hardware float ABIs for parameter passing */
 #define ARM_HARD_FLOAT  @ARM_HARD_FLOAT@
 
+/* Define if using ARMv7 hardware */
+#cmakedefine ARMV7_AVAILABLE
+
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
