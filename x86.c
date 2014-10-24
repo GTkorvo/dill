@@ -11,6 +11,7 @@
 #include <linux/module.h>
 #endif
 
+#undef NDEBUG
 #include "assert.h"
 
 #ifndef LINUX_KERNEL_MODULE

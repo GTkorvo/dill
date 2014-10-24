@@ -2,6 +2,7 @@
 #include "dill.h"
 #include "dill_internal.h"
 #include "virtual.h"
+#undef NDEBUG
 #include "assert.h"
 #include <stdarg.h>
 #ifdef HAVE_MALLOC_H
