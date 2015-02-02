@@ -14,6 +14,7 @@ include(Compile)
 include(FindCERCSProject)
 include(AddLibtoolLibrary)
 include(TestBigEndian)
+include(CERCS_package)
 
 
 # use, i.e. don't skip the full RPATH for the build tree
