@@ -2408,7 +2408,7 @@ x86_64_branchi(dill_stream s, int op, int type, int src, long imm, int label)
     default:
 /*	BYTE_OUT2(s, 0x39, ModRM(0x3, src2, src1));*/
 	if (src > RDI) rex |= REX_B;
-	if (imm < 0xffffffff) {
+	if (imm < 0x7fffffff) {
 	    BYTE_OUT2IR(s, rex, 0x81, ModRM(0x3, 0x7, src), imm);  /* cmp */
 	} else {
 	    x86_64_setl(s, EAX, imm);
