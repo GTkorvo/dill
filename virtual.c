@@ -3661,14 +3661,30 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		virtual_print_insn(c, NULL, ip);
 		printf(" with ");
 	    }
+	    ip->class_code = iclass_set;
+	    ip->insn_code = to_type;
 	    switch(to_type) {
-	    case DILL_C: case DILL_UC: 
-	    case DILL_S: case DILL_US:
-	    case DILL_I: case DILL_U:
-	    case DILL_L: case DILL_UL:
-		ip->class_code = iclass_set;
-		ip->insn_code = to_type;
+	    case DILL_C:
+	    case DILL_S:
+	    case DILL_I:
+	    case DILL_L:
 		ip->opnds.a3i.u.imm = set.imm;
+		ip->opnds.a3i.dest = dest_vreg;
+		break;
+	    case DILL_UC: 
+		ip->opnds.a3i.u.imm = (unsigned char) set.imm;
+		ip->opnds.a3i.dest = dest_vreg;
+		break;
+	    case DILL_US: 
+		ip->opnds.a3i.u.imm = (unsigned short) set.imm;
+		ip->opnds.a3i.dest = dest_vreg;
+		break;
+	    case DILL_U: 
+		ip->opnds.a3i.u.imm = (unsigned) set.imm;
+		ip->opnds.a3i.dest = dest_vreg;
+		break;
+	    case DILL_UL: 
+		ip->opnds.a3i.u.imm = (unsigned long) set.imm;
 		ip->opnds.a3i.dest = dest_vreg;
 		break;
 	    case DILL_P:
