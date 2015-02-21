@@ -264,7 +264,12 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     {
 	int typ = insn->insn_code & 0xf;
 	if ((short)insn->opnds.a1.src < 0) {
-	    printf("pushinit");
+	    if ((short)insn->opnds.a1.src == -1) {
+		printf("pushinit");
+	    } else {
+		int non_var_arg = -((short)insn->opnds.a1.src) - 2;
+		printf("pushinit varidiac, %d nonvar args", non_var_arg);
+	    }
 	} else {
 	    printf("push%s %c%d", dill_type_names[typ], 
 		   OPND(insn->opnds.a1.src));
