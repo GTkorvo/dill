@@ -178,6 +178,8 @@ typedef struct x86_64_mach_info {
     int call_stack_space;
     char pending_prefix;
     char *last_proc_ret_end;
+    int varidiac_call;
+    int non_var_args;
 } *x86_64_mach_info;
 
 extern int x86_64_type_align[];

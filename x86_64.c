@@ -53,6 +53,12 @@ static void x86_64_push_reg(dill_stream s, int src);
 static void x86_64_pop_reg(dill_stream s, int src);
 #define x86_64_nop(s) BYTE_OUT1(s, 0x90)
 
+static char *char_regs[] = {"AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH"};
+static char *short_regs[] = {"AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"};
+static char *int_regs[] = {"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"};
+char *long_regs[] = {"RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI"};
+char *float_regs[] = {"RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI"};
+
 #define IREG 0
 #define FREG 1
 
@@ -2224,6 +2230,16 @@ static void internal_push(dill_stream s, int type, int immediate,
 	assert(0);
     }
 	
+
+    if (smi->varidiac_call && (smi->int_arg_count + smi->float_arg_count >= smi->non_var_args)) {
+	if (type == DILL_F) {
+	    arg.type = DILL_D;
+	    if (immediate) {
+		/* value_ptr is already pointing to a double, no special case */
+		type = DILL_D;
+	    }
+	}	    
+    }
     if ((arg.type != DILL_D) && (arg.type != DILL_F)) {
       if (smi->int_arg_count < 6) {
 	arg.is_register = 1;
@@ -2270,6 +2286,7 @@ static void internal_push(dill_stream s, int type, int immediate,
 	    }
 	    x86_64_pstorei(s, arg_type, 0, EAX, ESP, arg.offset);
 	} else {
+	    /* need to handle DILL_F upconvert to DILL_D here? */
 	    x86_64_pstorei(s, arg.type, 0, *(int*)value_ptr, ESP, 
 			   arg.offset);
 	}
@@ -2278,9 +2295,10 @@ static void internal_push(dill_stream s, int type, int immediate,
 	    if (arg.is_immediate) {
 		x86_64_setl(s, arg.out_reg, *(long*)value_ptr);
 	    } else {
-		x86_64_pmov(s, type, arg.out_reg, *(int*) value_ptr);
+		x86_64_pmov(s, arg.type, arg.out_reg, *(int*) value_ptr);
 	    }
 	} else {
+	    /* float types handled here */
 	    if (arg.is_immediate) {
 		if ((type == DILL_F) || (type == DILL_D)) {
 		    /* set appropriate register */
@@ -2291,7 +2309,12 @@ static void internal_push(dill_stream s, int type, int immediate,
 		}
 	    } else {
 		/* move to the appropriate float reg */
-		x86_64_mov(s, type, 0, arg.out_reg, *(int*)value_ptr);
+		if ((type == DILL_F) && (arg.type == DILL_D)) {
+		    /* special case for upconverting varidiac args */
+		    x86_64_convert(s, DILL_F, DILL_D, arg.out_reg, *(int*)value_ptr);
+		} else {
+		    x86_64_mov(s, type, 0, arg.out_reg, *(int*)value_ptr);
+		}
 	    }
 
 	}
@@ -2301,6 +2324,7 @@ static void internal_push(dill_stream s, int type, int immediate,
 static void push_init(dill_stream s)
 {
     x86_64_mach_info smi = (x86_64_mach_info) s->p->mach_info;
+    smi->varidiac_call = 0;
     smi->cur_arg_offset = 0;
     smi->int_arg_count = 0;
     smi->float_arg_count = 0;
@@ -2310,8 +2334,13 @@ static void push_init(dill_stream s)
 
 extern void x86_64_push(dill_stream s, int type, int reg)
 {
+    x86_64_mach_info smi = (x86_64_mach_info) s->p->mach_info;
     if ((type == DILL_V) && (reg <= -1)) {
 	push_init(s);
+	if (reg <= -2) {
+	    smi->varidiac_call = 1;
+	    smi->non_var_args = -(reg + 2);
+	}
     } else {
 	internal_push(s, type, 0, &reg);
     }
@@ -2798,12 +2827,6 @@ extern int
 x86_64_init_disassembly_info(dill_stream s, void * ptr){return 0;}
 extern int x86_64_print_insn(dill_stream s, void *info_ptr, void *insn){return 0;}
 #endif
-
-static char *char_regs[] = {"AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH"};
-static char *short_regs[] = {"AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"};
-static char *int_regs[] = {"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"};
-char *long_regs[] = {"RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI"};
-char *float_regs[] = {"RAX", "RCX", "RDX", "RBX", "RSP", "RBP", "RSI", "RDI"};
 
 extern void
 x86_64_print_reg(dill_stream s, int typ, int reg)
