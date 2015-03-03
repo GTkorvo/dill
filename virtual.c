@@ -3157,7 +3157,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    ip = &((virtual_insn *)insns)[j];
 	    insn_code = ip->insn_code;
 	    loc = (int)((char*)ip - (char*)insns);
-	    while ((loc != 0) && (ltable[label_xlate].old_location == loc)) {
+	    while (ltable[label_xlate].old_location == loc) {
 		dill_mark_label(c, ltable[label_xlate].new_label);
 		label_xlate++;
 	    }
@@ -3425,8 +3425,8 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    label_xlate++;
 	}
 	if (ltable[label_xlate].old_location != -1) {
-	    printf("Some labels2 (%d, old loc %d) not placed\n", label_xlate,
-		   ltable[label_xlate].old_location);
+	    printf("Some labels2 (%d, old loc %d name \"%s\") not placed\n", label_xlate,
+		   ltable[label_xlate].old_location, c->p->branch_table.label_name[ltable[label_xlate].old_location]);
 	}
     }
     free(state.fpregs);
