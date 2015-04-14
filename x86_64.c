@@ -1081,11 +1081,11 @@ x86_64_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset)
     switch(type){
     case DILL_C:
 	x86_64_lshi(s, dest, tmp_dest, 56);
-	x86_64_rshi(s, dest, dest, 56);
+	x86_64_rshai(s, dest, dest, 56);
 	break;
     case DILL_S:
 	x86_64_lshi(s, dest, tmp_dest, 48);
-	x86_64_rshi(s, dest, dest, 48);
+	x86_64_rshai(s, dest, dest, 48);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -1173,11 +1173,11 @@ x86_64_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
     switch(type){
     case DILL_C:
 	x86_64_lshi(s, dest, tmp_dest, 56);
-	x86_64_rshi(s, dest, dest, 56);
+	x86_64_rshai(s, dest, dest, 56);
 	break;
     case DILL_S:
 	x86_64_lshi(s, dest, tmp_dest, 48);
-	x86_64_rshi(s, dest, dest, 48);
+	x86_64_rshai(s, dest, dest, 48);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest) {
