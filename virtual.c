@@ -3670,7 +3670,12 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 	    ip->insn_code = to_type;
 	    switch(to_type) {
 	    case DILL_C:
+		ip->opnds.a3i.u.imm = (char)set.imm;
+		ip->opnds.a3i.dest = dest_vreg;
+		break;
 	    case DILL_S:
+		ip->opnds.a3i.u.imm = (short)set.imm;
+		ip->opnds.a3i.dest = dest_vreg;
 	    case DILL_I:
 	    case DILL_L:
 		ip->opnds.a3i.u.imm = set.imm;
