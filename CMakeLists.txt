@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 cmake_policy(VERSION 2.8.3)
-project(dill)
+project(dill C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -225,6 +225,7 @@ if (${CMAKE_C_COMPILER_ID} MATCHES "Intel")
 endif()
 
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
+CONFIGURE_FILE(CTestCustom.ctest.in CTestCustom.ctest @ONLY)
 
 # display status message for important variables
 MESSAGE( STATUS )

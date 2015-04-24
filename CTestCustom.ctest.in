@@ -1,0 +1,4 @@
+set (CTEST_CUSTOM_MEMCHECK_IGNORE)
+set (CTEST_SVN_UPDATE_OPTIONS "--password anon --username anon")
+set (SVNUpdateOptions "--username anon --password anon")
+
