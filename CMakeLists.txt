@@ -87,8 +87,12 @@ elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.*")
 	set (TEST_PERL_FLAGS -max_arg=4)
 	set (ARCH_FILE arm6)
     endif()
+elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
+    set (NATIVE_ARCH arm8)
+    set (HOST_ARM8 1)
+    set (ARCH_FILE arm8)
 else()
-message (STATUS "NO CG for Processor ${CMAKE_SYSTEM_PROCESSOR}")
+    message (STATUS "NO CG for Processor \"${CMAKE_SYSTEM_PROCESSOR}\"")
     set (NATIVE_CG false)
     set (NATIVE_ARCH UNSUPPORTED)
 endif()
@@ -127,7 +131,7 @@ ENDIF(NOT DEFINED BUILD_SHARED_STATIC)
 option(ENABLE_DISASSEMBLY "enable binutils-based disassembly (default is OFF)"
          OFF)
 
-set (ARCHITECTURES sparc powerpc virtual x86 x86_64 ia64 arm5 arm6 arm7)
+set (ARCHITECTURES sparc powerpc virtual x86 x86_64 ia64 arm5 arm6 arm7 arm8)
 foreach(_arch ${ARCHITECTURES})
   add_custom_command(
     OUTPUT "dill_${_arch}.c"

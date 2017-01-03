@@ -51,6 +51,7 @@ extern char * x86_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * arm5_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * arm6_package_stitch(char *code, call_t *t, dill_pkg pkg);
+extern char * arm8_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * ia64_package_stitch(char *code, call_t *t, dill_pkg pkg);
 extern char * powerpc_package_stitch(char *code, call_t *t, dill_pkg pkg);
 
@@ -95,6 +96,8 @@ dill_package_stitch(char *pkg, dill_extern_entry* extra_externs)
     char *p = arm6_package_stitch(code, &t, (dill_pkg) pkg);
 #elif defined(HOST_ARM7)
     char *p = arm6_package_stitch(code, &t, (dill_pkg) pkg);
+#elif defined(HOST_ARM8)
+    char *p = arm8_package_stitch(code, &t, (dill_pkg) pkg);
 #elif defined(HOST_POWERPC)
     char *p = powerpc_package_stitch(code, &t, (dill_pkg) pkg);
 #else

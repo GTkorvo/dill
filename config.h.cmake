@@ -72,6 +72,9 @@
 /* Define if the host processor is ARM7 */
 #cmakedefine HOST_ARM7 @HOST_ARM7@
 
+/* Define if the host processor is ARM8 */
+#cmakedefine HOST_ARM8 @HOST_ARM8@
+
 /* Define if the host processor is an ia64 */
 #cmakedefine HOST_IA64
 
