@@ -30,7 +30,6 @@ typedef struct basic_block {
     bit_vec live_at_end;
     short *reg_assigns;
     int visited;
-    int loop_depth;
     int is_loop_start;
     int is_loop_end;
 } *basic_block;

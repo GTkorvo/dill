@@ -381,7 +381,6 @@ bb->end = -1;\
 bb->label = -1;\
 bb->end_branch_label = -1;\
 bb->fall_through = 0;	  \
-bb->loop_depth = 0;				\
 bb->is_loop_start = 0;				\
 bb->is_loop_end = 0;				\
 bb->regs_used = new_bit_vec(c->p->vreg_count);\
@@ -535,7 +534,6 @@ dump_bb(dill_stream c, struct basic_block *bb, int i)
     }
     if (bb->is_loop_start) printf(" - LOOP_START");
     if (bb->is_loop_end) printf(" - LOOP_END");
-/*NOTUSED	printf("   Nesting depth %d", bb->loop_depth);*/
     printf("\n");
     for (j = bb->start; j <= bb->end; j++) {
 	printf(" %d - ", j);
@@ -587,80 +585,6 @@ clear_bit_vec(bit_vec b)
     memset(&b->vec[0], 0, b->len);
 }
 
-static void
-do_depth(dill_stream c, int *pred_array, int count)
-{
-    virtual_mach_info vmi = (virtual_mach_info)c->p->mach_info;
-    basic_block bb = &vmi->bblist[pred_array[count]];
-    int i;
-
-    if (bb->visited) return;
-    bb->visited++;
-    for (i = 0; i < bb->succ_count; i++) {
-	int succ = bb->succ_list[i];
-	int j;
-	for (j = 0; j <= count; j++) {
-	    if (succ == pred_array[j]) {
-		/* found a loop */
-		if (c->dill_debug) printf("bb %d has succ %d, which appears as entry %d in the pred list\n", pred_array[count], succ, j);
-		bb->is_loop_end++;
-		vmi->bblist[succ].is_loop_start++;
-		break;
-	    }
-	}
-	pred_array[count + 1] = succ;
-	do_depth(c, pred_array, count + 1);
-    }
-}
-	
-static void
-mark_depth(dill_stream c, int *pred_array, int count, int depth)
-{
-    virtual_mach_info vmi = (virtual_mach_info)c->p->mach_info;
-    basic_block bb = &vmi->bblist[pred_array[count]];
-    int i, succ_depth;
-
-    if (c->dill_debug) 
-	printf("Considering bb %d, loop_end_state %d, loop_start %d, in depth %d\n", pred_array[count], bb->is_loop_end, bb->is_loop_start, depth);
-    if (bb->visited) return;
-    bb->visited++;
-    bb->loop_depth = depth;
-
-    if (bb->is_loop_start) bb->loop_depth++;
-
-    succ_depth = bb->loop_depth;
-
-    if (bb->is_loop_end) succ_depth--;
-
-    for (i = 0; i < bb->succ_count; i++) {
-	int succ = bb->succ_list[i];
-	pred_array[count + 1] = succ;
-	mark_depth(c, pred_array, count + 1, succ_depth);
-    }
-}
-	
-
-#ifdef NOT_USED
-static void
-calculate_depth(dill_stream c)
-{
-    virtual_mach_info vmi = (virtual_mach_info)c->p->mach_info;
-    int *pred_array = malloc(sizeof(pred_array[0]) *vmi->bbcount);
-    int pred_count = 0;
-    int i = 0;
-    for (i=0; i < vmi->bbcount; i++) {
-	vmi->bblist[i].visited = 0;
-	vmi->bblist[i].loop_depth = 0;
-	vmi->bblist[i].is_loop_start = 0;
-	vmi->bblist[i].is_loop_end = 0;
-    }
-    pred_array[0] = 0;
-    do_depth(c, pred_array, pred_count);
-    for (i=0; i < vmi->bbcount; i++) vmi->bblist[i].visited = 0;
-    mark_depth(c, pred_array, pred_count, 0);
-}
-#endif
-    
 static void
 build_live(dill_stream c)
 {
@@ -1269,7 +1193,6 @@ build_bbs(dill_stream c, void *vinsns, void *prefix_begin, void *code_end)
     bb->reg_assigns = NULL;
     bb->end_branch_label = -1;
     bb->fall_through = 0;
-    bb->loop_depth = 0;
     bb->is_loop_start = 0;
     bb->is_loop_end = 0;
     if (prefix_begin < code_end) {
