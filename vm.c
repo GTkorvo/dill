@@ -14,11 +14,11 @@
 
 #define PREG(ec, reg) ((reg < 100) ? &ec->p[reg] : &ec->r[reg-100])
 
-static void run_emulation(dill_exec_ctx ec);
 
 #include "vm_include.c"
 #ifdef BUILD_EMULATOR
 #include <ffi.h>
+static void run_emulation(dill_exec_ctx ec);
 
 static
 void emu_func(ffi_cif *cif, void*vret, void* args[], void *client_data)
