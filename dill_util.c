@@ -125,6 +125,7 @@ extern void dill_arm6_init(dill_stream s);
 extern void dill_arm7_init(dill_stream s);
 extern void dill_arm8_init(dill_stream s);
 extern void dill_powerpc_init(dill_stream s);
+extern void dill_ppc64le_init(dill_stream s);
 extern void dill_ia64_init(dill_stream s);
 #if defined(EMULATION_ONLY)
 static void null_init(dill_stream s) 
@@ -195,6 +196,12 @@ set_mach_reset(dill_stream s, char *arch)
 #if defined(MULTI_TARGET) || defined(HOST_POWERPC)
     if (strcmp(arch, "powerpc") == 0) {
 	s->p->mach_reset = dill_powerpc_init;
+	return 1;
+    }
+#endif
+#if defined(MULTI_TARGET) || defined(HOST_PPC64LE)
+    if (strcmp(arch, "ppc64le") == 0) {
+	s->p->mach_reset = dill_ppc64le_init;
 	return 1;
     }
 #endif

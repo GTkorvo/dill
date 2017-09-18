@@ -84,6 +84,9 @@
 /* Define if the host processor is a powerpc64 */
 #cmakedefine HOST_POWERPC64
 
+/* Define if the host processor is a ppc64le */
+#cmakedefine HOST_PPC64LE
+
 /* Define if the host processor is a sparc */
 #cmakedefine HOST_SPARC
 
