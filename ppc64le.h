@@ -26,14 +26,21 @@
 /* lower 10 bits */
 #define lo(x) ((x) & ((1 << 11) - 1))
 
+extern void ppc64le_XOFORM_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
+extern void ppc64le_swap_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
+extern void ppc64le_imm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
+extern void ppc64le_farith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void ppc64le_FORM3_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void ppc64le_FORM3imm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
 extern void ppc64le_FORM3_farith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void ppc64le_FORM2_farith(dill_stream c, int op3, int op, int dest, int src);
 
 
-#define D_FORM(op, r1, r2, i) ((op<<26)|(r1<<21)|(r2<<16)|i)
 #define XL_FORM(op, BO, BI, BH, XO, LK) ((op<<26)|(BO<<21)|(BI<<16)|(BH<<11)|(XO<<1)|LK)
+#define XO_FORM(op, RT, RA, RB, XO) ((op<<26)|(RT<<21)|(RA<<16)|(RB<<11)|(XO<<1))
+#define X_FORM(op, RS, RA, RB, XO) ((op<<26)|(RS<<21)|(RA<<16)|(RB<<11)|(XO<<1))
+#define D_FORM(op, RT, RA, SI) ((op<<26)|(RT<<21)|(RA<<16)|(SI & 0xffff))
+#define A_FORM(op, FRT, FRA, FRB, XO) ((op<<26)|(FRT<<21)|(FRA<<16)|(FRB<<11)|(XO<<1))
 #define INSN_OUT(c, insn) do {\
 if (c->p->cur_ip >= c->p->code_limit) {\
    extend_dill_stream(c);\

@@ -17,11 +17,11 @@
 #define ppc64le_ori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP(0x2)|IM|RD(dest)|RS1(src)|imm)
 #define ppc64le_xori(s, dest, src, imm) INSN_OUT(s, HDR(0x2)|OP(0x3)|IM|RD(dest)|RS1(src)|imm)
 #define ppc64le_andi(s, dest, src, imm) ppc64le_FORM3imm_arith(s, 0x1, 0, dest, src, imm)
-#define ppc64le_or(s, dest, src1, src2) INSN_OUT(s, HDR(0x2)|OP(0x2)|RD(dest)|RS1(src1)|RS2(src2))
-#define ppc64le_movi(s, dest, src) ppc64le_or(s, dest, src, _gpr0)
-#define ppc64le_int_mov(s, dest, src) ppc64le_or(s, dest, _gpr0, src)
-#define ppc64le_movf(s, dest, src) INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(1)|RS2(src))
-#define ppc64le_movd(s, dest, src) INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(2)|RS2(src))
+#define ppc64le_or(s, dest, src1, src2) INSN_OUT(s, X_FORM(31,src1, dest, src2, 444))
+#define ppc64le_movi(s, dest, src) ppc64le_or(s, dest, src, src)
+#define ppc64le_int_mov(s, dest, src) ppc64le_or(s, dest, src, src)
+#define ppc64le_movf(s, dest, src) INSN_OUT(s, X_FORM(63, dest, 0, src, 72))
+#define ppc64le_movd(s, dest, src) INSN_OUT(s, X_FORM(63, dest, 0, src, 72))
 #define BALWAYS 0x14
 #define BRETURN 0x0
 #define ppc64le_simple_ret(c) INSN_OUT(s, XL_FORM(19,0x14,0,0,16,0))
@@ -247,6 +247,39 @@ int src2;
 	}*/
 }
 
+extern void ppc64le_farith(s, op, xop, dest, src1, src2)
+dill_stream s;
+int op;
+int xop;
+int dest;
+int src1;
+int src2;
+{
+    INSN_OUT(s, A_FORM(op, dest, src1, src2, xop));
+}
+
+extern void ppc64le_XOFORM_arith(s, ppc64le_po, ppc64le_xo, dest, src1, src2)
+dill_stream s;
+int ppc64le_po;
+int ppc64le_xo;
+int dest;
+int src1;
+int src2;
+{
+    INSN_OUT(s, XO_FORM(ppc64le_po, dest, src1, src2, ppc64le_xo));
+}
+
+extern void ppc64le_swap_arith(s, ppc64le_po, ppc64le_xo, dest, src1, src2)
+dill_stream s;
+int ppc64le_po;
+int ppc64le_xo;
+int dest;
+int src1;
+int src2;
+{
+    INSN_OUT(s, XO_FORM(ppc64le_po, dest, src2, src1, ppc64le_xo));
+}
+
 extern void ppc64le_FORM3imm_arith(s, op3, use_ext_form, dest, src1, imm)
 dill_stream s;
 int op3;
@@ -273,26 +306,46 @@ long imm;
     }
 }
 
+extern void ppc64le_imm_arith(s, op, full_op, dest, src1, imm)
+dill_stream s;
+int op;
+int full_op;
+int dest;
+int src1;
+long imm;
+{
+    if (((long)imm) < 32767 && ((long)imm) >= -32768) {
+	/* D-FORM */
+	INSN_OUT(s, D_FORM(op, dest, src1, imm));
+    } else {
+	ppc64le_set(s, dest, imm);
+	if (full_op == 40) {  /* special SUB case */
+	    ppc64le_XOFORM_arith(s, 31, full_op, dest, dest, src1);
+	} else {
+	    ppc64le_XOFORM_arith(s, 31, full_op, dest, src1, dest);
+	}
+    }
+}
+
 extern void
 ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args,
 	     dill_reg *arglist)
 {
-#ifdef NOT_DEF
     int i;
 
-    int max_in_reg = _i0;
+    int max_in_reg = _gpr3;
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
     int cur_arg_offset = 0;
     /* emit start insns */
-    INSN_OUT(s, 0x10000);
-    INSN_OUT(s, 0x10000);
-    INSN_OUT(s, 0x10000);
-    INSN_OUT(s, 0x10000);
-    smi->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
-    ppc64le_savei(s, 0);
+//    INSN_OUT(s, 0x10000);
+//    INSN_OUT(s, 0x10000);
+//    INSN_OUT(s, 0x10000);
+//    INSN_OUT(s, 0x10000);
+//    smi->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
+//    ppc64le_savei(s, 0);
 
-    smi->conversion_word = ppc64le_local(s, DILL_D);
-    smi->conversion_word = ppc64le_local(s, DILL_D);
+//    smi->conversion_word = ppc64le_local(s, DILL_D);
+//    smi->conversion_word = ppc64le_local(s, DILL_D);
 
     /* load params from regs */
     for (i = 0; i < arg_count; i++) {
@@ -302,12 +355,8 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 		/* How about the limit on FP registers?  Fix this. */
 		int reg;
 		args[i].is_register = 1;
-		if (args[i].type == DILL_F) {
-		    reg = _f0 + cur_arg_offset / 4 + 1;
-		} else {
-		    reg = _f0 + cur_arg_offset / 4;
-		}
-		dill_dealloc_specific(s, _f0 +cur_arg_offset / 4, args[i].type, DILL_TEMP);
+		reg = _fpr1 + cur_arg_offset / 8;
+		dill_dealloc_specific(s, reg, args[i].type, DILL_TEMP);
 		args[i].in_reg = args[i].out_reg = reg;
 		break;
 	    }
@@ -389,17 +438,16 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 		ppc64le_ploadi(s, args[i].type, 0, tmp_reg, _fp, 
 			     real_offset);
 	    } else {
-		ppc64le_ploadi(s, DILL_I, 0, _g1, _fp, real_offset);
-		ppc64le_pstorei(s, DILL_I, 0, _g1, _fp, smi->conversion_word);
-		ppc64le_ploadi(s, DILL_I, 0, _g1, _fp, real_offset+4);
-		ppc64le_pstorei(s, DILL_I, 0, _g1, _fp, smi->conversion_word+4);
-		ppc64le_ploadi(s, DILL_D, 0, tmp_reg, _fp, smi->conversion_word);
+//		ppc64le_ploadi(s, DILL_I, 0, _g1, _fp, real_offset);
+//		ppc64le_pstorei(s, DILL_I, 0, _g1, _fp, smi->conversion_word);
+//		ppc64le_ploadi(s, DILL_I, 0, _g1, _fp, real_offset+4);
+//		ppc64le_pstorei(s, DILL_I, 0, _g1, _fp, smi->conversion_word+4);
+//		ppc64le_ploadi(s, DILL_D, 0, tmp_reg, _fp, smi->conversion_word);
 	    }
 	}
 	args[i].in_reg = tmp_reg;
 	args[i].is_register = 1;
     }
-#endif
 }
 
 static char ld_opcodes[] = {
@@ -1361,10 +1409,10 @@ extern void ppc64le_ret(dill_stream s, int data1, int data2, int src)
 	if (src != _gpr3) ppc64le_int_mov(s, _gpr3, src);
 	break;
     case DILL_F:
-	if (src != _fpr0) ppc64le_movf(s, _fpr0, src);
+	if (src != _fpr0) ppc64le_movf(s, _fpr1, src);
 	break;
     case DILL_D:
-	if (src != _fpr0) ppc64le_movd(s, _fpr0, src);
+	if (src != _fpr0) ppc64le_movd(s, _fpr1, src);
 	break;
     }
     ppc64le_simple_ret(s);
@@ -1651,7 +1699,8 @@ ppc64le_setf(dill_stream s, int type, int junk, int dest, double imm)
     }
 }	
 
-#define SIMM34_P(im) (((long)im) < (long)1<<33 ) && (((long)im) >= -((long)1<<33) )
+#define lo16(im) (((long)im) & 0xffff)
+#define hi16(im) ((((long)im) & 0xffffffff) >> 16)
 
 extern void
 ppc64le_set(s, r, val)
@@ -1659,7 +1708,24 @@ dill_stream s;
 int r;
 long val;
 {
-  INSN_OUT(s, D_FORM(14, r, 0, val));
+    if ((val > 2147483647) || (val < -2147483647) ) {
+	/* need to set all 64 bits */
+	ppc64le_set(s, r, ((val >> 32) & 0xffffffff));
+//	pc64le_lshift(s, r, 32);
+	// or immediate shifted
+	INSN_OUT(s, D_FORM(25, r, r, hi16(val)));
+	// or immediate 
+	INSN_OUT(s, D_FORM(24, r, r, lo16(val)));
+    } else if ((((long)val) > 32767) || (((long)val) <= -32768)) {
+	/* need to set low 32 bits */
+	// add immediate shifted
+	INSN_OUT(s, D_FORM(15, r, 0, hi16(val)));
+	// or immediate 
+	INSN_OUT(s, D_FORM(24, r, r, lo16(val)));
+    } else {	
+	// add immediate 
+	INSN_OUT(s, D_FORM(14, r, 0, lo16(val)));
+    }	
 }
 
 #ifdef NOT_DEF

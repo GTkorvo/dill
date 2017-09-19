@@ -7,18 +7,18 @@ sub upperc {
 
 &output_header;
 
-&arith_insn("add", "i u ul l p", "ppc64le_FORM3_arith", "0x0", "0");
-&arith_insn("sub", "i u ul l p", "ppc64le_FORM3_arith", "0x4", "0");
+&arith_insn("add", "i u ul l p", "ppc64le_XOFORM_arith", "31", "266");
+&arith_insn("sub", "i u ul l p", "ppc64le_swap_arith", "31", "40");
 &arith_insn("mul", "u ul", "ppc64le_FORM3_arith", "0x9/*umul*/", "0");
 &arith_insn("mul", "i l", "ppc64le_FORM3_arith", "0x9/*smul*/", "0");
-&arith_insn("div", "u", "ppc64le_div", "0x0d/*udiv*/", 0); #"FORM3(2,0x0,dest,src1,src2)", 
-&arith_insn("div", "ul", "ppc64le_div", "0x0d/*udiv*/", 1); #"FORM3(2,0x0,dest,src1,src2)", 
-&arith_insn("div", "i", "ppc64le_div", "0x2d/*sdivx*/", 0); #"FORM3(2,0x0,dest,src1,src2)", 
-&arith_insn("div", "l", "ppc64le_div", "0x2d/*sdivx*/", 1); #"FORM3(2,0x0,dest,src1,src2)", 
-&arith_insn("mod", "u", "ppc64le_mod", "0x0/*umod*/", 0); #"FORM3(2,0x0,dest,src1,src2)", 
-&arith_insn("mod", "ul", "ppc64le_mod", "0x0/*umod*/", 1); #"FORM3(2,0x0,dest,src1,src2)", 
-&arith_insn("mod", "i", "ppc64le_mod", "0x1/*smod*/", 0); #"FORM3(2,0x0,dest,src1,src2)", 
-&arith_insn("mod", "l", "ppc64le_mod", "0x1/*smod*/", 1); #"FORM3(2,0x0,dest,src1,src2)", 
+&arith_insn("div", "u", "ppc64le_div", "0x0d/*udiv*/", 0); 
+&arith_insn("div", "ul", "ppc64le_div", "0x0d/*udiv*/", 1);
+&arith_insn("div", "i", "ppc64le_div", "0x2d/*sdivx*/", 0);
+&arith_insn("div", "l", "ppc64le_div", "0x2d/*sdivx*/", 1);
+&arith_insn("mod", "u", "ppc64le_mod", "0x0/*umod*/", 0);
+&arith_insn("mod", "ul", "ppc64le_mod", "0x0/*umod*/", 1);
+&arith_insn("mod", "i", "ppc64le_mod", "0x1/*smod*/", 0);
+&arith_insn("mod", "l", "ppc64le_mod", "0x1/*smod*/", 1);
 &arith_insn("and", "i u ul l", "ppc64le_FORM3_arith", "0x1", "0");
 &arith_insn("or", "i u ul l", "ppc64le_FORM3_arith", "0x2", "0");
 &arith_insn("xor", "i u ul l", "ppc64le_FORM3_arith", "0x3", "0");
@@ -31,20 +31,20 @@ sub upperc {
 &arith_insn("rsh", "l", "ppc64le_FORM3_arith", "0x27", "1");
 &arith_insn("rsh", "u", "ppc64le_FORM3_arith", "0x26", "0");
 &arith_insn("rsh", "ul", "ppc64le_FORM3_arith", "0x26", "1");
-&arith_insn("add", "f", "ppc64le_FORM3_farith", "0x34", "0x041");
-&arith_insn("add", "d", "ppc64le_FORM3_farith", "0x34", "0x042");
-&arith_insn("sub", "f", "ppc64le_FORM3_farith", "0x34", "0x045");
-&arith_insn("sub", "d", "ppc64le_FORM3_farith", "0x34", "0x046");
-&arith_insn("mul", "f", "ppc64le_FORM3_farith", "0x34", "0x049");
-&arith_insn("mul", "d", "ppc64le_FORM3_farith", "0x34", "0x04a");
-&arith_insn("div", "f", "ppc64le_FORM3_farith", "0x34", "0x04d");
-&arith_insn("div", "d", "ppc64le_FORM3_farith", "0x34", "0x04e");
+&arith_insn("add", "f", "ppc64le_farith", "59", "21");
+&arith_insn("add", "d", "ppc64le_farith", "63", "21");
+&arith_insn("sub", "f", "ppc64le_farith", "59", "20");
+&arith_insn("sub", "d", "ppc64le_farith", "63", "20");
+&arith_insn("mul", "f", "ppc64le_farith", "59", "25");
+&arith_insn("mul", "d", "ppc64le_farith", "63", "25");
+&arith_insn("div", "f", "ppc64le_farith", "59", "18");
+&arith_insn("div", "d", "ppc64le_farith", "63", "18");
 &arith2_insn("neg", "f", "ppc64le_FORM2_farith", "0x34", "0x05");
 &arith2_insn("neg", "d", "ppc64le_FORM2_farith", "0x34", "0x06");
 &arith2_insn("bswap", "s us i u ul l f d", "ppc64le_bswap", "0", "T");
 
-&arithi_insn("add", "i u ul l p", "ppc64le_FORM3imm_arith", "0x0", "0");
-&arithi_insn("sub", "i u ul l p", "ppc64le_FORM3imm_arith", "0x4", "0");
+&arithi_insn("add", "i u ul l p", "ppc64le_imm_arith", "14", "266");
+&arithi_insn("sub", "i u ul l p", "ppc64le_imm_arith", "8", "40");
 &arithi_insn("mul", "u ul", "ppc64le_FORM3imm_arith", "0x9/*umul*/", "0");
 &arithi_insn("mul", "i l", "ppc64le_FORM3imm_arith", "0x9/*smul*/", "0");
 &arithi_insn("div", "u", "ppc64le_divi", "0x0d/*udiv*/", "0");
@@ -207,17 +207,6 @@ print COUT "    ${mach}_jump_table->target_byte_order = 1;  /* Format_Integer_bi
 print COUT "    ${mach}_jump_table->target_float_format = 1;  /* Format_IEEE_754_bigendian */ \n";
 print COUT "}\n\n";
 print COUT "extern void dill_ppc64le_init(dill_stream s)\n{\n";
-print COUT "    if(ppc64le_jump_table == 0) {\n";
-print COUT "        gen_ppc64le_jump_table();\n";
-print COUT "    }\n";
-print COUT "    s->j = ppc64le_jump_table;\n";
-print COUT "    s->dill_local_pointer = _fp;\n";
-print COUT "    s->dill_param_reg_pointer = _fp;\n";
-print COUT "    s->p->mach_info = (void*)gen_ppc64le_mach_info(s,/*v9*/ 0);\n";
-print COUT "    s->p->machine_strr_tmp_reg = _gpr1;\n";
-print COUT "    return;\n";
-print COUT "}\n";
-print COUT "extern void dill_ppc64lev9_init(dill_stream s)\n{\n";
 print COUT "    if(ppc64le_jump_table == 0) {\n";
 print COUT "        gen_ppc64le_jump_table();\n";
 print COUT "    }\n";
