@@ -28,19 +28,28 @@
 
 extern void ppc64le_XOFORM_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void ppc64le_swap_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
+extern void ppc64le_log_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void ppc64le_imm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
+extern void ppc64le_shift_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
+extern void ppc64le_shiftimm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
+extern void ppc64le_logimm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
 extern void ppc64le_farith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void ppc64le_FORM3_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void ppc64le_FORM3imm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
 extern void ppc64le_FORM3_farith(dill_stream c, int op3, int op, int dest, int src1, int src2);
-extern void ppc64le_FORM2_farith(dill_stream c, int op3, int op, int dest, int src);
+extern void ppc64le_XFORM2_farith(dill_stream c, int op3, int op, int dest, int src);
 
 
 #define XL_FORM(op, BO, BI, BH, XO, LK) ((op<<26)|(BO<<21)|(BI<<16)|(BH<<11)|(XO<<1)|LK)
 #define XO_FORM(op, RT, RA, RB, XO) ((op<<26)|(RT<<21)|(RA<<16)|(RB<<11)|(XO<<1))
 #define X_FORM(op, RS, RA, RB, XO) ((op<<26)|(RS<<21)|(RA<<16)|(RB<<11)|(XO<<1))
-#define D_FORM(op, RT, RA, SI) ((op<<26)|(RT<<21)|(RA<<16)|(SI & 0xffff))
-#define A_FORM(op, FRT, FRA, FRB, XO) ((op<<26)|(FRT<<21)|(FRA<<16)|(FRB<<11)|(XO<<1))
+#define XS_FORM(OP, RS, RA, SH1, XS, SH2) ((OP<<26)|(RS<<21)|(RA<<16)|(SH1<<11)|(XS<<2)|(SH2<<1))
+#define XX2_FORM(OP, T, RB, XOP) ((OP<<26)|(T<<21)|(RB<<11)|(XOP<<2))
+#define XX3_FORM(OP, T, RA, RB, XOP) ((OP<<26)|(T<<21)|(RA<<16)|(RB<<11)|(XOP<<3))
+#define D_FORM(OP, RT, RA, SI) ((OP<<26)|(RT<<21)|(RA<<16)|(SI & 0xffff))
+#define M_FORM(op, RS, RA, SH, MB, ME) ((op<<26)|(RS<<21)|(RA<<16)|(SH<<11)|(MB<<6)|(ME<<1))
+#define MD_FORM(op, RS, RA, SH, MB, XO, SH2) ((op<<26)|(RS<<21)|(RA<<16)|(SH<<11)|(MB<<5)|(XO<<2)|(SH2<<1))
+#define A_FORM(OP, FRT, FRA, FRB, XO) ((OP<<26)|(FRT<<21)|(FRA<<16)|(FRB<<11)|(XO<<1))
 #define INSN_OUT(c, insn) do {\
 if (c->p->cur_ip >= c->p->code_limit) {\
    extend_dill_stream(c);\

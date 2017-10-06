@@ -9,59 +9,52 @@ sub upperc {
 
 &arith_insn("add", "i u ul l p", "ppc64le_XOFORM_arith", "31", "266");
 &arith_insn("sub", "i u ul l p", "ppc64le_swap_arith", "31", "40");
-&arith_insn("mul", "u ul", "ppc64le_FORM3_arith", "0x9/*umul*/", "0");
-&arith_insn("mul", "i l", "ppc64le_FORM3_arith", "0x9/*smul*/", "0");
-&arith_insn("div", "u", "ppc64le_div", "0x0d/*udiv*/", 0); 
-&arith_insn("div", "ul", "ppc64le_div", "0x0d/*udiv*/", 1);
-&arith_insn("div", "i", "ppc64le_div", "0x2d/*sdivx*/", 0);
-&arith_insn("div", "l", "ppc64le_div", "0x2d/*sdivx*/", 1);
-&arith_insn("mod", "u", "ppc64le_mod", "0x0/*umod*/", 0);
-&arith_insn("mod", "ul", "ppc64le_mod", "0x0/*umod*/", 1);
-&arith_insn("mod", "i", "ppc64le_mod", "0x1/*smod*/", 0);
-&arith_insn("mod", "l", "ppc64le_mod", "0x1/*smod*/", 1);
-&arith_insn("and", "i u ul l", "ppc64le_FORM3_arith", "0x1", "0");
-&arith_insn("or", "i u ul l", "ppc64le_FORM3_arith", "0x2", "0");
-&arith_insn("xor", "i u ul l", "ppc64le_FORM3_arith", "0x3", "0");
-&arith2_insn("com", "i u ul l", "(arith_op2)ppc64le_FORM2_arith", "0x07", "2");
-&arith2_insn("neg", "i u ul l", "(arith_op2)ppc64le_FORM2_arith", "0x04", "2");
+&arith_insn("mul", "u ul", "ppc64le_XOFORM_arith", "31", "233");
+&arith_insn("mul", "i l", "ppc64le_XOFORM_arith", "31", "235");
+&arith_insn("div", "u", "ppc64le_div", "459/*divwu*/", 0); 
+&arith_insn("div", "ul", "ppc64le_div", "457/*divdu*/", 1);
+&arith_insn("div", "i", "ppc64le_div", "491/*divw*/", 0);
+&arith_insn("div", "l", "ppc64le_div", "489/*divd*/", 1);
+&arith_insn("mul", "i l", "ppc64le_XOFORM_arith", "31", "235");
+&arith_insn("mod", "u", "ppc64le_mod", "0", 0);
+&arith_insn("mod", "ul", "ppc64le_mod", "0", 1);
+&arith_insn("mod", "i", "ppc64le_mod", "1", 0);
+&arith_insn("mod", "l", "ppc64le_mod", "1", 1);
+&arith_insn("and", "i u ul l", "ppc64le_log_arith", "31", "28");
+&arith_insn("or", "i u ul l", "ppc64le_log_arith", "31", "444");
+&arith_insn("xor", "i u ul l", "ppc64le_log_arith", "31", "316");
+&arith2_insn("com", "i u ul l", "(arith_op2)ppc64le_XOFORM_arith", "31", "476");
+&arith2_insn("neg", "i u ul l", "(arith_op2)ppc64le_XOFORM_arith", "31", "104");
 &arith2_insn("not", "i u ul l", "(arith_op2)ppc64le_FORM2_arith", dill_jmp_noti, "0");
-&arith_insn("lsh", "i u", "ppc64le_FORM3_arith", "0x25", "0");
-&arith_insn("lsh", "ul l", "ppc64le_FORM3_arith", "0x25", "1");
-&arith_insn("rsh", "i", "ppc64le_FORM3_arith", "0x27", "0");
-&arith_insn("rsh", "l", "ppc64le_FORM3_arith", "0x27", "1");
-&arith_insn("rsh", "u", "ppc64le_FORM3_arith", "0x26", "0");
-&arith_insn("rsh", "ul", "ppc64le_FORM3_arith", "0x26", "1");
-&arith_insn("add", "f", "ppc64le_farith", "59", "21");
-&arith_insn("add", "d", "ppc64le_farith", "63", "21");
-&arith_insn("sub", "f", "ppc64le_farith", "59", "20");
-&arith_insn("sub", "d", "ppc64le_farith", "63", "20");
-&arith_insn("mul", "f", "ppc64le_farith", "59", "25");
-&arith_insn("mul", "d", "ppc64le_farith", "63", "25");
-&arith_insn("div", "f", "ppc64le_farith", "59", "18");
-&arith_insn("div", "d", "ppc64le_farith", "63", "18");
-&arith2_insn("neg", "f", "ppc64le_FORM2_farith", "0x34", "0x05");
-&arith2_insn("neg", "d", "ppc64le_FORM2_farith", "0x34", "0x06");
+&arith_insn("lsh", "i u ul l", "ppc64le_shift_arith", "27", "T");
+&arith_insn("rsh", "i u ul l", "ppc64le_shift_arith", "792", "T");
+&arith_insn("add", "f", "ppc64le_farith", "60", "0");
+&arith_insn("add", "d", "ppc64le_farith", "60", "96");
+&arith_insn("sub", "f", "ppc64le_farith", "60", "8");
+&arith_insn("sub", "d", "ppc64le_farith", "60", "40");
+&arith_insn("mul", "f", "ppc64le_farith", "60", "16");
+&arith_insn("mul", "d", "ppc64le_farith", "60", "48");
+&arith_insn("div", "f", "ppc64le_farith", "60", "24");
+&arith_insn("div", "d", "ppc64le_farith", "60", "56");
+&arith2_insn("neg", "f", "ppc64le_XFORM2_farith", "40", "0");
+&arith2_insn("neg", "d", "ppc64le_XFORM2_farith", "40", "0");
 &arith2_insn("bswap", "s us i u ul l f d", "ppc64le_bswap", "0", "T");
 
 &arithi_insn("add", "i u ul l p", "ppc64le_imm_arith", "14", "266");
 &arithi_insn("sub", "i u ul l p", "ppc64le_imm_arith", "8", "40");
-&arithi_insn("mul", "u ul", "ppc64le_FORM3imm_arith", "0x9/*umul*/", "0");
-&arithi_insn("mul", "i l", "ppc64le_FORM3imm_arith", "0x9/*smul*/", "0");
-&arithi_insn("div", "u", "ppc64le_divi", "0x0d/*udiv*/", "0");
-&arithi_insn("div", "ul", "ppc64le_divi", "0x0d/*udiv*/", "1");
-&arithi_insn("div", "i", "ppc64le_divi", "0x2d/*sdiv*/", "0");
-&arithi_insn("div", "l", "ppc64le_divi", "0x2d/*sdiv*/", "1");
-&arithi_insn("mod", "u ul", "ppc64le_modi", "0x0/*umod*/", "2");
-&arithi_insn("mod", "i l", "ppc64le_modi", "0x1/*smod*/", "2");
-&arithi_insn("and", "i u ul l", "ppc64le_FORM3imm_arith", "0x1", "0");
-&arithi_insn("or", "i u ul l", "ppc64le_FORM3imm_arith", "0x2", "0");
-&arithi_insn("xor", "i u ul l", "ppc64le_FORM3imm_arith", "0x3", "0");
-&arithi_insn("lsh", "i u", "ppc64le_FORM3imm_arith", "0x25", "0");
-&arithi_insn("lsh", "ul l", "ppc64le_FORM3imm_arith", "0x25", "1");
-&arithi_insn("rsh", "i", "ppc64le_FORM3imm_arith", "0x27", "0");
-&arithi_insn("rsh", "l", "ppc64le_FORM3imm_arith", "0x27", "1");
-&arithi_insn("rsh", "u", "ppc64le_FORM3imm_arith", "0x26", "0");
-&arithi_insn("rsh", "ul", "ppc64le_FORM3imm_arith", "0x26", "1");
+&arithi_insn("mul", "u ul", "ppc64le_imm_arith", "7", "233");
+&arithi_insn("mul", "i l", "ppc64le_imm_arith", "7", "235");
+&arithi_insn("div", "u", "ppc64le_divi", "459", "0");
+&arithi_insn("div", "ul", "ppc64le_divi", "459", "1");
+&arithi_insn("div", "i", "ppc64le_divi", "489", "0");
+&arithi_insn("div", "l", "ppc64le_divi", "489", "1");
+&arithi_insn("mod", "u ul", "ppc64le_modi", "0", "0");
+&arithi_insn("mod", "i l", "ppc64le_modi", "1", "0");
+&arithi_insn("and", "i u ul l", "ppc64le_logimm_arith", "28", "28");
+&arithi_insn("or", "i u ul l", "ppc64le_logimm_arith", "24", "444");
+&arithi_insn("xor", "i u ul l", "ppc64le_logimm_arith", "26", "316");
+&arithi_insn("lsh", "i u ul l", "ppc64le_shiftimm_arith", "21", "T");
+&arithi_insn("rsh", "i u ul l", "ppc64le_shiftimm_arith", "413", "T");
 &branch_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "ppc64le_branch");
 &branchi_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "ppc64le_branchi");
 &compare_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "ppc64le_compare");
@@ -221,9 +214,13 @@ print COUT "}\n";
 sub arith_insn {
     local ($op, $type_list, $subr, $code1, $code2) = @_;
     foreach(split(' ', $type_list)) {
+	$pcode2 = $code2;
+	if ($code2 eq "T") {
+	    $pcode2 = "DILL_". &upperc(${_});
+	}
 	$jmp_a3_assigns = $jmp_a3_assigns . "    ${mach}_jump_table->jmp_a3[dill_jmp_${op}${_}] = $subr;\n";
 	$jmp_a3_assigns = $jmp_a3_assigns . "    ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data1 = $code1;\n";
-	$jmp_a3_assigns = $jmp_a3_assigns . "    ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data2 = $code2;\n";
+	$jmp_a3_assigns = $jmp_a3_assigns . "    ${mach}_jump_table->a3_data[dill_jmp_${op}${_}].data2 = $pcode2;\n";
     }
 }
 
@@ -243,9 +240,13 @@ sub arith2_insn {
 sub arithi_insn {
     local ($op, $type_list, $subr, $code1, $code2) = @_;
     foreach(split(' ', $type_list)) {
+	$pcode2 = $code2;
+	if ($code2 eq "T") {
+	    $pcode2 = "DILL_". &upperc(${_});
+	}
 	$jmp_a3i_assigns = $jmp_a3i_assigns . "    ${mach}_jump_table->jmp_a3i[dill_jmp_${op}${_}] = $subr;\n";
 	$jmp_a3i_assigns = $jmp_a3i_assigns . "    ${mach}_jump_table->a3i_data[dill_jmp_${op}${_}].data1 = $code1;\n";
-	$jmp_a3i_assigns = $jmp_a3i_assigns . "    ${mach}_jump_table->a3i_data[dill_jmp_${op}${_}].data2 = $code2;\n";
+	$jmp_a3i_assigns = $jmp_a3i_assigns . "    ${mach}_jump_table->a3i_data[dill_jmp_${op}${_}].data2 = $pcode2;\n";
     }
 }
 
