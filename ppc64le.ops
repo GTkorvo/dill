@@ -23,11 +23,12 @@ sub upperc {
 &arith_insn("and", "i u ul l", "ppc64le_log_arith", "31", "28");
 &arith_insn("or", "i u ul l", "ppc64le_log_arith", "31", "444");
 &arith_insn("xor", "i u ul l", "ppc64le_log_arith", "31", "316");
-&arith2_insn("com", "i u ul l", "(arith_op2)ppc64le_XOFORM_arith", "31", "476");
+&arith2_insn("com", "i u ul l", "(arith_op2)ppc64le_FORM2_arith", "31", "124");
 &arith2_insn("neg", "i u ul l", "(arith_op2)ppc64le_XOFORM_arith", "31", "104");
-&arith2_insn("not", "i u ul l", "(arith_op2)ppc64le_FORM2_arith", dill_jmp_noti, "0");
+&arith2_insn("not", "i u ul l", "(arith_op2)ppc64le_FORM2_arith", 0, "T");
 &arith_insn("lsh", "i u ul l", "ppc64le_shift_arith", "27", "T");
-&arith_insn("rsh", "i u ul l", "ppc64le_shift_arith", "792", "T");
+&arith_insn("rsh", "i l", "ppc64le_shift_arith", "792", "T");
+&arith_insn("rsh", "u ul", "ppc64le_shift_arith", "539", "T");
 &arith_insn("add", "f", "ppc64le_farith", "60", "0");
 &arith_insn("add", "d", "ppc64le_farith", "60", "96");
 &arith_insn("sub", "f", "ppc64le_farith", "60", "8");
@@ -48,8 +49,10 @@ sub upperc {
 &arithi_insn("div", "ul", "ppc64le_divi", "459", "1");
 &arithi_insn("div", "i", "ppc64le_divi", "489", "0");
 &arithi_insn("div", "l", "ppc64le_divi", "489", "1");
-&arithi_insn("mod", "u ul", "ppc64le_modi", "0", "0");
-&arithi_insn("mod", "i l", "ppc64le_modi", "1", "0");
+&arithi_insn("mod", "u", "ppc64le_modi", "0", "0");
+&arithi_insn("mod", "i", "ppc64le_modi", "1", "0");
+&arithi_insn("mod", "ul", "ppc64le_modi", "0", "1");
+&arithi_insn("mod", "l", "ppc64le_modi", "1", "1");
 &arithi_insn("and", "i u ul l", "ppc64le_logimm_arith", "28", "28");
 &arithi_insn("or", "i u ul l", "ppc64le_logimm_arith", "24", "444");
 &arithi_insn("xor", "i u ul l", "ppc64le_logimm_arith", "26", "316");
@@ -82,23 +85,6 @@ int src;
 {
     /* format 3 */
     INSN_OUT(s, HDR(0x2)|OP3(op3)|RD(dest)|OPF(fop)|RS2(src));
-}
-
-extern void ppc64le_FORM2_arith(s, op3, op, dest, src)
-dill_stream s;
-int op3;
-int op;
-int dest;
-int src;
-{
-    // if (op != 0) {
-    // 	/* format 3 with g0 as rs1*/
-    // 	INSN_OUT(s, HDR(op)|OP3(op3)|RD(dest)|RS1(_g0)|RS2(src));
-    //} else {
-    // 	/* must be NOT */
-    // 	INSN_OUT(s, HDR(0x2)|RD(_g0)|OP3(0x14)|RS1(_g0)|RS2(src));/* subcc */
-    //	INSN_OUT(s, HDR(0x2)|RD(dest)|OP3(0xc)|RS1(_g0)|IM|SIMM13(-1));
-    //}
 }
 
 static struct jmp_table_s ${mach}_jump_table_struct;

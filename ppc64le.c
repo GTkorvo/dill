@@ -95,6 +95,17 @@ int ppc64le_type_size[] = {
 	sizeof(long), /* EC */
 };
 
+static void
+dump_bits(int val) 
+{
+    int i;
+    for (i = 0; i < 32; i++) {
+	printf("%2d", (val & 0x80000000) >> 31);
+	val = val << 1;
+    }
+    printf("\n");
+}
+
 extern int
 ppc64le_local(dill_stream s, int type)
 {
@@ -166,7 +177,7 @@ ppc64le_movi2d(dill_stream s, int dest, int src);
 static void
 ppc64le_movi2f(dill_stream s, int dest, int src)
 {
-    ppc64le_movi2d(s, dest, src);
+    INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
 }
     
 static void
@@ -356,13 +367,20 @@ long imm;
     
     if (op == 413) {
 	/* rsh, different form */
-	INSN_OUT(s, XS_FORM(31, src1, dest, imm & 0x1f, 413, imm >> 5));
-	printf("IMM was %x\n", imm);
-	dill_dump(s);
+	if ((type == DILL_I) || (type == DILL_L)) {
+	    INSN_OUT(s, XS_FORM(31, src1, dest, imm & 0x1f, 413, imm >> 5));
+	} else {
+	    INSN_OUT(s, MD_FORM(30, src1, dest, (64-imm)&0x1f, (((imm&0x1f)<< 1) | (imm >> 5)), 0, ((64-imm)>> 5)));
+	}
     } else {
-	INSN_OUT(s, M_FORM(op, src1, dest, imm, 0, 31-imm));
+	/* lsh */
+	if (dill_type_size(s, type) == 4) {
+	    INSN_OUT(s, M_FORM(op, src1, dest, imm, 0, 31 - imm));
+	} else {
+	    INSN_OUT(s, MD_FORM(30, src1, dest, (imm&0x1f), ((((63-imm)&0x1f) << 1) | ((63-imm)>>5)), 1, (imm>>5)));
+	}
     }
-    if (type == DILL_I) {
+    if (dill_type_size(s, type) == 4) {
 	/* clrldi dest,dest,32 */
 	INSN_OUT(s, MD_FORM(30,dest,dest,0,32, 0, 0));
     }
@@ -720,26 +738,27 @@ extern long dill_ppc64le_hidden_udiv(unsigned long a, unsigned long b);
 extern void ppc64le_mod(dill_stream s, int is_signed, int type_long, int dest, 
 		      int src1, int src2)
 {
-    int return_reg = _gpr3;
-    if (is_signed == 1) {
-	/* signed case */
+    if (is_signed) {
 	if (type_long) {
-//	    return_reg = dill_scalll(s, (void*)dill_ppc64le_hidden_mod, "dill_ppc64le_hidden_mod", "%l%l", src1, src2);
-	    ppc64le_movl(s, dest, return_reg);
+	    /* divd */
+	    INSN_OUT(s, XO_FORM(31, _gpr0, src1, src2, 489));
 	} else {
-//	    return_reg = dill_scalli(s, (void*)dill_ppc64le_hidden_modi, "dill_ppc64le_hidden_modi", "%i%i", src1, src2);
-	    ppc64le_movl(s, dest, return_reg);
-	}
+	    /* divw */
+	    INSN_OUT(s, XO_FORM(31, _gpr0, src1, src2, 491));
+	}	    
     } else {
-	/* unsigned case */
 	if (type_long) {
-//	    return_reg = dill_scalll(s, (void*)dill_ppc64le_hidden_umod, "dill_ppc64le_hidden_umod", "%l%l", src1, src2);
-	    ppc64le_movl(s, dest, return_reg);
+	    /* divdu */
+	    INSN_OUT(s, XO_FORM(31, _gpr0, src1, src2, 457));
 	} else {
-//	    return_reg = dill_scallu(s, (void*)dill_ppc64le_hidden_umodi, "dill_ppc64le_hidden_umodi", "%u%u", src1, src2);
-	    ppc64le_movl(s, dest, return_reg);
+	    /* divdu */
+	    INSN_OUT(s, XO_FORM(31, _gpr0, src1, src2, 459));
 	}
     }
+    /* muld */
+    INSN_OUT(s, XO_FORM(31, _gpr0, _gpr0, src2, 233));
+    /* subf */
+    INSN_OUT(s, XO_FORM(31, dest, _gpr0, src1, 40));
 }
 
 extern void ppc64le_modi(dill_stream s, int data1, int data2, int dest, int src1, 
@@ -813,6 +832,26 @@ ppc64le_saverestore_floats(dill_stream s, int saverestore)
     }
 }
 
+
+extern void ppc64le_FORM2_arith(s, op3, op, dest, src)
+dill_stream s;
+int op3;
+int op;
+int dest;
+int src;
+{
+    if (op3) {
+	INSN_OUT(s, X_FORM(op3, src, dest, src, op));
+    } else {
+	/* must be not */
+	/* cmpwi, mfcr, rlwinm 3, 31, 31 */
+	INSN_OUT(s, D_FORM(11, 3<<2, src, 0));
+	/* mfcr */
+	INSN_OUT(s, (31<<26)| (dest<<21)|(19<1)); 
+	INSN_OUT(s, M_FORM(21, dest, dest, 3, 31, 31));
+    }
+}
+
 #define CONV(x,y) ((x*100)+y)
 extern void
 ppc64le_convert(dill_stream s, int from_type, int to_type, 
@@ -826,7 +865,7 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
     switch(CONV(from_type, to_type)) {
     case CONV(DILL_I,DILL_L):
 	/* extsw */
-	INSN_OUT(s, X_FORM(31, src, 0, dest, 986));
+	INSN_OUT(s, X_FORM(31, src, dest, 0, 986));
 	break;
     case CONV(DILL_US,DILL_S):
     case CONV(DILL_UC,DILL_US):
@@ -852,6 +891,7 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	ppc64le_movd(s, dest, src);
 	break;
     case CONV(DILL_F,DILL_L):
+	INSN_OUT(s, XX2_FORM(60, src, src, 344));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	break;
     case CONV(DILL_F,DILL_I):
@@ -900,7 +940,7 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	}
 	break;
     case CONV(DILL_D,DILL_F):
-	ppc64le_movd(s, dest, src);
+	INSN_OUT(s, X_FORM(63, dest, 0, src, 12));
 	break;
     case CONV(DILL_D,DILL_L):
 	/* xscvdpsxds */
@@ -958,6 +998,7 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	/* fall through */
     case CONV(DILL_L,DILL_D):
 	INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
+	INSN_OUT(s, XX2_FORM(60, dest, dest, 376));
 	break;
     case CONV(DILL_UC,DILL_D):
     case CONV(DILL_US,DILL_D):
@@ -986,6 +1027,7 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_I,DILL_F):
     case CONV(DILL_L,DILL_F):
 	INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
+	INSN_OUT(s, XX2_FORM(60, dest, dest, 312));
 	break;
     case CONV(DILL_UC,DILL_F):
     case CONV(DILL_US,DILL_F):
@@ -1110,14 +1152,10 @@ ppc64le_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 {
     switch(type) {
     case DILL_F:
-	INSN_OUT(s, HDR(0x2)|OP(0x35)|RS1(src1)|OPF(0x51)|RS2(src2));/*fcmps*/
-	dill_mark_branch_location(s, label);
-	INSN_OUT(s, HDR(0)|COND(fop_conds[op])|(0x5<<22)|CC(0x0)|P(1)|/*disp */0);/* fbp*/
-	break;
     case DILL_D:
-	INSN_OUT(s, HDR(0x2)|OP(0x35)|RS1(src1)|OPF(0x52)|RS2(src2));
+	INSN_OUT(s, X_FORM(63, 3<<2, src1, src2, 0));
 	dill_mark_branch_location(s, label);
-	INSN_OUT(s, HDR(0)|COND(fop_conds[op])|(0x5<<22)|CC(0x0)|P(1)|/*disp */0);/* fbp*/
+	INSN_OUT(s, B_FORM(16, 3, 10, 0 /* target */, 0, 0));
 	break;
     case DILL_U:
     case DILL_UL:
@@ -1136,9 +1174,9 @@ ppc64le_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 	op += 6; /* second set of codes */
 	/* fall through */
     default:
-	INSN_OUT(s, HDR(0x2)|RD(_gpr2)|OP(0x14)|RS1(src1)|RS2(src2)); /* subcc */
+	INSN_OUT(s, X_FORM(31, ((3<<2)| 1), src1, src2, 0));
 	dill_mark_branch_location(s, label);
-	INSN_OUT(s, HDR(0)|COND(op_conds[op])|(2<<22)|/*disp */0);/* bp*/
+	INSN_OUT(s, B_FORM(16, 3, 10, 0 /* target */, 0, 0));
     }
     ppc64le_nop(c);
 }
@@ -1409,10 +1447,15 @@ ppc64le_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 	op += 6; /* second set of codes */
 	/* fall through */
     default:
-	ppc64le_FORM3imm_arith(s, 0x14, 0, _gpr2, src, imm); /* subcc */
-	dill_mark_branch_location(s, label);
-	INSN_OUT(s, HDR(0)|COND(op_conds[op])|(2<<22)|/*disp */0);/* bp*/
-	ppc64le_nop(s);
+	if  (((long)imm) >= 32767 || ((long)imm) < -32768) {
+	    INSN_OUT(s, D_FORM(11, 3<<2 | 1, src, imm));
+	    dill_mark_branch_location(s, label);
+	    INSN_OUT(s, B_FORM(16, 3, 10, 0 /* target */, 0, 0));
+	    ppc64le_nop(s);
+	} else {
+	    ppc64le_set(s, _gpr0, imm);
+	    ppc64le_branch(s, op, type, src, _gpr0, label);
+	}
     }
 }
 
@@ -1487,9 +1530,9 @@ ppc64le_branch_link(dill_stream s)
 	int *branch_addr = (int*)((char *)s->p->code_base + 
 				  t->branch_locs[i].loc);
         /* div addr diff by 4 for ppc64le offset value */
-	label_offset = label_offset >> 2;  
-	*branch_addr &= 0xffc00000;
-	*branch_addr |= (label_offset & 0x3fffff);
+//	label_offset = label_offset >> 2;  
+	*branch_addr &= 0xffff0000;
+	*branch_addr |= (label_offset & 0xfffc);
     }
 }
 
@@ -1757,9 +1800,52 @@ int typ;
 int dest;
 int src;
 {
-  /*    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-    ppc64le_pstorei(s, typ, 0, src, _fp, smi->conversion_word);
-    ppc64le_pbsloadi(s, typ, 0, dest, _fp, smi->conversion_word);*/
+    switch (typ) {
+    case DILL_S:
+    case DILL_US:
+	/* stwu  src, -16(r1) */
+	INSN_OUT(s, D_FORM(45, src, _gpr1, -16 & 0xffff));
+	/* lwbru dest, (r1) */
+	INSN_OUT(s, X_FORM(31, dest, 0, _gpr1, 790));
+	break;
+    case DILL_I:
+    case DILL_U:
+	/* stwu  src, -16(r1) */
+	INSN_OUT(s, D_FORM(37, src, _gpr1, -16 & 0xffff));
+	/* lwbru dest, (r1) */
+	INSN_OUT(s, X_FORM(31, dest, 0, _gpr1, 534));
+	break;
+    case DILL_L:
+    case DILL_UL:
+	/* stdu  src, -16(r1) */
+	INSN_OUT(s, D_FORM(62, src, _gpr1, (-16 & 0xfffc) | 0x1));
+	/* lwbru dest, (r1) */
+	INSN_OUT(s, X_FORM(31, dest, 0, _gpr1, 532));
+	break;
+    case DILL_F:
+	/* stfsu  src, -16(r1) */
+	INSN_OUT(s, D_FORM(53, src, _gpr1, -16 & 0xffff));
+	/* lwbru _gpr0, (r1) */
+	INSN_OUT(s, X_FORM(31, _gpr0, 0, _gpr1, 532));
+	/* stw  _gpr0, (r1) */
+	INSN_OUT(s, D_FORM(36, _gpr0, _gpr1, 0));
+	/* lfs dest, (r1) */
+	INSN_OUT(s, D_FORM(49, dest, _gpr1, 0));
+	break;
+    case DILL_D:
+	/* stfdu  src, -16(r1) */
+	INSN_OUT(s, D_FORM(55, src, _gpr1, -16 & 0xffff));
+	/* lwbru dest, (r1) */
+	INSN_OUT(s, X_FORM(31, _gpr0, 0, _gpr1, 532));
+	/* addi r1, r1, 16 */
+	/* stw  _gpr0, (r1) */
+	INSN_OUT(s, D_FORM(36, _gpr0, _gpr1, 0));
+	/* lfd dest, (r1) */
+	INSN_OUT(s, D_FORM(50, dest, _gpr1, 0));
+	break;
+    }
+    /* addi r1, r1, 16 */
+    INSN_OUT(s, D_FORM(14, _gpr1, _gpr1, 16));
 }
 
 #define bit_R(x) ((unsigned long)1<<x)
