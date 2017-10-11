@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ppc64le_save(s, r) ppc64le_FORM3_arith(s, 0x3c, 0x2, _sp, _sp, r)
 #define ppc64le_savei(s, imm) ppc64le_FORM3imm_arith(s, 0x3c, 0x2, _sp, _sp, imm)
 #define ppc64le_ori(s, dest, src, imm) 	INSN_OUT(s, D_FORM(24, r, r, lo16(imm)));
 #define ppc64le_andi(s, dest, src, imm) ppc64le_FORM3imm_arith(s, 0x1, 0, dest, src, imm)
@@ -22,9 +21,8 @@
 #define ppc64le_movd(s, dest, src) INSN_OUT(s, X_FORM(63, dest, 0, src, 72))
 #define BALWAYS 0x14
 #define BRETURN 0x0
-#define ppc64le_simple_ret(c) INSN_OUT(s, XL_FORM(19,0x14,0,0,16,0))
-#define ppc64le_restore(c) INSN_OUT(s, HDR(0x2)|OP(0x3d)|RD(_gpr0)|RS1(_gpr0)|RS2(_gpr0));
-#define ppc64le_lshi(s, dest, src1,imm) INSN_OUT(s, MD_FORM(30,dest,src,imm & 0x1f,63-imm, 0, imm>>5));
+#define ppc64le_simple_ret(c) 
+#define ppc64le_lshi(s, dest, src,imm) INSN_OUT(s, MD_FORM(30,dest,src,imm & 0x1f,63-imm, 0, imm>>5));
 #define ppc64le_xlshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
 #define ppc64le_rshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
 #define ppc64le_xrshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
@@ -177,9 +175,14 @@ ppc64le_movi2d(dill_stream s, int dest, int src);
 static void
 ppc64le_movi2f(dill_stream s, int dest, int src)
 {
-    INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
+    /* stwu  src, -16(r1) */
+    INSN_OUT(s, D_FORM(37, src, _gpr1, -16 & 0xffff));
+    /* lfs dest, (r1) */
+    INSN_OUT(s, D_FORM(49, dest, _gpr1, 0));
+    /* addi r1, r1, 16 */
+    INSN_OUT(s, D_FORM(14, _gpr1, _gpr1, 16));
 }
-    
+
 static void
 ppc64le_movf2i(dill_stream s, int dest, int src)
 {
@@ -204,7 +207,12 @@ ppc64le_movd2i(dill_stream s, int dest, int src)
 static void
 ppc64le_movi2d(dill_stream s, int dest, int src)
 {
-    INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
+    /* stdu  src, -16(r1) */
+    INSN_OUT(s, D_FORM(62, src, _gpr1, (-16 & 0xfffc) | 0x1));
+    /* lfd dest, (r1) */
+    INSN_OUT(s, D_FORM(50, dest, _gpr1, 0));
+    /* addi r1, r1, 16 */
+    INSN_OUT(s, D_FORM(14, _gpr1, _gpr1, 16));
 }
     
 /*
@@ -407,6 +415,20 @@ long imm;
     }
 }
 
+#define STACK_SIZE 128
+static void
+ppc64le_restore(dill_stream s)
+{
+    /* ld r0, 64(r1) */
+    ppc64le_ploadi(s, DILL_L, 0, _gpr0, _sp, 64);
+    /* mtlr r0 */
+    INSN_OUT(s, XFX_FORM(31, _gpr0, /* LR */ 0x100, 467));
+    /* addi r1, r1, STACK_SIZE */
+    INSN_OUT(s, D_FORM(14, _gpr1, _gpr1, STACK_SIZE));
+    /* blr*/
+    INSN_OUT(s, XL_FORM(19,0x14,0,0,16,0));
+}
+
 extern void
 ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args,
 	     dill_reg *arglist)
@@ -416,13 +438,21 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
     int max_in_reg = _gpr3;
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
     int cur_arg_offset = 0;
+    int last_incoming_fp_arg = _fpr0;
+    int last_incoming_int_arg = _gpr2;
     /* emit start insns */
 //    INSN_OUT(s, 0x10000);
 //    INSN_OUT(s, 0x10000);
 //    INSN_OUT(s, 0x10000);
 //    INSN_OUT(s, 0x10000);
-//    smi->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
-//    ppc64le_savei(s, 0);
+
+    smi->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
+    /* mflr r0 */
+    INSN_OUT(s, XFX_FORM(31, _gpr0, /* LR */ 0x100, 339));
+    /* stdu  _gpr1, -SAVE_AREA(r1) */
+    INSN_OUT(s, D_FORM(62, _gpr1, _gpr1, (-STACK_SIZE & 0xfffc) | 0x1));
+    /* std  _lr, 64(r1) */
+    INSN_OUT(s, D_FORM(62, _gpr0, _sp, (64 & 0xfffc)));
 
 //    smi->conversion_word = ppc64le_local(s, DILL_D);
 //    smi->conversion_word = ppc64le_local(s, DILL_D);
@@ -430,22 +460,23 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
     /* load params from regs */
     for (i = 0; i < arg_count; i++) {
 	switch (args[i].type) {
-	case DILL_F: case DILL_D:
-	    if (smi->stack_align == 8) {
-		/* How about the limit on FP registers?  Fix this. */
-		int reg;
+	case DILL_F: case DILL_D: {
+	    int reg;
+	    if (last_incoming_fp_arg < _fpr13) {
 		args[i].is_register = 1;
-		reg = _fpr1 + cur_arg_offset / 8;
+		reg = ++last_incoming_fp_arg;
 		dill_dealloc_specific(s, reg, args[i].type, DILL_TEMP);
 		args[i].in_reg = args[i].out_reg = reg;
-		break;
+	    } else {
+		args[i].is_register = 0;
 	    }
-	    /* falling through */
+	    break;
+	}
 	default:
-	    if (cur_arg_offset < 6 * smi->stack_align) {
+	    if (last_incoming_int_arg < _gpr10) {
 		args[i].is_register = 1;
-		args[i].in_reg = _gpr3 + cur_arg_offset/smi->stack_align;
-		args[i].out_reg = _gpr3 + cur_arg_offset/smi->stack_align;
+		args[i].in_reg = ++last_incoming_int_arg;
+		args[i].out_reg = args[i].out_reg;
 		max_in_reg = args[i].in_reg;
 	    } else {
 		args[i].is_register = 0;
@@ -465,65 +496,19 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
     }
     for (i = 0; i < arg_count; i++) {
 	int tmp_reg;
-	if (smi->stack_align != 8) {
-	    /* 32-bit ppc64le */
-	    /* only do nothing for int params in registers */
-	    if (args[i].is_register && ((args[i].type != DILL_F) && 
-					(args[i].type != DILL_D))) {
-		if (arglist != NULL) arglist[i] = args[i].in_reg;
-		continue;
-	    }
-	} else {
-	    /* 64-bit ppc64le do nothing for anything in a register */
-	    if (args[i].is_register) {
-		if (arglist != NULL) arglist[i] = args[i].in_reg;
-		continue;
-	    }
-	}	    
 	if (!dill_raw_getreg(s, &tmp_reg, args[i].type, DILL_VAR)) {
 	    fprintf(stderr, "not enough registers for parameter %d\n", i);
 	    exit(1);
 	}
 	if (arglist != NULL) arglist[i] = tmp_reg;
 	if (args[i].is_register) {
-	    /* must be float */
-	    if (args[i].type == DILL_F) {
-		ppc64le_movi2f(s, tmp_reg, args[i].in_reg);
-		dill_alloc_specific(s, args[i].in_reg, DILL_I, DILL_VAR);
+	    if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
+		ppc64le_int_mov(s, tmp_reg, args[i].in_reg);
 	    } else {
-		/* ppc64lev8 boundary condition, half in register */
-		if (args[i].offset == 5*4) {
-		    int real_offset = args[i].offset + 68; 
-		    /*		    ppc64le_pstorei(s, DILL_I, 0, args[i].in_reg, _fp, 
-				  real_offset);
-		    ppc64le_ploadi(s, DILL_F, 0, tmp_reg, _fp, real_offset);
-		    ppc64le_ploadi(s, DILL_F, 0, tmp_reg+1, _fp, real_offset+4);*/
-		} else {
-		    ppc64le_movi2d(s, tmp_reg, args[i].in_reg);
-		    dill_alloc_specific(s, args[i].in_reg, DILL_I, DILL_VAR);
-		    if (smi->stack_align == 4) {
-			dill_alloc_specific(s, args[i].in_reg, DILL_I, DILL_VAR);
-
-		    }
-		}
+		ppc64le_movf(s, tmp_reg, args[i].in_reg);
 	    }
 	} else {
-	    /* general offset from fp*/
-	    int real_offset = args[i].offset + 8 +15*smi->stack_align; 
-	    if (type_info[(int)args[i].type].size < smi->stack_align) {
-		real_offset += smi->stack_align - type_info[(int)args[i].type].size;
-	    }
-	    real_offset += smi->stack_constant_offset;
-	    if (args[i].type != DILL_D) {
-		ppc64le_ploadi(s, args[i].type, 0, tmp_reg, _fp, 
-			     real_offset);
-	    } else {
-//		ppc64le_ploadi(s, DILL_I, 0, _g1, _fp, real_offset);
-//		ppc64le_pstorei(s, DILL_I, 0, _g1, _fp, smi->conversion_word);
-//		ppc64le_ploadi(s, DILL_I, 0, _g1, _fp, real_offset+4);
-//		ppc64le_pstorei(s, DILL_I, 0, _g1, _fp, smi->conversion_word+4);
-//		ppc64le_ploadi(s, DILL_D, 0, tmp_reg, _fp, smi->conversion_word);
-	    }
+	    ppc64le_ploadi(s, args[i].type, 0, tmp_reg, _sp, args[i].offset);
 	}
 	args[i].in_reg = tmp_reg;
 	args[i].is_register = 1;
@@ -1102,31 +1087,6 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
     }
 }
 
-static signed char op_conds[] = {
-    0x01, /* dill_eq_code */  /* signed */
-    0x0b, /* dill_ge_code */
-    0x0a, /* dill_gt_code */
-    0x02, /* dill_le_code */
-    0x03, /* dill_lt_code */
-    0x09, /* dill_ne_code */
-
-    0x01, /* dill_eq_code */  /* unsigned */
-    0x00, /* dill_ge_code */ /* no unsigned version */
-    0x0c, /* dill_gt_code */ 
-    0x04, /* dill_le_code */
-    0x00, /* dill_lt_code */ /* no unsigned version */
-    0x09, /* dill_ne_code */
-};
-
-static char fop_conds[] = {
-    0x09, /* dill_eq_code */
-    0x0b, /* dill_ge_code */
-    0x06, /* dill_gt_code */
-    0x0d, /* dill_le_code */
-    0x04, /* dill_lt_code */
-    0x01, /* dill_ne_code */
-};
-
 extern void
 ppc64le_compare(dill_stream s, int op, int type, int dest, int src1, int src2)
 {
@@ -1147,46 +1107,58 @@ ppc64le_comparei(dill_stream s, int op, int type, int dest, int src, long imm)
     dill_mark_label(s, label);
 }
 
+
+static signed char op_BO[] = {
+    0x0c, /* dill_eq_code = branch if eq bit is 1 */  
+    0x04, /* dill_ge_code = branch if lt bit is 0 */
+    0x0c, /* dill_gt_code = branch if gt bit is 1 */
+    0x04, /* dill_le_code = branch if gt bit is 0 */
+    0x0c, /* dill_lt_code = branch if lt bit is 1 */
+    0x04, /* dill_ne_code = branch if eq bit is 0 */
+};
+
+static char op_BI[] = {
+    0x02, /* dill_eq_code = test eq bit */
+    0x00, /* dill_ge_code = test lt bit */
+    0x01, /* dill_gt_code = test gt bit */
+    0x01, /* dill_le_code = test gt bit */
+    0x00, /* dill_lt_code = test lt bit */
+    0x02, /* dill_ne_code = test eq bit */
+};
+
 extern void
 ppc64le_branch(dill_stream s, int op, int type, int src1, int src2, int label)
 {
+    int cmp_op = 0;
+    int L = 0;
+
+    if (dill_type_size(s, type) == 8) L = 1;
+
     switch(type) {
     case DILL_F:
     case DILL_D:
-	INSN_OUT(s, X_FORM(63, 3<<2, src1, src2, 0));
+	INSN_OUT(s, X_FORM(63, 0<<2, src1, src2, 0));
 	dill_mark_branch_location(s, label);
-	INSN_OUT(s, B_FORM(16, 3, 10, 0 /* target */, 0, 0));
+	INSN_OUT(s, B_FORM(16, op_BO[op], op_BI[op], 0 /* target */, 0, 0));
 	break;
+    case DILL_UC:
+    case DILL_US:
     case DILL_U:
     case DILL_UL:
-	switch(op) {
-	case dill_ge_code: {
-	    int tmp = src1; src1 = src2; src2 = tmp;  /* swap operands */
-	    op = dill_le_code;
-	    break;
-	}
-	case dill_lt_code: {
-	    int tmp = src1; src1 = src2; src2 = tmp;  /* swap operands */
-	    op = dill_gt_code;
-	    break;
-	}
-	}
-	op += 6; /* second set of codes */
-	/* fall through */
+	cmp_op = 32;   /* unsigned cmpl */
+	/* falling through */
     default:
-	INSN_OUT(s, X_FORM(31, ((3<<2)| 1), src1, src2, 0));
+	INSN_OUT(s, X_FORM(31, ((0<<2)| L), src1, src2, cmp_op));
 	dill_mark_branch_location(s, label);
-	INSN_OUT(s, B_FORM(16, 3, 10, 0 /* target */, 0, 0));
+	INSN_OUT(s, B_FORM(16, op_BO[op], op_BI[op], 0 /* target */, 0, 0));
     }
-    ppc64le_nop(c);
 }
 
 extern void 
 ppc64le_jump_to_label(dill_stream s, unsigned long label)
 {
     dill_mark_branch_location(s, label);
-    INSN_OUT(s, HDR(0)|COND(8)|(2<<22)|/*disp */0);/* bp always*/
-    ppc64le_nop(c);
+    INSN_OUT(s, 18<<26);
 }
 
 extern void ppc64le_jump_to_reg(dill_stream s, unsigned long reg)
@@ -1195,9 +1167,8 @@ extern void ppc64le_jump_to_reg(dill_stream s, unsigned long reg)
     ppc64le_nop(c);
 }
 
-extern void ppc64le_jump_to_imm(dill_stream s, unsigned long imm)
+extern void ppc64le_jump_to_imm(dill_stream s, void * imm)
 {
-  /*    INSN_OUT(s, HDR(0x2)|OP(0x38)|RD(_gpr2)|RS1(_i7)|IM|SIMM13(imm));*/
     ppc64le_nop(c);
 }
 
@@ -1391,7 +1362,7 @@ extern void ppc64le_pushfi(dill_stream s, int type, double value)
     internal_push(s, type, 1, &value);
 }
 
-extern int ppc64le_calli(dill_stream s, int type, void *xfer_address, char *name)
+extern int ppc64le_calli(dill_stream s, int type, void *xfer_address, const char *name)
 {
     int caller_side_ret_reg = _gpr3;
 
@@ -1430,31 +1401,14 @@ ppc64le_branchi(dill_stream s, int op, int type, int src, long imm, int label)
     case DILL_D:
 	fprintf(stderr, "Shouldn't happen\n");
 	break;
-    case DILL_U:
-    case DILL_UL:
-	switch(op) {
-	case dill_ge_code: {
-	    imm = imm-1;
-	    op = dill_gt_code;
-	    break;
-	}
-	case dill_lt_code: {
-	    imm = imm-1;
-	    op = dill_le_code;
-	    break;
-	}
-	}
-	op += 6; /* second set of codes */
-	/* fall through */
     default:
 	if  (((long)imm) >= 32767 || ((long)imm) < -32768) {
-	    INSN_OUT(s, D_FORM(11, 3<<2 | 1, src, imm));
-	    dill_mark_branch_location(s, label);
-	    INSN_OUT(s, B_FORM(16, 3, 10, 0 /* target */, 0, 0));
-	    ppc64le_nop(s);
-	} else {
 	    ppc64le_set(s, _gpr0, imm);
 	    ppc64le_branch(s, op, type, src, _gpr0, label);
+	} else {
+	    INSN_OUT(s, D_FORM(11, 0<<2 | 1, src, imm));
+	    dill_mark_branch_location(s, label);
+	    INSN_OUT(s, B_FORM(16, op_BO[op], op_BI[op], 0 /* target */, 0, 0));
 	}
     }
 }
@@ -1776,7 +1730,10 @@ long val;
     if ((val > 2147483647) || (val < -2147483647) ) {
 	/* need to set all 64 bits */
 	ppc64le_set(s, r, ((val >> 32) & 0xffffffff));
-//	pc64le_lshift(s, r, 32);
+
+	/* left shift the 32 we just set */
+	ppc64le_shiftimm_arith(s, 21 /*lsh*/, DILL_L, r, r, 32);
+
 	// or immediate shifted
 	INSN_OUT(s, D_FORM(25, r, r, hi16(val)));
 	// or immediate 
@@ -1826,7 +1783,7 @@ int src;
 	/* stfsu  src, -16(r1) */
 	INSN_OUT(s, D_FORM(53, src, _gpr1, -16 & 0xffff));
 	/* lwbru _gpr0, (r1) */
-	INSN_OUT(s, X_FORM(31, _gpr0, 0, _gpr1, 532));
+	INSN_OUT(s, X_FORM(31, _gpr0, 0, _gpr1, 534));
 	/* stw  _gpr0, (r1) */
 	INSN_OUT(s, D_FORM(36, _gpr0, _gpr1, 0));
 	/* lfs dest, (r1) */
@@ -1838,8 +1795,8 @@ int src;
 	/* lwbru dest, (r1) */
 	INSN_OUT(s, X_FORM(31, _gpr0, 0, _gpr1, 532));
 	/* addi r1, r1, 16 */
-	/* stw  _gpr0, (r1) */
-	INSN_OUT(s, D_FORM(36, _gpr0, _gpr1, 0));
+	/* std  _gpr0, (r1) */
+	INSN_OUT(s, D_FORM(62, _gpr0, _gpr1, 0));
 	/* lfd dest, (r1) */
 	INSN_OUT(s, D_FORM(50, dest, _gpr1, 0));
 	break;
@@ -1853,24 +1810,38 @@ int src;
 extern void
 ppc64le_reg_init(dill_stream s)
 {
-    s->p->var_i.init_avail[0] = (bit_R(_gpr0)|bit_R(_gpr1)|bit_R(_gpr2)|bit_R(_gpr3)|
-				 bit_R(_gpr4)|bit_R(_gpr5)|bit_R(_gpr6)|bit_R(_gpr7));
+    s->p->var_i.init_avail[0] = (bit_R(_gpr13)|bit_R(_gpr14)|bit_R(_gpr15)|
+				 bit_R(_gpr16)|bit_R(_gpr17)|bit_R(_gpr18)|
+				 bit_R(_gpr19)|bit_R(_gpr20)|bit_R(_gpr21)|
+				 bit_R(_gpr22)|bit_R(_gpr23)|bit_R(_gpr24)|
+				 bit_R(_gpr25)|bit_R(_gpr26)|bit_R(_gpr27)|
+				 bit_R(_gpr28)|bit_R(_gpr29)|bit_R(_gpr30)|
+				 bit_R(_gpr31));
     s->p->var_i.members[0] = s->p->var_i.init_avail[0];
-    s->p->tmp_i.init_avail[0] = (bit_R(_gpr2)|bit_R(_gpr3));
-    s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0] | bit_R(_gpr2);
+    s->p->tmp_i.init_avail[0] = (bit_R(_gpr3)|bit_R(_gpr4)|bit_R(_gpr5)|
+				 bit_R(_gpr6)|bit_R(_gpr7)|bit_R(_gpr8)|
+				 bit_R(_gpr9)|bit_R(_gpr10)|bit_R(_gpr11)|
+				 bit_R(_gpr12));
+    s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0];
     s->p->var_f.init_avail[0] = 0;
     s->p->var_f.members[0] = s->p->var_f.init_avail[0];
-    s->p->tmp_f.init_avail[0] = (bit_R(_fpr2)|bit_R(_fpr4)|bit_R(_fpr6)|
-				 bit_R(_fpr8)|bit_R(_fpr10)|bit_R(_fpr12)|bit_R(_fpr14)|
-				 bit_R(_fpr16)|bit_R(_fpr18)|bit_R(_fpr20)|bit_R(_fpr22)|
-				 bit_R(_fpr24)|bit_R(_fpr26)|bit_R(_fpr28)|bit_R(_fpr30));
+    s->p->tmp_f.init_avail[0] = (bit_R(_fpr2)|bit_R(_fpr3)|bit_R(_fpr4)|
+				 bit_R(_fpr5)|bit_R(_fpr6)|bit_R(_fpr7)|
+				 bit_R(_fpr8)|bit_R(_fpr9)|bit_R(_fpr10)|
+				 bit_R(_fpr11)|bit_R(_fpr12)|bit_R(_fpr13)|
+				 bit_R(_fpr14)|bit_R(_fpr15)|bit_R(_fpr16)|
+				 bit_R(_fpr17)|bit_R(_fpr18)|bit_R(_fpr19)|
+				 bit_R(_fpr20)|bit_R(_fpr21)|bit_R(_fpr22)|
+				 bit_R(_fpr23)|bit_R(_fpr24)|bit_R(_fpr25)|
+				 bit_R(_fpr26)|bit_R(_fpr27)|bit_R(_fpr28)|
+				 bit_R(_fpr29)|bit_R(_fpr30)|bit_R(_fpr31));
     s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
 
 extern void*
-gen_ppc64le_mach_info(s, v9)
+gen_ppc64le_mach_info(s, bit64)
 dill_stream s;
-int v9;
+int bit64;
 {
     ppc64le_mach_info smi = malloc(sizeof(*smi));
     if (s->p->mach_info != NULL) {
@@ -1882,12 +1853,12 @@ int v9;
     smi->act_rec_size = 0;
     smi->conversion_word = 0;
     smi->cur_arg_offset = 0;
-    if (v9) {
-	smi->stack_align = 8; /* 8 for ppc64lev9 */
+    if (bit64) {
+	smi->stack_align = 8; /* 8 for ppc64le */
 	smi->stack_constant_offset = 2047; 
     } else {
-	smi->stack_align = 4; /* 8 for ppc64lev9 */
-	smi->stack_constant_offset = 0; /* 2047 for ppc64lev9 */
+	smi->stack_align = 4; /* 4 for ppowerpc */
+	smi->stack_constant_offset = 0;
     }
     smi->gp_save_offset = (16 + 1 + 6 + 19 /* args */) * smi->stack_align; /*184;*/
     smi->fp_save_offset = smi->gp_save_offset + 8 * smi->stack_align;

@@ -46,8 +46,8 @@ sub upperc {
 &arithi_insn("mul", "u ul", "ppc64le_imm_arith", "7", "233");
 &arithi_insn("mul", "i l", "ppc64le_imm_arith", "7", "235");
 &arithi_insn("div", "u", "ppc64le_divi", "459", "0");
-&arithi_insn("div", "ul", "ppc64le_divi", "459", "1");
-&arithi_insn("div", "i", "ppc64le_divi", "489", "0");
+&arithi_insn("div", "ul", "ppc64le_divi", "457", "1");
+&arithi_insn("div", "i", "ppc64le_divi", "491", "0");
 &arithi_insn("div", "l", "ppc64le_divi", "489", "1");
 &arithi_insn("mod", "u", "ppc64le_modi", "0", "0");
 &arithi_insn("mod", "i", "ppc64le_modi", "1", "0");
@@ -190,10 +190,10 @@ print COUT "    if(ppc64le_jump_table == 0) {\n";
 print COUT "        gen_ppc64le_jump_table();\n";
 print COUT "    }\n";
 print COUT "    s->j = ppc64le_jump_table;\n";
-print COUT "    s->dill_local_pointer = _fp;\n";
-print COUT "    s->dill_param_reg_pointer = _fp;\n";
-print COUT "    s->p->mach_info = (void*)gen_ppc64le_mach_info(s,/*v9*/ 1);\n";
-print COUT "    s->p->machine_strr_tmp_reg = _gpr1;\n";
+print COUT "    s->dill_local_pointer = _sp;\n";
+print COUT "    s->dill_param_reg_pointer = _sp;\n";
+print COUT "    s->p->mach_info = (void*)gen_ppc64le_mach_info(s,1);\n";
+print COUT "    s->p->machine_strr_tmp_reg = _gpr0;\n";
 print COUT "    return;\n";
 print COUT "}\n";
 

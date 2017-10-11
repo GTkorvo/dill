@@ -47,6 +47,7 @@ extern void ppc64le_FORM2_arith(dill_stream c, int op3, int op, int dest, int sr
 #define X_FORM(op, RS, RA, RB, XO) ((op<<26)|(RS<<21)|(RA<<16)|(RB<<11)|(XO<<1))
 #define XS_FORM(OP, RS, RA, SHA, XS, SHB) ((OP<<26)|(RS<<21)|(RA<<16)|((SHA)<<11)|((XS)<<2)|((SHB)<<1))
 #define XX2_FORM(OP, T, RB, XOP) ((OP<<26)|(T<<21)|(RB<<11)|(XOP<<2))
+#define XFX_FORM(OP, RT, SPR, XOP) ((OP<<26)|(RT<<21)|(SPR<<11)|(XOP<<1))
 #define XX3_FORM(OP, T, RA, RB, XOP) ((OP<<26)|(T<<21)|(RA<<16)|(RB<<11)|(XOP<<3))
 #define D_FORM(OP, RT, RA, SI) ((OP<<26)|(RT<<21)|(RA<<16)|(SI & 0xffff))
 #define M_FORM(op, RS, RA, SH, MB, ME) ((op<<26)|(RS<<21)|(RA<<16)|(SH<<11)|(MB<<6)|(ME<<1))
@@ -75,8 +76,8 @@ enum {
     _fpr24,  _fpr25,  _fpr26,  _fpr27,  _fpr28,  _fpr29,  _fpr30,  _fpr31,
 
 
-    _sp = _gpr3,/* stack pointer */
-    _fp = _gpr3,/* frame pointer?? */
+    _sp = _gpr1,/* stack pointer */
+    _lr = _gpr2,/* link register */
 
 };
 
@@ -150,9 +151,9 @@ ppc64le_lea(dill_stream c, int junk, int junk1, int dest, int src, long imm);
 extern void ppc64le_bswap(dill_stream c, int junk, int typ, int dest, int src);
 extern void ppc64le_jump_to_label(dill_stream c, unsigned long label);
 extern void ppc64le_jump_to_reg(dill_stream c, unsigned long reg);
-extern void ppc64le_jump_to_imm(dill_stream c, unsigned long imm);
+extern void ppc64le_jump_to_imm(dill_stream c, void* imm);
 extern void ppc64le_jal(dill_stream c, int return_addr_reg, int target);
-extern int ppc64le_calli(dill_stream c, int type, void *xfer_address, char*name);
+extern int ppc64le_calli(dill_stream c, int type, void *xfer_address, const char*name);
 extern int ppc64le_callr(dill_stream c, int type, int src);
 extern void ppc64le_push(dill_stream c, int type, int reg);
 extern void ppc64le_pushi(dill_stream c, int type, long value);
