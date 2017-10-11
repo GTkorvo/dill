@@ -536,8 +536,8 @@ extern void
 ppc64le_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     if  (((long)offset) >= 32767 || ((long)offset) < -32768) {
-	ppc64le_set(s, _gpr1, offset);
-	ppc64le_pload(s, type, junk, dest, src, _gpr1);
+	ppc64le_set(s, _gpr0, offset);
+	ppc64le_pload(s, type, junk, dest, src, _gpr0);
 	return;
     }
 
@@ -653,8 +653,8 @@ extern void
 ppc64le_pstorei(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     if  (((long)offset) >= 32767 || ((long)offset) < -32768) {
-	ppc64le_set(s, _gpr1, offset);
-	ppc64le_pstore(s, type, junk, dest, src, _gpr1);
+	ppc64le_set(s, _gpr0, offset);
+	ppc64le_pstore(s, type, junk, dest, src, _gpr0);
 	return;
     }
 
@@ -830,9 +830,9 @@ int src;
     } else {
 	/* must be not */
 	/* cmpwi, mfcr, rlwinm 3, 31, 31 */
-	INSN_OUT(s, D_FORM(11, 3<<2, src, 0));
+	INSN_OUT(s, D_FORM(11, 0<<2, src, 0));
 	/* mfcr */
-	INSN_OUT(s, (31<<26)| (dest<<21)|(19<1)); 
+	INSN_OUT(s, (31<<26)| (dest<<21)|(19<<1)); 
 	INSN_OUT(s, M_FORM(21, dest, dest, 3, 31, 31));
     }
 }
