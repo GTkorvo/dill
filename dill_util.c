@@ -711,7 +711,7 @@ translate_arg_str(const char *string, int *count)
 	}
 	string++;
 	list[cnt].is_register = 0;
-	list[cnt].is_immediate = (isupper((int)*string) != 0);
+	list[cnt].is_immediate = (isupper((int)(*string)) != 0);
 	list[cnt].in_reg = 0;
 	list[cnt].out_reg = 0;
 	list[cnt].offset = 0;
@@ -1563,7 +1563,11 @@ dill_dump(dill_stream s)
 	int l;
 	int insn_count = 0;
 	if ((s->j != s->p->virtual.mach_jump) && (s->p->fp != NULL) )
-	    base = s->p->fp;
+	    if (s->p->disassembly_code_start != NULL) {
+		base = s->p->disassembly_code_start;
+	    } else {
+		base = s->p->fp;
+	    }
 	for (p =base; (char*) p < s->p->cur_ip;) {
 	    int i;
 	    struct branch_table *t = &s->p->branch_table;
@@ -1572,6 +1576,9 @@ dill_dump(dill_stream s)
 		    ((char*)p - (char*)base)) {
 		    printf("L%d:\n", i);
 		}
+	    }
+	    if (p == s->p->fp) {
+		printf("Function entry point:\n");
 	    }
 	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
 	    l = s->j->print_insn(s, &info, (void *)p);

@@ -104,7 +104,7 @@ struct dill_private_ctx {
     char *cur_ip;
     char *code_limit;
     void *fp;
-    void *fpc;
+    void *disassembly_code_start;
     int ret_type;
     struct branch_table branch_table;
     struct call_table call_table;
