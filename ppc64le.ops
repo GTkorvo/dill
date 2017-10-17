@@ -64,29 +64,6 @@ sub upperc {
 &comparei_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "ppc64le_comparei");
 
 print COUT <<EOF;
-extern void ppc64le_FORM3_farith(s, op3, fop, dest, src1, src2)
-dill_stream s;
-int op3;
-int fop;
-int dest;
-int src1;
-int src2;
-{
-    /* format 3 */
-    INSN_OUT(s, HDR(0x2)|OP3(op3)|RD(dest)|RS1(src1)|OPF(fop)|RS2(src2));
-}
-
-extern void ppc64le_FORM2_farith(s, op3, fop, dest, src)
-dill_stream s;
-int op3;
-int fop;
-int dest;
-int src;
-{
-    /* format 3 */
-    INSN_OUT(s, HDR(0x2)|OP3(op3)|RD(dest)|OPF(fop)|RS2(src));
-}
-
 static struct jmp_table_s ${mach}_jump_table_struct;
 static arith_op3 ${mach}_arith_op3_table[dill_jmp_a3_size + 1];
 static jmp_data  ${mach}_arith_op3_data[dill_jmp_a3_size + 1];

@@ -34,14 +34,12 @@ extern void ppc64le_shift_arith(dill_stream c, int op3, int op, int dest, int sr
 extern void ppc64le_shiftimm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
 extern void ppc64le_logimm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
 extern void ppc64le_farith(dill_stream c, int op3, int op, int dest, int src1, int src2);
-extern void ppc64le_FORM3_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
-extern void ppc64le_FORM3imm_arith(dill_stream c, int op3, int op, int dest, int src1, long imm);
-extern void ppc64le_FORM3_farith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void ppc64le_XFORM2_farith(dill_stream c, int op3, int op, int dest, int src);
 extern void ppc64le_FORM2_arith(dill_stream c, int op3, int op, int dest, int src);
 
 
 #define B_FORM(op, BO, BI, BD, AA, LK) ((op<<26)|(BO<<21)|(BI<<16)|(BD<<2)|(AA<<1)|LK)
+#define I_FORM(op, LI, AA, LK) ((op<<26)|(LI<<2)|(AA<<1)|LK)
 #define XL_FORM(op, BO, BI, BH, XO, LK) ((op<<26)|(BO<<21)|(BI<<16)|(BH<<11)|(XO<<1)|LK)
 #define XO_FORM(op, RT, RA, RB, XO) ((op<<26)|(RT<<21)|(RA<<16)|(RB<<11)|(XO<<1))
 #define X_FORM(op, RS, RA, RB, XO) ((op<<26)|(RS<<21)|(RA<<16)|(RB<<11)|(XO<<1))
@@ -91,6 +89,8 @@ typedef struct ppc64le_mach_info {
     int conversion_word;
     int cur_arg_offset;
     int save_insn_offset;
+    int start_label;
+    int epilogue_label;
 } *ppc64le_mach_info;
 
 extern int ppc64le_type_align[];

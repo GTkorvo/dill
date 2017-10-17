@@ -11,17 +11,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ppc64le_savei(s, imm) ppc64le_FORM3imm_arith(s, 0x3c, 0x2, _sp, _sp, imm)
-#define ppc64le_ori(s, dest, src, imm) 	INSN_OUT(s, D_FORM(24, r, r, lo16(imm)));
-#define ppc64le_andi(s, dest, src, imm) ppc64le_FORM3imm_arith(s, 0x1, 0, dest, src, imm)
+#define lo16(im) (((long)im) & 0xffff)
+#define hi16(im) ((((long)im) & 0xffffffff) >> 16)
+
+#define ppc64le_savei(s, imm) 
+#define ppc64le_ori(s, dest, src, imm) 	INSN_OUT(s, D_FORM(24, dest, src, lo16(imm)));
+#define ppc64le_andi(s, dest, src, imm) INSN_OUT(s, D_FORM(28, dest, src, lo16(imm)));
 #define ppc64le_or(s, dest, src1, src2) INSN_OUT(s, X_FORM(31,src1, dest, src2, 444))
 #define ppc64le_movl(s, dest, src) ppc64le_or(s, dest, src, src);
 #define ppc64le_int_mov(s, dest, src) ppc64le_or(s, dest, src, src)
 #define ppc64le_movf(s, dest, src) INSN_OUT(s, X_FORM(63, dest, 0, src, 72))
 #define ppc64le_movd(s, dest, src) INSN_OUT(s, X_FORM(63, dest, 0, src, 72))
-#define BALWAYS 0x14
-#define BRETURN 0x0
-#define ppc64le_simple_ret(c) 
+
 #define ppc64le_lshi(s, dest, src,imm) INSN_OUT(s, MD_FORM(30,dest,src,imm & 0x1f,63-imm, 0, imm>>5));
 #define ppc64le_xlshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
 #define ppc64le_rshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
@@ -30,7 +31,7 @@
 #define ppc64le_xrshai(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
 #define ppc64le_rsh(s, dest, src1, src2) 	INSN_OUT(s, HDR(0x2)|OP(0x27)|RD(dest)|RS1(src1)|RS2(src2));
 
-#define ppc64le_nop(c) INSN_OUT(s, OP(0x4));
+#define ppc64le_nop(c) INSN_OUT(s, 0x60000000);
 
 #define IREG 0
 #define FREG 1
@@ -92,6 +93,9 @@ int ppc64le_type_size[] = {
         8, /* B */
 	sizeof(long), /* EC */
 };
+
+static void ppc64le_simple_ret(dill_stream s);
+static void ppc64le_spill_fill_vars(dill_stream s, int action);
 
 static void
 dump_bits(int val) 
@@ -215,49 +219,6 @@ ppc64le_movi2d(dill_stream s, int dest, int src)
     INSN_OUT(s, D_FORM(14, _gpr1, _gpr1, 16));
 }
     
-/*
- *    ppc64le stack frame organization
- *         HIGH MEMORY 
- *
- *   %fp (old sp) -> -------------------------
- *      %fp -offset      automatic arrays, aggregates 
- *			 and scalar automatic (local vars)
- *                   -------------------------
- *			 alloca space (if any)
- *                   -------------------------
- *      %sp + offset   compiler temps + saved float regs
- *                   -------------------------
- *      %sp + offset   outgoing parameters past the 6th (if any)
- *                   -------------------------
- *      %sp + offset   6 words into which callee may store reg args
- *                   -------------------------
- *      %sp + offset   one word hidden parameter
- *                   -------------------------
- *	%sp + offset   16 words in which to save register window
- *  %sp ->           -------------------------
- *          		| 
- *			V    stack growth
- *         LOW MEMORY   
- */
-
-
-extern void ppc64le_FORM3_arith(s, ppc64le_op3, use_ext_form, dest, src1, src2)
-dill_stream s;
-int ppc64le_op3;
-int use_ext_form;
-int dest;
-int src1;
-int src2;
-{
-  /*    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;*/
-    /* format 3 */
-    /*    if ((smi->stack_align == 8) && use_ext_form) {
-	INSN_OUT(s, HDR(0x2)|OP(ppc64le_op3)|1<<12|RD(dest)|RS1(src1)|RS2(src2));
-    } else {	
-	INSN_OUT(s, HDR(0x2)|OP(ppc64le_op3)|RD(dest)|RS1(src1)|RS2(src2));
-	}*/
-}
-
 extern void ppc64le_farith(s, op, xop, dest, src1, src2)
 dill_stream s;
 int op;
@@ -315,32 +276,6 @@ int src1;
 int src2;
 {
     INSN_OUT(s, XO_FORM(ppc64le_po, src1, dest, src2, ppc64le_xo));
-}
-
-extern void ppc64le_FORM3imm_arith(s, op3, use_ext_form, dest, src1, imm)
-dill_stream s;
-int op3;
-int use_ext_form;
-int dest;
-int src1;
-long imm;
-{
-    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-    int ppc64lev9 = 0;
-    if ((smi->stack_align == 8) && use_ext_form) {
-	ppc64lev9 = 0x1;
-    }
-    if (((op3 >= 0x25) && (op3 <= 0x27)) && !use_ext_form) {
-	imm &= 0x1f;  /* 32-bit reg shift.  limit imm to 31 or less */
-    }
-    if (((long)imm) < 4096 && ((long)imm) >= -4096) {
-	/* format 3 */
-	INSN_OUT(s, HDR(0x2)|OP(op3)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|ppc64lev9<<12);
-    } else {
-      /*	ppc64le_set(s, _g1, imm);*/
-	/* format 3 */
-      /*	INSN_OUT(s, HDR(0x2)|OP(op3)|RD(dest)|RS1(src1)|RS2(_g1)|ppc64lev9<<12);*/
-    }
 }
 
 extern void ppc64le_imm_arith(s, op, full_op, dest, src1, imm)
@@ -415,44 +350,152 @@ long imm;
     }
 }
 
-#define STACK_SIZE 128
-static void
-ppc64le_restore(dill_stream s)
+enum { SPILL = 1, FILL = 2 };
+
+static int 
+int_reg_store_offset(dill_stream s, int reg)
 {
+    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
+
+    int offset = 48 + 64 + smi->act_rec_size;
+    int reg_offset = (reg - _gpr14) * 8;
+    return offset + reg_offset;
+}
+
+static int 
+float_reg_store_offset(dill_stream s, int reg)
+{
+    int offset = int_reg_store_offset(s, _gpr31) + 8;
+    int reg_offset = (reg - _fpr14) * 8;
+    return offset + reg_offset;
+}
+
+static int
+stack_space_calc(dill_stream s)
+{
+// Reserve Space
+// 48 (save areas) + 64 (parameter area) + (local variables) + (non-volatile save)
+// align to 16-byte boundary
+    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
+
+    int stack_space = 48 + 64 + smi->act_rec_size;
+    /* integer save */
+    stack_space += 18 /* non-volatile regs */ * 8;
+    /* float save */
+    stack_space += 18 /* non-volatile regs */ * 8;
+    
+    /* round up to multiple of 16 */
+    stack_space = ((stack_space + 15) / 16) * 16;
+    return stack_space;
+}
+
+static void
+ppc64le_emit_proc_epilogue(dill_stream s)
+{
+    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
+    int stack_size = stack_space_calc(s);
+
+    /* 
+     *  all return operations will branch here.  
+     * _gpr3 or _fpr1 may hold return data, we won't stomp on it. 
+     */
+    dill_mark_label(s, smi->epilogue_label);
+
+    /* 
+     * restore non-volatile variables that we might have used in 
+     * the course of the subroutine.
+     */
+    ppc64le_spill_fill_vars(s, FILL);
+
+    /*
+     * destroy the activation record
+     */
+
     /* ld r0, 64(r1) */
     ppc64le_ploadi(s, DILL_L, 0, _gpr0, _sp, 64);
     /* mtlr r0 */
     INSN_OUT(s, XFX_FORM(31, _gpr0, /* LR */ 0x100, 467));
     /* addi r1, r1, STACK_SIZE */
-    INSN_OUT(s, D_FORM(14, _gpr1, _gpr1, STACK_SIZE));
+    INSN_OUT(s, D_FORM(14, _gpr1, _gpr1, stack_size));
     /* blr*/
     INSN_OUT(s, XL_FORM(19,0x14,0,0,16,0));
 }
 
+static void
+ppc64le_emit_proc_prologue(dill_stream s)
+{
+    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
+
+    /* 
+     * this is the real entry point, but we emit this after the rest of the
+     * code so that we can save only the non-volatile regs that we've
+     * had to use.  At the end of this prologue we branch to the beginning
+     * of the actual subroutine code (emitted earlier).
+     */
+    int stack_size = stack_space_calc(s);
+
+    /*
+     * create the activation record
+     */
+    smi->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
+    /* mflr r0 */
+    INSN_OUT(s, XFX_FORM(31, _gpr0, /* LR */ 0x100, 339));
+    /* stdu  _gpr1, -SAVE_AREA(r1) */
+    INSN_OUT(s, D_FORM(62, _gpr1, _gpr1, (-stack_size & 0xfffc) | 0x1));
+    /* std  _lr, 64(r1) */
+    INSN_OUT(s, D_FORM(62, _gpr0, _sp, (64 & 0xfffc)));
+
+    /*
+     *  Spill the non-volatiles that we'll destroy.
+     */
+    ppc64le_spill_fill_vars(s, SPILL);
+
+    /*
+     * go do the actual code
+     */
+    ppc64le_jump_to_label(s, smi->start_label);
+    s->p->fp = (char*)s->p->code_base + smi->save_insn_offset;
+    s->p->disassembly_code_start = s->p->code_base;
+}
+
+/*
+  The PPC activation record looks like this:
+
+High Address
+
+          +-> Back chain
+          |   Floating point register save area
+          |   General register save area
+          |   VRSAVE save word (32-bits)
+          |   Alignment padding (4 or 12 bytes)
+          |   Vector register save area (quadword aligned)
+          |   Local variable space
+          |   Parameter save area    (SP + 48)
+          |   TOC save area          (SP + 40)
+          |   link editor doubleword (SP + 32)
+          |   compiler doubleword    (SP + 24)
+          |   LR save area           (SP + 16)
+          |   CR save area           (SP + 8)
+SP  --->  +-- Back chain             (SP + 0)
+
+Low Address
+
+*/
 extern void
 ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list args,
 	     dill_reg *arglist)
 {
     int i;
 
-    int max_in_reg = _gpr3;
+    int max_in_reg = _gpr2;
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-    int cur_arg_offset = 0;
+    int cur_arg_offset = 32;
     int last_incoming_fp_arg = _fpr0;
     int last_incoming_int_arg = _gpr2;
-    /* emit start insns */
-//    INSN_OUT(s, 0x10000);
-//    INSN_OUT(s, 0x10000);
-//    INSN_OUT(s, 0x10000);
-//    INSN_OUT(s, 0x10000);
 
-    smi->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
-    /* mflr r0 */
-    INSN_OUT(s, XFX_FORM(31, _gpr0, /* LR */ 0x100, 339));
-    /* stdu  _gpr1, -SAVE_AREA(r1) */
-    INSN_OUT(s, D_FORM(62, _gpr1, _gpr1, (-STACK_SIZE & 0xfffc) | 0x1));
-    /* std  _lr, 64(r1) */
-    INSN_OUT(s, D_FORM(62, _gpr0, _sp, (64 & 0xfffc)));
+    smi->start_label = dill_alloc_label(s, "Procedure code start");
+    smi->epilogue_label = dill_alloc_label(s, "Procedure code exit");
+    dill_mark_label(s, smi->start_label);
 
 //    smi->conversion_word = ppc64le_local(s, DILL_D);
 //    smi->conversion_word = ppc64le_local(s, DILL_D);
@@ -465,7 +508,6 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 	    if (last_incoming_fp_arg < _fpr13) {
 		args[i].is_register = 1;
 		reg = ++last_incoming_fp_arg;
-		dill_dealloc_specific(s, reg, args[i].type, DILL_TEMP);
 		args[i].in_reg = args[i].out_reg = reg;
 	    } else {
 		args[i].is_register = 0;
@@ -487,13 +529,6 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 	cur_arg_offset += roundup(type_info[(int)args[i].type].size, smi->stack_align);
     }
     
-    for (i=_gpr3 ; i < _gpr10; i++) {
-	if (i <= max_in_reg) {
-	    dill_dealloc_specific(s, i, DILL_I, DILL_VAR);
-	} else {
-	    dill_alloc_specific(s, i, DILL_I, DILL_VAR);
-	}
-    }
     for (i = 0; i < arg_count; i++) {
 	int tmp_reg;
 	if (!dill_raw_getreg(s, &tmp_reg, args[i].type, DILL_VAR)) {
@@ -508,7 +543,10 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 		ppc64le_movf(s, tmp_reg, args[i].in_reg);
 	    }
 	} else {
-	    ppc64le_ploadi(s, args[i].type, 0, tmp_reg, _sp, args[i].offset);
+	    /* load the old SP into our int temporary */
+	    ppc64le_ploadi(s, DILL_P, 0, tmp_reg, _sp, 0);
+	    /* use our int temporary to load the value */
+	    ppc64le_ploadi(s, args[i].type, 0, tmp_reg, tmp_reg, args[i].offset);
 	}
 	args[i].in_reg = tmp_reg;
 	args[i].is_register = 1;
@@ -1197,20 +1235,18 @@ static void internal_push(dill_stream s, int type, int immediate,
 	arg.type = type;
     }
 	
-    if (smi->cur_arg_offset < 6 * smi->stack_align) {
+    if (smi->cur_arg_offset < 8 * smi->stack_align) {
 	arg.is_register = 1;
-	if ((smi->stack_align == 8) && ((type == DILL_F) || (type == DILL_D))) {
-	    arg.out_reg = _fpr0  + smi->cur_arg_offset/4;
-	    if (type == DILL_F) arg.out_reg++;
-	    arg.in_reg = _gpr3   + smi->cur_arg_offset/8;
+	if ((type == DILL_F) || (type == DILL_D)) {
+	    arg.out_reg = _fpr1  + smi->cur_arg_offset/8;
+	    arg.in_reg = _fpr1   + smi->cur_arg_offset/8;
 	} else {
-	    /* ppc64lev8 */
 	    arg.in_reg = _gpr3 + smi->cur_arg_offset/smi->stack_align;
 	    arg.out_reg = _gpr3 + smi->cur_arg_offset/smi->stack_align;
 	}
     } else {
 	if ((smi->stack_align == 8) && ((type == DILL_F) || (type == DILL_D)) &&
-	    (smi->cur_arg_offset <= 10 * smi->stack_align)) {
+	    (smi->cur_arg_offset <= 8 * smi->stack_align)) {
 	    /* floating arg can go in a float reg, but not int reg */
 	    arg.is_register = 1;
 	    arg.out_reg = _fpr0  + smi->cur_arg_offset/4;
@@ -1223,113 +1259,55 @@ static void internal_push(dill_stream s, int type, int immediate,
     arg.offset = smi->cur_arg_offset;
     smi->cur_arg_offset += 
 	roundup(type_info[(int)arg.type].size, smi->stack_align);
-    real_offset = arg.offset + 8 + 15*smi->stack_align + 
-	smi->stack_constant_offset;
-    if (smi->stack_align == 4) {
-	/* ppc64lev8 */
-	if (arg.is_register == 0) {
-	    /* store it on the stack only */
-	    if (arg.is_immediate) {
-		if (type != DILL_D) {
-		    if (type == DILL_F) {
-			float f = (float) *(double*)value_ptr;
-			ppc64le_set(s, _gpr2, *(int*)&f);
-		    } else {
-			ppc64le_set(s, _gpr2, *(long*)value_ptr);
-		    }
-		    ppc64le_pstorei(s, arg.type, 0, _gpr2, _sp, real_offset);
-		} else {
-		    ppc64le_set(s, _gpr2, *(int*)value_ptr);
-		    ppc64le_pstorei(s, DILL_I, 0, _gpr2, _sp, real_offset);
-		    ppc64le_set(s, _gpr2, *(((int*)value_ptr)+1));
-		    ppc64le_pstorei(s, DILL_I, 0, _gpr2, _sp, real_offset+4);
-		}		
+    real_offset = arg.offset + 32;
+    if (arg.is_register == 0) {
+	/* store it on the stack only */
+	if (arg.is_immediate) {
+	    if (type == DILL_F) {
+		float f = (float) *(double*)value_ptr;
+		ppc64le_set(s, _gpr2, *(int*)&f);
 	    } else {
-		if (type != DILL_D) {
-		    ppc64le_pstorei(s, arg.type, 0, *(int*)value_ptr, _sp, real_offset);
-		} else {
-		    ppc64le_pstorei(s, DILL_F, 0, *(int*)value_ptr, _sp, real_offset);
-		    ppc64le_pstorei(s, DILL_F, 0, (*(int*)value_ptr)+1, _sp, 
-				  real_offset + 4);
-		}
+		ppc64le_set(s, _gpr2, *(long*)value_ptr);
 	    }
+	    ppc64le_pstorei(s, arg.type, 0, _gpr2, _sp, real_offset);
 	} else {
-	    if ((type != DILL_F) && (type != DILL_D)) {
-		if (arg.is_immediate) {
-		    ppc64le_set(s, arg.out_reg, *(long*)value_ptr);
-		} else {
-		    ppc64le_mov(s, type, 0, arg.out_reg, *(int*) value_ptr);
-		}
-	    } else {
-		if (arg.is_immediate) {
-		    if (type == DILL_F) {
-			float f = (float) *(double*)value_ptr;
-			ppc64le_set(s, arg.out_reg, *(int*)&f);
-		    } else {
-			ppc64le_set(s, arg.out_reg, *(int*)value_ptr);
-			ppc64le_set(s, arg.out_reg+1, *(((int*)value_ptr)+1));
-		    }
-		} else {
-		    if (type == DILL_F) {
-			ppc64le_movf2i(s, arg.out_reg, *(int*)value_ptr);
-		    } else {
-		      ppc64le_movd2i(s, arg.out_reg, *(int*)value_ptr);
-		    }
-		}
-
-	    }
+	    ppc64le_pstorei(s, arg.type, 0, *(int*)value_ptr, _sp, 
+			    real_offset);
 	}
     } else {
-	/* ppc64lev9 */
-	if (arg.is_register == 0) {
-	    /* store it on the stack only */
+	if ((type != DILL_F) && (type != DILL_D)) {
 	    if (arg.is_immediate) {
-		if (type == DILL_F) {
-		    float f = (float) *(double*)value_ptr;
-		    ppc64le_set(s, _gpr2, *(int*)&f);
-		} else {
-		    ppc64le_set(s, _gpr2, *(long*)value_ptr);
-		}
-		ppc64le_pstorei(s, arg.type, 0, _gpr2, _sp, real_offset);
+		ppc64le_set(s, arg.out_reg, *(long*)value_ptr);
 	    } else {
-		ppc64le_pstorei(s, arg.type, 0, *(int*)value_ptr, _sp, 
-			      real_offset);
+		ppc64le_mov(s, type, 0, arg.out_reg, *(int*) value_ptr);
 	    }
 	} else {
-	    if ((type != DILL_F) && (type != DILL_D)) {
-		if (arg.is_immediate) {
-		    ppc64le_set(s, arg.out_reg, *(long*)value_ptr);
+	    if (arg.is_immediate) {
+		if ((type == DILL_F) || (type == DILL_D)) {
+		    /* set appropriate register */
+		    ppc64le_setf(s, type, 0, arg.out_reg, 
+				 *(double*)value_ptr);
 		} else {
-		    ppc64le_mov(s, type, 0, arg.out_reg, *(int*) value_ptr);
+		    ppc64le_set(s, arg.out_reg, *(int*)value_ptr);
 		}
 	    } else {
-		if (arg.is_immediate) {
-		    if ((type == DILL_F) || (type == DILL_D)) {
-			/* set appropriate register */
-			ppc64le_setf(s, type, 0, arg.out_reg, 
-				   *(double*)value_ptr);
-		    } else {
-			ppc64le_set(s, arg.out_reg, *(int*)value_ptr);
-		    }
+		/* move to the appropriate float reg */
+		ppc64le_mov(s, type, 0, arg.out_reg, *(int*)value_ptr);
+	    }
+	    if (arg.in_reg != -1) {
+		/* put value in int regs too */
+		if (type == DILL_D) {
+		    ppc64le_movd2i(s, arg.in_reg, arg.out_reg);
 		} else {
-		    /* move to the appropriate float reg */
-		    ppc64le_mov(s, type, 0, arg.out_reg, *(int*)value_ptr);
+		    ppc64le_movf2i(s, arg.in_reg, arg.out_reg);
 		}
-		if (arg.in_reg != -1) {
-		    /* put value in int regs too */
-		    if (type == DILL_D) {
-			ppc64le_movd2i(s, arg.in_reg, arg.out_reg);
-		    } else {
-			ppc64le_movf2i(s, arg.in_reg, arg.out_reg);
-		    }
-		} else {
-		    /* put it on the stack as well */
-		    ppc64le_pstorei(s, arg.type, 0, arg.out_reg, _sp,
-				  real_offset);
-		}
+	    } else {
+		/* put it on the stack as well */
+		ppc64le_pstorei(s, arg.type, 0, arg.out_reg, _sp,
+				real_offset);
 	    }
 	}
-    }		
+    }
 }
 
 static void push_init(dill_stream s)
@@ -1368,7 +1346,7 @@ extern int ppc64le_calli(dill_stream s, int type, void *xfer_address, const char
 
     /* save temporary registers */
     dill_mark_call_location(s, name, xfer_address);
-    INSN_OUT(s, HDR(0x1)|0);
+    INSN_OUT(s, I_FORM(18, 0, 0, 1));
     ppc64le_nop(s);
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
@@ -1435,7 +1413,6 @@ extern void ppc64le_ret(dill_stream s, int data1, int data2, int src)
 	break;
     }
     ppc64le_simple_ret(s);
-    ppc64le_restore(s);
 }
 
 extern void ppc64le_reti(dill_stream s, int data1, int data2, long imm)
@@ -1457,7 +1434,6 @@ extern void ppc64le_reti(dill_stream s, int data1, int data2, long imm)
 	break;/* no return immediate of floats */
     }
     ppc64le_simple_ret(s);
-    ppc64le_restore(s);
 }
 
 static void
@@ -1483,10 +1459,15 @@ ppc64le_branch_link(dill_stream s)
 	int label_offset = t->label_locs[label] - t->branch_locs[i].loc;
 	int *branch_addr = (int*)((char *)s->p->code_base + 
 				  t->branch_locs[i].loc);
-        /* div addr diff by 4 for ppc64le offset value */
-//	label_offset = label_offset >> 2;  
-	*branch_addr &= 0xffff0000;
-	*branch_addr |= (label_offset & 0xfffc);
+	if ((*branch_addr & 0xfa000000) == (18<<26)) {
+	    /* unconditional branch   I-form, adjust LI field */
+	    *branch_addr &= 0xfa000000;
+	    *branch_addr |= (label_offset & 0x3fffffc);
+	} else {
+	    /* conditional branch   B-form, adjust BD field */
+	    *branch_addr &= 0xffff0000;
+	    *branch_addr |= (label_offset & 0xfffc);
+	}
     }
 }
 
@@ -1590,32 +1571,60 @@ ppc64le_flush(void *base, void *limit)
 #endif
 }    
 
-static void
-ppc64le_emit_save(dill_stream s)
-{
-    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-    void *save_ip = s->p->cur_ip;
-    int ar_size = smi->fp_save_end + smi->act_rec_size;
-    ar_size = roundup(ar_size, 16) + 16;
-
-    s->p->cur_ip = (char*)s->p->code_base + smi->save_insn_offset;
-    //    ppc64le_savei(s, -ar_size);
-    s->p->fp = (char*)s->p->code_base + smi->save_insn_offset;
-    s->p->cur_ip = save_ip;
-}
-    
 extern void
 ppc64le_end(s)
 dill_stream s;
 {
     ppc64le_simple_ret(s);
-    ppc64le_restore(s);
+    ppc64le_emit_proc_epilogue(s);
+    ppc64le_emit_proc_prologue(s);
     ppc64le_PLT_emit(s, 0);   /* must be done before linking */
     ppc64le_branch_link(s);
     ppc64le_call_link(s);
     ppc64le_data_link(s);
-    ppc64le_emit_save(s);
     ppc64le_flush(s->p->code_base, s->p->code_limit);
+}
+
+static void
+ppc64le_simple_ret(dill_stream s) 
+{
+    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
+    ppc64le_jump_to_label(s, smi->epilogue_label);
+}
+
+/*
+ * save (spill) registers to memory or load (fill) registers from memory
+ */
+static void
+ppc64le_spill_fill_vars(dill_stream s, int action)
+{
+    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
+    int reg;
+    int ireg_start = _gpr14;
+    int ireg_end = _gpr31;
+    int freg_start = _fpr14;
+    int freg_end = _fpr31;
+
+    for(reg = ireg_start; reg <= ireg_end; reg++) {
+	if (dill_wasused(&s->p->var_i, reg)) {
+	    int offset = int_reg_store_offset(s, reg);
+	    if (action == SPILL) {
+		ppc64le_pstorei(s, DILL_L, 0, reg, _sp, offset);
+	    } else {
+		ppc64le_ploadi(s, DILL_L, 0, reg, _sp, offset);
+	    }
+	}
+    }
+    for(reg = freg_start; reg <= freg_end; reg++) {
+	if (dill_wasused(&s->p->var_f, reg)) {
+	    int offset = float_reg_store_offset(s, reg);
+	    if (action == SPILL) {
+		ppc64le_pstorei(s, DILL_D, 0, reg, _sp, offset);
+	    } else {
+		ppc64le_ploadi(s, DILL_D, 0, reg, _sp, offset);
+	    }
+	}
+    }
 }
 
 extern void
@@ -1624,13 +1633,11 @@ dill_stream s;
 {
     int force_plt = 0;
     ppc64le_simple_ret(s);
-    ppc64le_restore(s);
 #if defined(HOST_PPC64LEV9)
     force_plt = 1;
 #endif
     ppc64le_PLT_emit(s, force_plt);   /* must be done before linking */
     ppc64le_branch_link(s);
-    ppc64le_emit_save(s);
 }
 
 extern void *
@@ -1717,9 +1724,6 @@ ppc64le_setf(dill_stream s, int type, int junk, int dest, double imm)
 	ppc64le_movi2d(s, dest, _gpr2);
     }
 }	
-
-#define lo16(im) (((long)im) & 0xffff)
-#define hi16(im) ((((long)im) & 0xffffffff) >> 16)
 
 extern void
 ppc64le_set(s, r, val)
@@ -1810,7 +1814,30 @@ int src;
 extern void
 ppc64le_reg_init(dill_stream s)
 {
-    s->p->var_i.init_avail[0] = (bit_R(_gpr13)|bit_R(_gpr14)|bit_R(_gpr15)|
+    /* 
+     *  These PPC integer registers (R14-r31) are non-volatile must be
+     *  preserved across calls.  So if we use them we must save/restore them
+     *  in prologue/epilog, but we don't have to worry about them across
+     *  calls that we make.
+     *
+     *	r0        Volatile register used in function prologs
+     *  r1        Stack frame pointer
+     *  r2        TOC pointer
+     *  r3        Volatile parameter and return value register
+     *  r4-r10    Volatile registers used for function parameters
+     *  r11       Volatile register used in calls by pointer and as an
+     *            environment pointer for languages which require one
+     *  r12       Volatile register used for exception handling and glink code
+     *	r13       Reserved for use as system thread ID
+     *	r14-r31   Nonvolatile registers used for local variables
+     *
+     * Nothing is a true temporary because of the mandatory use in parameter 
+     * passing.
+     * The TOC stuff isn't really applicable to DCG code, so we're simply
+     * not going to touch r2.  We will use r0 as a very-short-term temporary.
+     */
+
+    s->p->var_i.init_avail[0] = (bit_R(_gpr14)|bit_R(_gpr15)|
 				 bit_R(_gpr16)|bit_R(_gpr17)|bit_R(_gpr18)|
 				 bit_R(_gpr19)|bit_R(_gpr20)|bit_R(_gpr21)|
 				 bit_R(_gpr22)|bit_R(_gpr23)|bit_R(_gpr24)|
@@ -1818,23 +1845,29 @@ ppc64le_reg_init(dill_stream s)
 				 bit_R(_gpr28)|bit_R(_gpr29)|bit_R(_gpr30)|
 				 bit_R(_gpr31));
     s->p->var_i.members[0] = s->p->var_i.init_avail[0];
-    s->p->tmp_i.init_avail[0] = (bit_R(_gpr3)|bit_R(_gpr4)|bit_R(_gpr5)|
-				 bit_R(_gpr6)|bit_R(_gpr7)|bit_R(_gpr8)|
-				 bit_R(_gpr9)|bit_R(_gpr10)|bit_R(_gpr11)|
-				 bit_R(_gpr12));
+    s->p->tmp_i.init_avail[0] = 0;
     s->p->tmp_i.members[0] = s->p->tmp_i.init_avail[0];
-    s->p->var_f.init_avail[0] = 0;
-    s->p->var_f.members[0] = s->p->var_f.init_avail[0];
-    s->p->tmp_f.init_avail[0] = (bit_R(_fpr2)|bit_R(_fpr3)|bit_R(_fpr4)|
-				 bit_R(_fpr5)|bit_R(_fpr6)|bit_R(_fpr7)|
-				 bit_R(_fpr8)|bit_R(_fpr9)|bit_R(_fpr10)|
-				 bit_R(_fpr11)|bit_R(_fpr12)|bit_R(_fpr13)|
-				 bit_R(_fpr14)|bit_R(_fpr15)|bit_R(_fpr16)|
+
+    
+
+    /* 
+     *  These PPC float registers (F14-F31) are non-volatile must be
+     *  preserved across calls.  So if we use them we must save/restore them
+     *  in prologue/epilog, but we don't have to worry about them across
+     *  calls that we make.
+     *
+     *  Additionally, F0 is a volatile scratch reg and F1-F13 are
+     *  potentially required for parameter passing, so we won't list
+     *  anything as a "temporary register" because of that mandatory use.
+     */
+    s->p->var_f.init_avail[0] = (bit_R(_fpr14)|bit_R(_fpr15)|bit_R(_fpr16)|
 				 bit_R(_fpr17)|bit_R(_fpr18)|bit_R(_fpr19)|
 				 bit_R(_fpr20)|bit_R(_fpr21)|bit_R(_fpr22)|
 				 bit_R(_fpr23)|bit_R(_fpr24)|bit_R(_fpr25)|
 				 bit_R(_fpr26)|bit_R(_fpr27)|bit_R(_fpr28)|
 				 bit_R(_fpr29)|bit_R(_fpr30)|bit_R(_fpr31));
+    s->p->var_f.members[0] = s->p->var_f.init_avail[0];
+    s->p->tmp_f.init_avail[0] = 0;
     s->p->tmp_f.members[0] = s->p->tmp_f.init_avail[0];
 }
 

@@ -57,10 +57,7 @@ ppc64le_rt_call_link(char *code, call_t *t, int force_plt)
 	    int call_offset = (unsigned long)t->call_locs[i].xfer_addr -
 		(unsigned long)call_addr;
 	
-	    /* div addr diff by 4 for ppc64le offset value */
-	    call_offset = call_offset >> 2;
-	    *call_addr &= 0xc0000000;
-	    *call_addr |= (call_offset & 0x3fffffff);
+	    *call_addr |= (call_offset & 0x03fffffc);
 	} else {
 	    int *plt = (int*)(code + t->call_locs[i].loc);
 	    union {
