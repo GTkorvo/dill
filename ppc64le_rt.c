@@ -40,10 +40,15 @@ static xfer_entry ppc64le_xfer_recs[] = {
     {"dill_ppc64le_hidden_udiv", (void*)dill_ppc64le_hidden_udiv},
     {(char*)0, (void*)0}};
 
-#define ppc64le_sethi(r, imm) (HDR(0)|RD(r)|OP2(0x4)|imm)
-#define ppc64le_ori(dest, src, imm) (HDR(0x2)|OP3(0x2)|IM|RD(dest)|RS1(src)|imm)
-#define ppc64le_or(dest, src1, src2) (HDR(0x2)|OP3(0x2)|RD(dest)|RS1(src1)|RS2(src2))
-#define ppc64le_sllx(dest, src1,imm) (HDR(0x2)|OP3(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) )
+#define ppc64le_ori(s, dest, src, imm) 	INSN_OUT(s, D_FORM(24, dest, src, lo16(imm)));
+#define ppc64le_andi(s, dest, src, imm) INSN_OUT(s, D_FORM(28, dest, src, lo16(imm)));
+#define ppc64le_or(s, dest, src1, src2) INSN_OUT(s, X_FORM(31,src1, dest, src2, 444))
+#define ppc64le_lshi(s, dest, src,imm) INSN_OUT(s, MD_FORM(30,dest,src,imm & 0x1f,63-imm, 0, imm>>5));
+
+#define lo16(im) (((long)im) & 0xffff)
+#define hi16(im) ((((long)im) & 0xffffffff) >> 16)
+#define lo32(im) (((long)im) & 0xfffffffff)
+#define hi32(im) ((((long)im) >> 32) &  0xfffffffff)
 
 extern void
 ppc64le_rt_call_link(char *code, call_t *t, int force_plt)
@@ -53,11 +58,12 @@ ppc64le_rt_call_link(char *code, call_t *t, int force_plt)
     for(i=0; i< t->call_count; i++) {
 	int *call_addr = (int*) (code + t->call_locs[i].loc);
 	if (!force_plt && (t->call_locs[i].mach_info == (void*)0)) {
-	    /* no PLT */
-	    int call_offset = (unsigned long)t->call_locs[i].xfer_addr -
-		(unsigned long)call_addr;
-	
-	    *call_addr |= (call_offset & 0x03fffffc);
+	    long xfer_addr = (unsigned long)t->call_locs[i].xfer_addr;
+	    call_addr[0] = D_FORM(15, _gpr12, _gpr0, hi16(hi32(xfer_addr)));
+	    call_addr[1] = D_FORM(24, _gpr12, _gpr12, lo16(hi32(xfer_addr)));
+	    call_addr[2] = MD_FORM(30, _gpr12, _gpr12, (32&0x1f), ((((63-32)&0x1f) << 1) | ((63-32)>>5)), 1, (32>>5));
+	    call_addr[3] = D_FORM(25, _gpr12, _gpr12, hi16(lo32(xfer_addr)));
+	    call_addr[4] = D_FORM(24, _gpr12, _gpr12, lo16(lo32(xfer_addr)));
 	} else {
 	    int *plt = (int*)(code + t->call_locs[i].loc);
 	    union {

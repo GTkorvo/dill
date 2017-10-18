@@ -438,6 +438,14 @@ ppc64le_emit_proc_prologue(dill_stream s)
      * create the activation record
      */
     smi->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
+
+
+    /* addis r2, R12, 0 */
+    INSN_OUT(s, D_FORM(15, _gpr2, _gpr12, 0));
+    /* addi r2, R2, 0 */
+    INSN_OUT(s, D_FORM(14, _gpr2, _gpr2, 0));
+    
+
     /* mflr r0 */
     INSN_OUT(s, XFX_FORM(31, _gpr0, /* LR */ 0x100, 339));
     /* stdu  _gpr1, -SAVE_AREA(r1) */
@@ -1346,9 +1354,24 @@ extern int ppc64le_calli(dill_stream s, int type, void *xfer_address, const char
 
     /* save temporary registers */
     dill_mark_call_location(s, name, xfer_address);
-    INSN_OUT(s, I_FORM(18, 0, 0, 1));
+    /* the next 5 ops will load a location into R12 */
+    ppc64le_set(s, _gpr12, 0x1234567812345678);
+/*    ppc64le_nop(s);
     ppc64le_nop(s);
+    ppc64le_nop(s);
+    ppc64le_nop(s);
+    ppc64le_nop(s);*/
+    /* mtctr r12  (store jump addrss from r12 into control reg */
+    INSN_OUT(s, XFX_FORM(31, _gpr12, 0x120, 467));
+    /* std r2, 24(r1)    (save our r2 value) */
+    ppc64le_pstorei(s, DILL_L, 0, _gpr2, _gpr1, 24);
+    /* bctrl (branch and link to control reg) */
+    INSN_OUT(s, 0x4e800421);
+
     /* restore temporary registers */
+    /* ld r2, 24(r1)    (load our r2 value back) */
+    ppc64le_ploadi(s, DILL_L, 0, _gpr2, _gpr1, 24);
+
     if ((type == DILL_D) || (type == DILL_F)) {
 	caller_side_ret_reg = _fpr0;
     }
