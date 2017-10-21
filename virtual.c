@@ -1740,7 +1740,7 @@ typedef struct label_translation {
 static int
 get_new_label(int old_label, label_translation_table ltable)
 {
-    while (ltable->old_location != -1) {
+    while (ltable->old_label != -1) {
 	if (ltable->old_label == old_label) return ltable->new_label;
 	ltable++;
     }
@@ -4246,6 +4246,16 @@ virtual_proc_start(dill_stream c, char *subr_name, int arg_count,
 extern void dill_virtual_init(dill_stream c);
 
 static label_translation_table
+fill_label_translation(dill_stream c, label_translation_table lt)
+{
+    int i = 0;
+    while (lt[i].old_label != -1) {
+	lt[i].new_label = dill_alloc_label(c, NULL);
+	i++;
+    }
+}
+
+static label_translation_table
 build_label_translation(dill_stream c)
 {
     int i;
@@ -4255,7 +4265,6 @@ build_label_translation(dill_stream c)
     for(i = 0; i < label_count; i++) {
 	l[i].old_label = i;
 	l[i].old_location = c->p->branch_table.label_locs[i];
-	l[i].new_label = dill_alloc_label(c, NULL);
     }
     /* Good old reliable insertion sort */
     {
@@ -4274,6 +4283,8 @@ build_label_translation(dill_stream c)
       }
     }
     l[label_count].old_location = -1;
+    l[label_count].old_label = -1;
+    l[label_count].new_label = -1;
     return l;
 }
 
@@ -4400,9 +4411,10 @@ virtual_do_end(dill_stream s, int package)
 	s->p->code_limit = s->p->native.code_limit;
 
 	s->p->native_mach_reset(s);
+	ltable = build_label_translation(s);
 	(s->j->proc_start)(s, "no name", s->p->c_param_count, 
 			   vmi->arg_info, (void*)0);
-	ltable = build_label_translation(s);
+	fill_label_translation(s, ltable);
 	if (old_reg_alloc) {
 	    do_register_assign(s, insns, code_end, virtual_local_pointer, vmi);
 	    emit_insns(s, insns, ltable, vmi);
