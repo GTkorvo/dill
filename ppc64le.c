@@ -114,7 +114,7 @@ ppc64le_local(dill_stream s, int type)
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
 
     smi->act_rec_size += roundup(type_info[type].size, smi->stack_align);
-    return (-smi->act_rec_size) + smi->stack_constant_offset;
+    return (smi->act_rec_size) + smi->stack_constant_offset;
 }
 
 extern int
@@ -125,7 +125,7 @@ ppc64le_localb(dill_stream s, int size)
     smi->act_rec_size = roundup(smi->act_rec_size, size);
 
     smi->act_rec_size += roundup(size, smi->stack_align);
-    return (-smi->act_rec_size) - 8 + smi->stack_constant_offset;
+    return smi->act_rec_size + smi->stack_constant_offset;
 }
 
 extern int ppc64le_local_op(dill_stream s, int flag, int val)
@@ -148,29 +148,11 @@ extern void
 ppc64le_save_restore_op(dill_stream s, int save_restore, int type, int reg)
 {
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-    if (save_restore == 0) { /* save */
-	switch (type) {
-	case DILL_D: case DILL_F:
-	    ppc64le_pstorei(s, type, 0, reg, _sp, smi->fp_save_offset + reg * smi->stack_align + smi->stack_constant_offset);
-	    break;
-	default:
-	    if (is_temp(reg)) {
-	      /*		ppc64le_pstorei(s, type, 0, reg, _sp, smi->gp_save_offset + (reg - _g0) * smi->stack_align + smi->stack_constant_offset);*/
-	    }
-	    break;
-	}
-    } else {  /* restore */
-	switch (type) {
-	case DILL_D: case DILL_F:
-	    ppc64le_ploadi(s, type, 0, reg, _sp, smi->fp_save_offset + reg * smi->stack_align + smi->stack_constant_offset);
-	    break;
-	default:
-	    if (is_temp(reg)) {
-		ppc64le_ploadi(s, type, 0, reg, _sp, smi->gp_save_offset + (reg - _gpr0) * smi->stack_align + smi->stack_constant_offset);
-	    }
-	    break;
-	}
-    }
+    /*  
+     * we use no volatile ppc64le registers, so everything in use is 
+     * saved across calls already 
+     */
+    return;
 }	
 
 static void
@@ -378,7 +360,7 @@ stack_space_calc(dill_stream s)
 // align to 16-byte boundary
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
 
-    int stack_space = 48 + 64 + smi->act_rec_size;
+    int stack_space = 48 + 64 + (smi ? smi->act_rec_size : 0);
     /* integer save */
     stack_space += 18 /* non-volatile regs */ * 8;
     /* float save */
@@ -386,6 +368,7 @@ stack_space_calc(dill_stream s)
     
     /* round up to multiple of 16 */
     stack_space = ((stack_space + 15) / 16) * 16;
+
     return stack_space;
 }
 
@@ -411,8 +394,8 @@ ppc64le_emit_proc_epilogue(dill_stream s)
      * destroy the activation record
      */
 
-    /* ld r0, 64(r1) */
-    ppc64le_ploadi(s, DILL_L, 0, _gpr0, _sp, 64);
+    /* ld r0, 16(r1) */
+    ppc64le_ploadi(s, DILL_L, 0, _gpr0, _sp, (stack_size + 16));
     /* mtlr r0 */
     INSN_OUT(s, XFX_FORM(31, _gpr0, /* LR */ 0x100, 467));
     /* addi r1, r1, STACK_SIZE */
@@ -440,6 +423,9 @@ ppc64le_emit_proc_prologue(dill_stream s)
     smi->save_insn_offset = (long)s->p->cur_ip - (long)s->p->code_base;
 
 
+    /* first insn of code block jumps here for prologue */
+    dill_mark_label(s, smi->entry_label);
+
     /* addis r2, R12, 0 */
     INSN_OUT(s, D_FORM(15, _gpr2, _gpr12, 0));
     /* addi r2, R2, 0 */
@@ -450,8 +436,8 @@ ppc64le_emit_proc_prologue(dill_stream s)
     INSN_OUT(s, XFX_FORM(31, _gpr0, /* LR */ 0x100, 339));
     /* stdu  _gpr1, -SAVE_AREA(r1) */
     INSN_OUT(s, D_FORM(62, _gpr1, _gpr1, (-stack_size & 0xfffc) | 0x1));
-    /* std  _lr, 64(r1) */
-    INSN_OUT(s, D_FORM(62, _gpr0, _sp, (64 & 0xfffc)));
+    /* std  _lr, 16(r1) */
+    INSN_OUT(s, D_FORM(62, _gpr0, _sp, ((stack_size + 16) & 0xfffc)));
 
     /*
      *  Spill the non-volatiles that we'll destroy.
@@ -462,8 +448,7 @@ ppc64le_emit_proc_prologue(dill_stream s)
      * go do the actual code
      */
     ppc64le_jump_to_label(s, smi->start_label);
-    s->p->fp = (char*)s->p->code_base + smi->save_insn_offset;
-    s->p->disassembly_code_start = s->p->code_base;
+    s->p->fp = (char*)s->p->code_base;
 }
 
 /*
@@ -501,8 +486,14 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
     int last_incoming_fp_arg = _fpr0;
     int last_incoming_int_arg = _gpr2;
 
-    smi->start_label = dill_alloc_label(s, "Procedure code start");
+    smi->start_label = dill_alloc_label(s, "Procedure body start");
+    smi->entry_label = dill_alloc_label(s, "Procedure code entry");
     smi->epilogue_label = dill_alloc_label(s, "Procedure code exit");
+
+    /* jump to the actual procedure entry (since we can't emit it yet) */
+    ppc64le_jump_to_label(s, smi->entry_label);
+
+    /* actual entry will jump back here for body of routine */
     dill_mark_label(s, smi->start_label);
 
 //    smi->conversion_word = ppc64le_local(s, DILL_D);
@@ -587,18 +578,16 @@ ppc64le_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset
 	return;
     }
 
-    switch (type) {
-    case DILL_L: case DILL_UL: case DILL_P:{
-	ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-	if (smi->stack_align == 4) {
-	    type = DILL_I;
-	}
+    if (type == DILL_I) {
+	/* set bit 30 for lwa (load word algebraic, for sign extend */
+	offset += 2;
     }
-    /* fall through */
-    default:
-	INSN_OUT(s, D_FORM(ldi_opcodes[type], dest, src, offset));
-	break;
+    INSN_OUT(s, D_FORM(ldi_opcodes[type], dest, src, offset));
+    if (type == DILL_C) {
+	/* extsb */
+	INSN_OUT(s, X_FORM(31, dest, dest, /*don't care */0, 954));
     }
+
 }
 
 static short ld_opcodes[] = {
@@ -653,7 +642,7 @@ extern void
 ppc64le_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
     if (offset == 0) {
-	ppc64le_pbsload(s, type, junk, dest, src, _gpr2);
+	ppc64le_pbsload(s, type, junk, dest, src, _gpr0);
     } else {
 	ppc64le_set(s, _gpr2, offset);
 	ppc64le_pbsload(s, type, junk, dest, src, _gpr2);
@@ -674,7 +663,7 @@ ppc64le_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 	/* fall through */
     }
     default:
-	INSN_OUT(s, HDR(0x3)|RD(dest)|OP(ld_bs_opcodes[type])|RS1(src1)|RS2(src2)|ASI(0x88));
+
 	break;
     }
 }
@@ -934,19 +923,16 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	ppc64le_rshai(s, dest, dest, 24);
 	break;
     case CONV(DILL_F,DILL_S):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
 	ppc64le_movf2i(s, dest, src);
 	ppc64le_lshi(s, dest, src, 16);
 	ppc64le_rshai(s, dest, dest, 16);
 	break;
     case CONV(DILL_F,DILL_UC):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
 	ppc64le_movf2i(s, dest, src);
 	ppc64le_lshi(s, dest, src, 24);
 	ppc64le_rshi(s, dest, dest, 24);
 	break;
     case CONV(DILL_F,DILL_US):
-	INSN_OUT(s, HDR(0x2)|RD(src)|OP(0x34)|OPF(0xd1)|RS2(src));/*fstoi*/
 	ppc64le_movf2i(s, dest, src);
 	ppc64le_lshi(s, dest, src, 16);
 	ppc64le_rshi(s, dest, dest, 16);
@@ -1024,8 +1010,8 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_C,DILL_D):
     case CONV(DILL_S,DILL_D):
     case CONV(DILL_I,DILL_D):
-	ppc64le_rshi(s, _gpr2, src, 0);
-	src = _gpr2;
+	ppc64le_rshi(s, _gpr0, src, 0);
+	src = _gpr0;
 	/* fall through */
     case CONV(DILL_L,DILL_D):
 	INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
@@ -1035,12 +1021,11 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_US,DILL_D):
     case CONV(DILL_U,DILL_D):
 	if (smi->stack_align == 8) { 
-	    ppc64le_rshi(s, _gpr2, src, 0);
-	    src = _gpr2;
+	    ppc64le_rshi(s, _gpr0, src, 0);
+	    src = _gpr0;
 	/* fall through */
 	    /*	    ppc64le_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
 		    ppc64le_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);*/
-	    INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(0x88)|RS2(dest));/*fxtod*/
 	    break;
 	}
 	/* fallthrough */
@@ -1064,11 +1049,10 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_US,DILL_F):
     case CONV(DILL_U,DILL_F):
 	if (smi->stack_align == 8) { 
-	    ppc64le_rshi(s, _gpr2, src, 0);
-	    src = _gpr2;
+	    ppc64le_rshi(s, _gpr0, src, 0);
+	    src = _gpr0;
 	    /*	    ppc64le_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
 		    ppc64le_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);*/
-	    INSN_OUT(s, HDR(0x2)|RD(dest)|OP(0x34)|OPF(0x84)|RS2(dest));/*fxtos*/
 	    break;
 	}
 	/* fallthrough */
@@ -1209,7 +1193,6 @@ ppc64le_jump_to_label(dill_stream s, unsigned long label)
 
 extern void ppc64le_jump_to_reg(dill_stream s, unsigned long reg)
 {
-    INSN_OUT(s, HDR(0x2)|OP(0x38)|RD(_gpr2)|RS1(reg)|IM|SIMM13(0x0));
     ppc64le_nop(c);
 }
 
@@ -1221,7 +1204,7 @@ extern void ppc64le_jump_to_imm(dill_stream s, void * imm)
 extern void 
 ppc64le_jal(dill_stream s, int return_addr_reg, int target)
 {
-    INSN_OUT(s, HDR(0x2)|OP(0x38)|RD(return_addr_reg)|RS1(target)|IM|SIMM13(0x0));
+
 }
 
 static void internal_push(dill_stream s, int type, int immediate, 
@@ -1243,24 +1226,23 @@ static void internal_push(dill_stream s, int type, int immediate,
 	arg.type = type;
     }
 	
-    if (smi->cur_arg_offset < 8 * smi->stack_align) {
-	arg.is_register = 1;
-	if ((type == DILL_F) || (type == DILL_D)) {
-	    arg.out_reg = _fpr1  + smi->cur_arg_offset/8;
-	    arg.in_reg = _fpr1   + smi->cur_arg_offset/8;
-	} else {
-	    arg.in_reg = _gpr3 + smi->cur_arg_offset/smi->stack_align;
-	    arg.out_reg = _gpr3 + smi->cur_arg_offset/smi->stack_align;
-	}
-    } else {
-	if ((smi->stack_align == 8) && ((type == DILL_F) || (type == DILL_D)) &&
-	    (smi->cur_arg_offset <= 8 * smi->stack_align)) {
-	    /* floating arg can go in a float reg, but not int reg */
+    if ((type == DILL_F) || (type == DILL_D)) {
+	if (smi->last_fp_arg < _fpr13) {
 	    arg.is_register = 1;
-	    arg.out_reg = _fpr0  + smi->cur_arg_offset/4;
-	    arg.in_reg = -1;
+	    arg.in_reg =  _gpr3 + (smi->cur_arg_offset / smi->stack_align);
+	    if (arg.in_reg > _gpr10) arg.in_reg = -1;
+	    arg.out_reg = ++smi->last_fp_arg;
 	} else {
 	    arg.is_register = 0;
+	    arg.out_reg = arg.in_reg = -1;
+	}
+    } else {
+	if (smi->cur_arg_offset < (8 * smi->stack_align)) {
+	    arg.is_register = 1;
+	    arg.out_reg = arg.in_reg = _fpr3 + smi->cur_arg_offset / smi->stack_align;
+	} else {
+	    arg.is_register = 0;
+	    arg.out_reg = arg.in_reg = -1;
 	}
     }
 
@@ -1271,30 +1253,55 @@ static void internal_push(dill_stream s, int type, int immediate,
     if (arg.is_register == 0) {
 	/* store it on the stack only */
 	if (arg.is_immediate) {
+	    int tmp_int_arg = _fpr3 + arg.offset / smi->stack_align;
+	    int use_gpr0 = 0;
+	    if (tmp_int_arg > 10) {
+		ppc64le_movl(s, _gpr0, _gpr3);
+		use_gpr0 = 1;
+		tmp_int_arg = _gpr3;
+	    }
 	    if (type == DILL_F) {
 		float f = (float) *(double*)value_ptr;
-		ppc64le_set(s, _gpr2, *(int*)&f);
+		ppc64le_set(s, tmp_int_arg, *(int*)&f);
 	    } else {
-		ppc64le_set(s, _gpr2, *(long*)value_ptr);
+		ppc64le_set(s, tmp_int_arg, *(long*)value_ptr);
 	    }
-	    ppc64le_pstorei(s, arg.type, 0, _gpr2, _sp, real_offset);
+	    ppc64le_pstorei(s, arg.type, 0, tmp_int_arg, _sp, real_offset);
+	    if (use_gpr0) {
+		ppc64le_movl(s, _gpr3, _gpr0);
+	    }
 	} else {
 	    ppc64le_pstorei(s, arg.type, 0, *(int*)value_ptr, _sp, 
 			    real_offset);
 	}
     } else {
+	/* argument should be in a register */
 	if ((type != DILL_F) && (type != DILL_D)) {
+	    /* integer arguments */
 	    if (arg.is_immediate) {
 		ppc64le_set(s, arg.out_reg, *(long*)value_ptr);
 	    } else {
 		ppc64le_mov(s, type, 0, arg.out_reg, *(int*) value_ptr);
 	    }
+	    if (smi->varidiac_call) {
+		ppc64le_pstorei(s, arg.type, 0, arg.out_reg, _sp, real_offset);
+	    }
 	} else {
+	    /* floating point */
 	    if (arg.is_immediate) {
 		if ((type == DILL_F) || (type == DILL_D)) {
 		    /* set appropriate register */
-		    ppc64le_setf(s, type, 0, arg.out_reg, 
-				 *(double*)value_ptr);
+		    int tmp_int_arg = arg.in_reg;
+		    if (arg.in_reg == -1) {
+			tmp_int_arg = _gpr3;
+			ppc64le_movl(s, _gpr0, _gpr3);
+		    }
+		    ppc64le_set(s, tmp_int_arg, *(long*)value_ptr);
+		    ppc64le_pstorei(s, DILL_L, 0, tmp_int_arg, _sp, real_offset);
+		    ppc64le_ploadi(s, DILL_D, 0, arg.out_reg, _sp, real_offset);
+		    if (arg.in_reg == -1) {
+			ppc64le_movl(s, _gpr3, _gpr0);
+		    }			
 		} else {
 		    ppc64le_set(s, arg.out_reg, *(int*)value_ptr);
 		}
@@ -1322,12 +1329,19 @@ static void push_init(dill_stream s)
 {
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
     smi->cur_arg_offset = 0;
+    smi->last_int_arg = _gpr2;
+    smi->last_fp_arg = _fpr0;
+    smi->varidiac_call = 0;
 }
 
 extern void ppc64le_push(dill_stream s, int type, int reg)
 {
+    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
     if ((type == DILL_V) && (reg <= -1)) {
 	push_init(s);
+	if (reg <= -2) {
+	    smi->varidiac_call = 1;
+	}
     } else {
 	internal_push(s, type, 0, &reg);
     }
@@ -1494,58 +1508,6 @@ ppc64le_branch_link(dill_stream s)
     }
 }
 
-/*
- * on 64-bit solaris 8, we need a procedure linkage table to manage 
- * calls to DLLs in an address range that is typically more than 32 bits
- * away from malloc'd memory.  We emit a PLT that is basically a set_reg, 
- * then jump_through_reg for each routine.  Later, during call linkage, 
- * we'll call to the PLT entry rather than directly to the routine.
- */
-static void
-ppc64le_PLT_emit(dill_stream s, int force_PLT)
-{
-    call_t *t = &s->p->call_table;
-    int i;
-
-    for(i=0; i< t->call_count; i++) {
-	int *call_addr = (int*) ((unsigned long)s->p->code_base + 
-				 t->call_locs[i].loc);
-	long call_offset = (unsigned long)t->call_locs[i].xfer_addr - 
-	    (unsigned long)call_addr;
-	int jump_value;
-
-        /* div addr diff by 4 for ppc64le offset value */
-	call_offset = call_offset >> 2;
-	jump_value = (char*)s->p->cur_ip - (char*)call_addr;
-	call_offset = call_offset >> 30;
-	t->call_locs[i].mach_info = (void*)0;
-	if (((call_offset != 0) && (call_offset != -1)) || force_PLT) {
-
-	    int plt_offset = (char*)s->p->cur_ip - (char*)s->p->code_base;
-	    t->call_locs[i].mach_info = (void*)1;
-
-	    ppc64le_nop(s);
-	    ppc64le_nop(s);
-	    ppc64le_nop(s);
-	    ppc64le_nop(s);
-	    ppc64le_nop(s);
-	    ppc64le_nop(s);
-
-/*	    ppc64le_set(s, _gpr2, (unsigned long)t->call_locs[i].xfer_addr);*/
-	    ppc64le_jump_to_reg(s, _gpr2);
-	    ppc64le_nop(s);
-
-	    /* fixup call to reference just-generated PLT code*/
-	    call_addr = (int*) ((unsigned long)s->p->code_base + 
-				t->call_locs[i].loc);
-	    t->call_locs[i].loc = plt_offset;
-	    jump_value = jump_value >> 2;
-	    *call_addr &= 0xc0000000;
-	    *call_addr |= (jump_value & 0x3fffffff);
-	}
-    }
-}
-
 extern void ppc64le_rt_call_link(char *code, call_t *t, int force_plt);
 
 static void
@@ -1559,36 +1521,28 @@ ppc64le_call_link(dill_stream s)
 static void
 ppc64le_flush(void *base, void *limit)
 {
-#if defined(HOST_PPC64LE) || defined(HOST_PPC64LEV9)
+#if defined(HOST_PPC64LE)
     {
 	volatile void *ptr = base;
 
 #ifdef __GNUC__
 	/* flush every 8 bytes of preallocated insn stream. */
 	while((char*)ptr < (char*) limit) {
-	  //	    asm volatile ("iflush %0" : /* */ : "r" (ptr));
-	    ptr = (char *)ptr + 8;
+	    ptr = (char *)ptr + 128;
+	    asm volatile ("dcbst 0, %0" : /* */ : "r" (ptr));
 	}
-	asm volatile("nop");
-	asm volatile("nop");
-	asm volatile("nop");
-	asm volatile("nop");
-	asm volatile("nop");
+	asm volatile("sync");
+	while((char*)ptr < (char*) limit) {
+	    ptr = (char *)ptr + 128;
+	    asm volatile ("icbi 0, %0" : /* */ : "r" (ptr));
+	}
+	asm volatile("isync");
 #else
 	int nbytes = (char*)limit - (char*)base;
 	for(; nbytes > 0;nbytes -= 8) {
 	    asm("add %i0, 8, %i0");
-	    asm ("iflush %i0");
+	    asm ("iflush %r3");
 	}
-
-	asm ("nop");
-	asm ("nop");
-	asm ("nop");
-	asm ("nop");
-	asm ("nop");
-#endif
-#ifdef USE_MEMBAR
-	asm("membar #Sync");
 #endif
     }
 #endif
@@ -1599,9 +1553,9 @@ ppc64le_end(s)
 dill_stream s;
 {
     ppc64le_simple_ret(s);
+    ppc64le_localb(s, 64); /* a few extra words of free space as a buffer */
     ppc64le_emit_proc_epilogue(s);
     ppc64le_emit_proc_prologue(s);
-    ppc64le_PLT_emit(s, 0);   /* must be done before linking */
     ppc64le_branch_link(s);
     ppc64le_call_link(s);
     ppc64le_data_link(s);
@@ -1656,10 +1610,9 @@ dill_stream s;
 {
     int force_plt = 0;
     ppc64le_simple_ret(s);
-#if defined(HOST_PPC64LEV9)
-    force_plt = 1;
-#endif
-    ppc64le_PLT_emit(s, force_plt);   /* must be done before linking */
+    ppc64le_localb(s, 64); /* a few extra words of free space as a buffer */
+    ppc64le_emit_proc_epilogue(s);
+    ppc64le_emit_proc_prologue(s);
     ppc64le_branch_link(s);
 }
 
@@ -1687,10 +1640,6 @@ int available_size;
     s->p->code_base = old_base;
     s->p->cur_ip = (void*)((long) old_base + size);
     s->p->fp = old_base;
-    while (*(int*)new_base == 0x10000) {
-	/* skip UNIMPs */
-	new_base = (void*) ((long) new_base + 4);
-    }
     return new_base;
 }
 
@@ -1732,19 +1681,12 @@ ppc64le_setf(dill_stream s, int type, int junk, int dest, double imm)
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
     if (type == DILL_F) {
 	a.f = (float) imm;
-	ppc64le_set(s, _gpr2, a.i);
-	ppc64le_movi2f(s, dest, _gpr2);
-    } else if (smi->stack_align == 4) {
-	b.d = imm;
-	ppc64le_set(s, _gpr2, b.i[0]);
-	ppc64le_movi2f(s, dest, _gpr2);
-	ppc64le_set(s, _gpr2, b.i[1]);
-	ppc64le_movi2f(s, dest+1, _gpr2);
+	ppc64le_set(s, _gpr0, a.i);
+	ppc64le_movi2f(s, dest, _gpr0);
     } else {
-	/* double ppc64lev9 */
 	b.d = imm;
-	ppc64le_set(s, _gpr2, b.l);
-	ppc64le_movi2d(s, dest, _gpr2);
+	ppc64le_set(s, _gpr0, b.l);
+	ppc64le_movi2d(s, dest, _gpr0);
     }
 }	
 
@@ -1911,11 +1853,10 @@ int bit64;
     smi->cur_arg_offset = 0;
     if (bit64) {
 	smi->stack_align = 8; /* 8 for ppc64le */
-	smi->stack_constant_offset = 2047; 
     } else {
 	smi->stack_align = 4; /* 4 for ppowerpc */
-	smi->stack_constant_offset = 0;
     }
+    smi->stack_constant_offset = stack_space_calc(s);
     smi->gp_save_offset = (16 + 1 + 6 + 19 /* args */) * smi->stack_align; /*184;*/
     smi->fp_save_offset = smi->gp_save_offset + 8 * smi->stack_align;
     smi->fp_save_end = smi->fp_save_offset + 32 * smi->stack_align + 16;

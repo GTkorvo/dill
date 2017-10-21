@@ -88,8 +88,12 @@ typedef struct ppc64le_mach_info {
     int fp_save_end;
     int conversion_word;
     int cur_arg_offset;
+    int last_int_arg;
+    int last_fp_arg;
+    int varidiac_call;
     int save_insn_offset;
     int start_label;
+    int entry_label;
     int epilogue_label;
 } *ppc64le_mach_info;
 

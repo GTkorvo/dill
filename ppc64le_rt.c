@@ -57,27 +57,12 @@ ppc64le_rt_call_link(char *code, call_t *t, int force_plt)
 
     for(i=0; i< t->call_count; i++) {
 	int *call_addr = (int*) (code + t->call_locs[i].loc);
-	if (!force_plt && (t->call_locs[i].mach_info == (void*)0)) {
-	    long xfer_addr = (unsigned long)t->call_locs[i].xfer_addr;
-	    call_addr[0] = D_FORM(15, _gpr12, _gpr0, hi16(hi32(xfer_addr)));
-	    call_addr[1] = D_FORM(24, _gpr12, _gpr12, lo16(hi32(xfer_addr)));
-	    call_addr[2] = MD_FORM(30, _gpr12, _gpr12, (32&0x1f), ((((63-32)&0x1f) << 1) | ((63-32)>>5)), 1, (32>>5));
-	    call_addr[3] = D_FORM(25, _gpr12, _gpr12, hi16(lo32(xfer_addr)));
-	    call_addr[4] = D_FORM(24, _gpr12, _gpr12, lo16(lo32(xfer_addr)));
-	} else {
-	    int *plt = (int*)(code + t->call_locs[i].loc);
-	    union {
-		void *xa;
-		long xl;
-	    }u;
-	    u.xa = t->call_locs[i].xfer_addr;
-	    /* plt[0] = ppc64le_sethi(_g1, hh(u.xl)); */
-	    /* plt[1] = ppc64le_ori(_g1, _g1, hm(u.xl)); */
-	    /* plt[2] = ppc64le_sethi(_l0, lm(u.xl)); */
-	    /* plt[3] = ppc64le_ori(_l0, _l0, lo(u.xl)); */
-	    /* plt[4] = ppc64le_sllx(_g1, _g1, 32); */
-	    /* plt[5] = ppc64le_or(_g1, _g1, _l0); */
-	}
+	long xfer_addr = (unsigned long)t->call_locs[i].xfer_addr;
+	call_addr[0] = D_FORM(15, _gpr12, _gpr0, hi16(hi32(xfer_addr)));
+	call_addr[1] = D_FORM(24, _gpr12, _gpr12, lo16(hi32(xfer_addr)));
+	call_addr[2] = MD_FORM(30, _gpr12, _gpr12, (32&0x1f), ((((63-32)&0x1f) << 1) | ((63-32)>>5)), 1, (32>>5));
+	call_addr[3] = D_FORM(25, _gpr12, _gpr12, hi16(lo32(xfer_addr)));
+	call_addr[4] = D_FORM(24, _gpr12, _gpr12, lo16(lo32(xfer_addr)));
     }
 }
 
@@ -124,9 +109,6 @@ ppc64le_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
     int force_plt = 0;
     dill_lookup_xfer_addrs(t, &ppc64le_xfer_recs[0]);
-#if defined(HOST_PPC64LEV9)
-    force_plt = 1;
-#endif
     ppc64le_rt_call_link(code, t, force_plt);
     ppc64le_flush(code, code + pkg->code_size);
     return code + pkg->entry_offset;
