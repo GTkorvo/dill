@@ -1563,11 +1563,7 @@ dill_dump(dill_stream s)
 	int l;
 	int insn_count = 0;
 	if ((s->j != s->p->virtual.mach_jump) && (s->p->fp != NULL) )
-	    if (s->p->disassembly_code_start != NULL) {
-		base = s->p->disassembly_code_start;
-	    } else {
-		base = s->p->fp;
-	    }
+	    base = s->p->fp;
 	for (p =base; (char*) p < s->p->cur_ip;) {
 	    int i;
 	    struct branch_table *t = &s->p->branch_table;
