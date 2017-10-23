@@ -1,30 +1,5 @@
 #ifndef _PPC64LE_H
 #define _PPC64LE_H
- #define OP(x)		(((x)&0x6) << 26) /* opcd field of insns */
-
- #define HDR(x)		((unsigned)((x)&0x3) << 30) /* hdr field of all insns */
- #define ASI(asi) 	((asi) << 5)
- #define OP3(x)		(((x)&0x1ff) << 5) /* opf field of float insns */
- #define OPF(x)		(((x)&0x1ff) << 5) /* opf field of float insns */
- #define RD(x)		(((x)&0x1f) << 25) /* destination register field */
- #define RS1(x)		(((x)&0x1f) << 14) /* rs1 field */
- #define RS2(x)		((x)&0x1f) /* rs2 field */
- #define SIMM13(x)	((x)&0x1fff) /* simm13 field */
- #define IM		0x2000
- #define COND(x) (((x)&0xf)<<25)
- #define CC(x)  (((x)&0x3)<<20)
- #define P(x)  (((x)&0x1)<<19)
-/* upper 22 of 64 bits */
-#define hh(x) (((unsigned long) x) >> 42)
-/* bits 11-32 */
-#define lm(x) hi((x) & (((unsigned long)1<<32) -1))
-/* lower 10 of upper 32 */
-#define hm(x) lo( ((unsigned long) x)>>32)
-
-/* upper 22 bits of 32 */
-#define hi(x) (((unsigned long)x) >> 10)
-/* lower 10 bits */
-#define lo(x) ((x) & ((1 << 11) - 1))
 
 extern void ppc64le_XOFORM_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
 extern void ppc64le_swap_arith(dill_stream c, int op3, int op, int dest, int src1, int src2);
@@ -86,7 +61,6 @@ typedef struct ppc64le_mach_info {
     int gp_save_offset;
     int fp_save_offset;
     int fp_save_end;
-    int conversion_word;
     int cur_arg_offset;
     int last_int_arg;
     int last_fp_arg;

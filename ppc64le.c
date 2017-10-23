@@ -14,22 +14,17 @@
 #define lo16(im) (((long)im) & 0xffff)
 #define hi16(im) ((((long)im) & 0xffffffff) >> 16)
 
-#define ppc64le_savei(s, imm) 
-#define ppc64le_ori(s, dest, src, imm) 	INSN_OUT(s, D_FORM(24, dest, src, lo16(imm)));
-#define ppc64le_andi(s, dest, src, imm) INSN_OUT(s, D_FORM(28, dest, src, lo16(imm)));
+#define ppc64le_ori(s, dest, src, imm) 	INSN_OUT(s, D_FORM(24, src, dest, lo16(imm)));
+#define ppc64le_andi(s, dest, src, imm) INSN_OUT(s, D_FORM(28, src, dest, lo16(imm)));
 #define ppc64le_or(s, dest, src1, src2) INSN_OUT(s, X_FORM(31,src1, dest, src2, 444))
 #define ppc64le_movl(s, dest, src) ppc64le_or(s, dest, src, src);
 #define ppc64le_int_mov(s, dest, src) ppc64le_or(s, dest, src, src)
 #define ppc64le_movf(s, dest, src) INSN_OUT(s, X_FORM(63, dest, 0, src, 72))
 #define ppc64le_movd(s, dest, src) INSN_OUT(s, X_FORM(63, dest, 0, src, 72))
 
-#define ppc64le_lshi(s, dest, src,imm) INSN_OUT(s, MD_FORM(30,dest,src,imm & 0x1f,63-imm, 0, imm>>5));
-#define ppc64le_xlshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x25)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
-#define ppc64le_rshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
-#define ppc64le_xrshi(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x26)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
-#define ppc64le_rshai(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm));
-#define ppc64le_xrshai(s, dest, src1,imm) INSN_OUT(s, HDR(0x2)|OP(0x27)|RD(dest)|RS1(src1)|IM|SIMM13(imm)|(1<<12) );
-#define ppc64le_rsh(s, dest, src1, src2) 	INSN_OUT(s, HDR(0x2)|OP(0x27)|RD(dest)|RS1(src1)|RS2(src2));
+#define ppc64le_lshi(s, dest, src,imm) INSN_OUT(s, MD_FORM(30,src,dest,imm & 0x1f,0, 0, imm>>5));
+#define ppc64le_rshi(s, dest, src1,imm) INSN_OUT(s, XS_FORM(31, src1, dest, imm & 0x1f, 413, imm >> 5));
+#define ppc64le_rshai(s, dest, src1,imm) INSN_OUT(s, MD_FORM(30, src1, dest, (64-imm)&0x1f, (((imm&0x1f)<< 1) | (imm >> 5)), 0, ((64-imm)>> 5)))
 
 #define ppc64le_nop(c) INSN_OUT(s, 0x60000000);
 
@@ -172,22 +167,11 @@ ppc64le_movi2f(dill_stream s, int dest, int src)
 static void
 ppc64le_movf2i(dill_stream s, int dest, int src)
 {
-  /*    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-    ppc64le_pstorei(s, DILL_F, 0, src, _fp, smi->conversion_word);
-	  ppc64le_ploadi(s, DILL_I, 0, dest, _fp, smi->conversion_word);*/
 }
     
 static void
 ppc64le_movd2i(dill_stream s, int dest, int src)
 {
-  /*    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-        ppc64le_pstorei(s, DILL_D, 0, src, _fp, smi->conversion_word);
-    if (smi->stack_align == 8) {
-	ppc64le_ploadi(s, DILL_L, 0, dest, _fp, smi->conversion_word);
-    } else {
-	ppc64le_ploadi(s, DILL_I, 0, dest, _fp, smi->conversion_word);
-	ppc64le_ploadi(s, DILL_I, 0, dest+1, _fp, smi->conversion_word+4);
-	}*/
 }
     
 static void
@@ -268,16 +252,17 @@ int dest;
 int src1;
 long imm;
 {
+    /* D-FORM */
+    if (op == 8) {   /* special sub case */
+	/* sigh.  No real sub immediate.  Negate imm and use add */
+	imm = -imm;
+	op = 14;
+    }
     if (((long)imm) < 32767 && ((long)imm) >= -32768) {
-	/* D-FORM */
 	INSN_OUT(s, D_FORM(op, dest, src1, imm));
     } else {
 	ppc64le_set(s, dest, imm);
-	if (full_op == 40) {  /* special SUB case */
-	    ppc64le_XOFORM_arith(s, 31, full_op, dest, dest, src1);
-	} else {
-	    ppc64le_XOFORM_arith(s, 31, full_op, dest, src1, dest);
-	}
+	ppc64le_XOFORM_arith(s, 31, full_op, dest, src1, dest);
     }
 }
 
@@ -321,14 +306,10 @@ long imm;
 {
     if ((imm >> 16) == 0) {
 	/* D-FORM */
-	INSN_OUT(s, D_FORM(op, dest, src1, imm));
-//    } if ((((unsigned long)imm) >> 32) == 0) {
-//	INSN_OUT(s, D_FORM(op, dest, src1, (((unsigned long)imm) & 0xffff)));
-//	/* shifted version is op+1 for logical ops */
-//	INSN_OUT(s, D_FORM(op+1, dest, src1, ((((unsigned long)imm) >> 16) & 0xffff)));
+	INSN_OUT(s, D_FORM(op, src1, dest, imm));
     } else {
 	ppc64le_set(s, dest, imm);
-	ppc64le_XOFORM_arith(s, 31, full_op, src1, dest, dest);
+	ppc64le_log_arith(s, 31, full_op, dest, src1, dest);
     }
 }
 
@@ -495,9 +476,6 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 
     /* actual entry will jump back here for body of routine */
     dill_mark_label(s, smi->start_label);
-
-//    smi->conversion_word = ppc64le_local(s, DILL_D);
-//    smi->conversion_word = ppc64le_local(s, DILL_D);
 
     /* load params from regs */
     for (i = 0; i < arg_count; i++) {
@@ -915,46 +893,40 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	break;
     case CONV(DILL_F,DILL_I):
+	INSN_OUT(s, XX2_FORM(60, src, src, 344));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	break;
     case CONV(DILL_F,DILL_C):
+	INSN_OUT(s, XX2_FORM(60, src, src, 344));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
-	ppc64le_lshi(s, dest, src, 24);
-	ppc64le_rshai(s, dest, dest, 24);
+	/* extsb */
+	INSN_OUT(s, X_FORM(31, dest, dest, /*don't care */0, 954));
 	break;
     case CONV(DILL_F,DILL_S):
-	ppc64le_movf2i(s, dest, src);
-	ppc64le_lshi(s, dest, src, 16);
-	ppc64le_rshai(s, dest, dest, 16);
+	INSN_OUT(s, XX2_FORM(60, src, src, 344));
+	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
+	/* extsh */
+	INSN_OUT(s, X_FORM(31, dest, dest, 0/*don't care */, 922));
 	break;
     case CONV(DILL_F,DILL_UC):
-	ppc64le_movf2i(s, dest, src);
-	ppc64le_lshi(s, dest, src, 24);
-	ppc64le_rshi(s, dest, dest, 24);
+	INSN_OUT(s, XX2_FORM(60, src, src, 328));
+	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
+	ppc64le_andi(s, dest, dest, 0xff);
 	break;
     case CONV(DILL_F,DILL_US):
-	ppc64le_movf2i(s, dest, src);
-	ppc64le_lshi(s, dest, src, 16);
-	ppc64le_rshi(s, dest, dest, 16);
+	/* xscvdpsxd */
+	INSN_OUT(s, XX2_FORM(60, src, src, 328));
+	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
+	ppc64le_andi(s, dest, dest, 0xffff);
 	break;
     case CONV(DILL_F,DILL_U):
-        {
-	    int ret;
-	    ppc64le_saverestore_floats(s, 0);
-	    ret = dill_scallu(s, (void*)dill_ppc64le_hidden_ftou, "dill_ppc64le_hidden_ftou", "%f", src);
-	    ppc64le_saverestore_floats(s, 1);
-	    ppc64le_mov(s, DILL_UL, 0, dest, ret);
-	}
+	INSN_OUT(s, XX2_FORM(60, src, src, 328));
+	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
+	ppc64le_andi(s, dest, dest, 0xffffffff);
 	break;
-	/* fallthrough */
     case CONV(DILL_F,DILL_UL):
-        {
-	    int ret;
-	    ppc64le_saverestore_floats(s, 0);
-	    ret = dill_scallul(s, (void*)dill_ppc64le_hidden_ftoul, "dill_ppc64le_hidden_ftoul", "%f", src);
-	    ppc64le_saverestore_floats(s, 1);
-	    ppc64le_mov(s, DILL_UL, 0, dest, ret);
-	}
+	INSN_OUT(s, XX2_FORM(60, src, src, 328));
+	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	break;
     case CONV(DILL_D,DILL_F):
 	INSN_OUT(s, X_FORM(63, dest, 0, src, 12));
@@ -990,22 +962,18 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	ppc64le_andi(s, dest, dest, 0xffff);
 	break;
     case CONV(DILL_D,DILL_U):
-        {
-	    int ret;
-	    ppc64le_saverestore_floats(s, 0);
-	    ret = dill_scallu(s, (void*)dill_ppc64le_hidden_dtou, "dill_ppc64le_hidden_dtou", "%d", src);
-	    ppc64le_saverestore_floats(s, 1);
-	    ppc64le_mov(s, DILL_U, 0, dest, ret);
-	}
+	/* xscvdpsxds */
+	INSN_OUT(s, XX2_FORM(60, src, src, 344));
+	/* mfvsrc */
+	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
+	ppc64le_andi(s, dest, dest, 0xffffffff);
 	break;
     case CONV(DILL_D,DILL_UL):
-        {
-	    int ret;
-	    ppc64le_saverestore_floats(s, 0);
-	    ret = dill_scallul(s, (void*)dill_ppc64le_hidden_dtoul, "dill_ppc64le_hidden_dtoul", "%d", src);
-	    ppc64le_saverestore_floats(s, 1);
-	    ppc64le_mov(s, DILL_UL, 0, dest, ret);
-	}
+	/* xscvdpsxds */
+	INSN_OUT(s, XX2_FORM(60, src, src, 328));
+	/* mfvsrc */
+	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
+	ppc64le_andi(s, dest, dest, 0xffffffff);
 	break;
     case CONV(DILL_C,DILL_D):
     case CONV(DILL_S,DILL_D):
@@ -1014,29 +982,22 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	src = _gpr0;
 	/* fall through */
     case CONV(DILL_L,DILL_D):
+	/* mtvsrd */
 	INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
 	INSN_OUT(s, XX2_FORM(60, dest, dest, 376));
 	break;
     case CONV(DILL_UC,DILL_D):
     case CONV(DILL_US,DILL_D):
     case CONV(DILL_U,DILL_D):
-	if (smi->stack_align == 8) { 
-	    ppc64le_rshi(s, _gpr0, src, 0);
-	    src = _gpr0;
-	/* fall through */
-	    /*	    ppc64le_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
-		    ppc64le_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);*/
-	    break;
-	}
-	/* fallthrough */
     case CONV(DILL_UL,DILL_D): 
-        {
-	    int ret;
-	    ppc64le_saverestore_floats(s, 0);
-	    ret = dill_scalld(s, (void*)dill_ppc64le_hidden_ultod, "dill_ppc64le_hidden_ultod", "%l", src);
-	    ppc64le_saverestore_floats(s, 1);
-	    ppc64le_mov(s, DILL_D, 0, dest, ret);
-	}
+    case CONV(DILL_UC,DILL_F):
+    case CONV(DILL_US,DILL_F):
+    case CONV(DILL_U,DILL_F):
+    case CONV(DILL_UL,DILL_F):
+	/* mtvsrd */
+	INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
+	/* xscvuxddp */
+	INSN_OUT(s, XX2_FORM(60, dest, dest, 360));
 	break;
     case CONV(DILL_C,DILL_F):
     case CONV(DILL_S,DILL_F):
@@ -1045,33 +1006,13 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
 	INSN_OUT(s, XX2_FORM(60, dest, dest, 312));
 	break;
-    case CONV(DILL_UC,DILL_F):
-    case CONV(DILL_US,DILL_F):
-    case CONV(DILL_U,DILL_F):
-	if (smi->stack_align == 8) { 
-	    ppc64le_rshi(s, _gpr0, src, 0);
-	    src = _gpr0;
-	    /*	    ppc64le_pstorei(s, DILL_UL, 0, src, _fp, smi->conversion_word);
-		    ppc64le_ploadi(s, DILL_D, 0, dest, _fp, smi->conversion_word);*/
-	    break;
-	}
-	/* fallthrough */
-    case CONV(DILL_UL,DILL_F):
-        {
-	    int ret;
-	    ppc64le_saverestore_floats(s, 0);
-	    ret = dill_scalld(s, (void*)dill_ppc64le_hidden_ultof, "dill_ppc64le_hidden_ultof", "%l", src);
-	    ppc64le_saverestore_floats(s, 1);
-	    ppc64le_mov(s, DILL_D, 0, dest, ret);
-	}
-	break;
     case CONV(DILL_C,DILL_UL):
     case CONV(DILL_C,DILL_S):
     case CONV(DILL_C,DILL_L):
     case CONV(DILL_C,DILL_I):
     case CONV(DILL_C,DILL_U):
-	ppc64le_lshi(s, dest, src, 24);
-	ppc64le_rshai(s, dest, dest, 24);
+	/* extsb */
+	INSN_OUT(s, X_FORM(31, src, dest, /*don't care */0, 954));
 	break;
     case CONV(DILL_S,DILL_C):
     case CONV(DILL_US,DILL_C):
@@ -1094,23 +1035,27 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_S,DILL_UL):
     case CONV(DILL_S,DILL_I):
     case CONV(DILL_S,DILL_U):
-	ppc64le_lshi(s, dest, src, 16);
-	ppc64le_rshai(s, dest, dest, 16);
+	/* extsh */
+	INSN_OUT(s, X_FORM(31, src, dest, 0/*don't care */, 922));
 	break;
     case CONV(DILL_US,DILL_I):
     case CONV(DILL_US,DILL_L):
     case CONV(DILL_US,DILL_U):
     case CONV(DILL_US,DILL_UL):
+	ppc64le_movl(s, dest, src);
+	break;
     case CONV(DILL_I,DILL_S):
     case CONV(DILL_U,DILL_S):
     case CONV(DILL_L,DILL_S):
     case CONV(DILL_UL,DILL_S):
+	/* extsh */
+	INSN_OUT(s, X_FORM(31, src, dest, 0/*don't care */, 922));
+	break;
     case CONV(DILL_I,DILL_US):
     case CONV(DILL_U,DILL_US):
     case CONV(DILL_L,DILL_US):
     case CONV(DILL_UL,DILL_US):
-	ppc64le_lshi(s, dest, src, 16);
-	ppc64le_rshi(s, dest, dest, 16);
+	ppc64le_andi(s, dest, src, 0xffff);
 	break;
     default:
 	printf("Unknown case in ppc64le convert %d\n", CONV(from_type,to_type));
@@ -1411,17 +1356,27 @@ extern int ppc64le_callr(dill_stream s, int type, int src)
 extern void
 ppc64le_branchi(dill_stream s, int op, int type, int src, long imm, int label)
 {
+    int low_bound = -32768;
     switch(type) {
     case DILL_F:
     case DILL_D:
 	fprintf(stderr, "Shouldn't happen\n");
 	break;
+    case DILL_UC: case DILL_US: case DILL_U: case DILL_UL:
+	low_bound = 0;
+	/* falling through */
     default:
-	if  (((long)imm) >= 32767 || ((long)imm) < -32768) {
+	if  ((((long)imm) >= 32767) || (((long)imm) < low_bound)) {
 	    ppc64le_set(s, _gpr0, imm);
 	    ppc64le_branch(s, op, type, src, _gpr0, label);
 	} else {
-	    INSN_OUT(s, D_FORM(11, 0<<2 | 1, src, imm));
+	    switch (type) {
+	    case DILL_U: case DILL_UC: case DILL_US: case DILL_UL: case DILL_P:
+		INSN_OUT(s, D_FORM(10, 0<<2 | 1, src, imm));
+		break;
+	    default:
+		INSN_OUT(s, D_FORM(11, 0<<2 | 1, src, imm));
+	    }
 	    dill_mark_branch_location(s, label);
 	    INSN_OUT(s, B_FORM(16, op_BO[op], op_BI[op], 0 /* target */, 0, 0));
 	}
@@ -1713,6 +1668,10 @@ long val;
 	INSN_OUT(s, D_FORM(15, r, 0, hi16(val)));
 	// or immediate 
 	INSN_OUT(s, D_FORM(24, r, r, lo16(val)));
+	if (val < 0) {
+	    /* extsw */
+	    INSN_OUT(s, X_FORM(31, r, r, r/*don't care */, 986));
+	}	    
     } else {	
 	// add immediate 
 	INSN_OUT(s, D_FORM(14, r, 0, lo16(val)));
@@ -1849,7 +1808,6 @@ int bit64;
     }
     ppc64le_reg_init(s);
     smi->act_rec_size = 0;
-    smi->conversion_word = 0;
     smi->cur_arg_offset = 0;
     if (bit64) {
 	smi->stack_align = 8; /* 8 for ppc64le */

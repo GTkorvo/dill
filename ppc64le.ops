@@ -42,9 +42,9 @@ sub upperc {
 &arith2_insn("bswap", "s us i u ul l f d", "ppc64le_bswap", "0", "T");
 
 &arithi_insn("add", "i u ul l p", "ppc64le_imm_arith", "14", "266");
-&arithi_insn("sub", "i u ul l p", "ppc64le_imm_arith", "8", "40");
+&arithi_insn("sub", "i u ul l p", "ppc64le_imm_arith", "8", "266");
 &arithi_insn("mul", "u ul", "ppc64le_imm_arith", "7", "233");
-&arithi_insn("mul", "i l", "ppc64le_imm_arith", "7", "235");
+&arithi_insn("mul", "i l", "ppc64le_imm_arith", "7", "233");
 &arithi_insn("div", "u", "ppc64le_divi", "459", "0");
 &arithi_insn("div", "ul", "ppc64le_divi", "457", "1");
 &arithi_insn("div", "i", "ppc64le_divi", "491", "0");
