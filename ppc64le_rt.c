@@ -8,12 +8,6 @@
 #include "ppc64le.h"
 #include <string.h>
 
-extern long dill_ppc64le_hidden_udiv(unsigned long a, unsigned long b)
-{ return a / b; }
-
-static xfer_entry ppc64le_xfer_recs[] = {
-    {"dill_ppc64le_hidden_udiv", (void*)dill_ppc64le_hidden_udiv},
-    {(char*)0, (void*)0}};
 
 #define ppc64le_ori(s, dest, src, imm) 	INSN_OUT(s, D_FORM(24, dest, src, lo16(imm)));
 #define ppc64le_andi(s, dest, src, imm) INSN_OUT(s, D_FORM(28, dest, src, lo16(imm)));
@@ -44,36 +38,28 @@ ppc64le_rt_call_link(char *code, call_t *t, int force_plt)
 static void
 ppc64le_flush(void *base, void *limit)
 {
-#if defined(HOST_PPC64LE) || defined(HOST_PPC64LEV9)
+#if defined(HOST_PPC64LE)
     {
 	volatile void *ptr = base;
 
 #ifdef __GNUC__
 	/* flush every 8 bytes of preallocated insn stream. */
 	while((char*)ptr < (char*) limit) {
-	  //	    asm volatile ("iflush %0" : /* */ : "r" (ptr));
-	    ptr = (char *)ptr + 8;
+	    ptr = (char *)ptr + 128;
+	    asm volatile ("dcbst 0, %0" : /* */ : "r" (ptr));
 	}
-	asm volatile("nop");
-	asm volatile("nop");
-	asm volatile("nop");
-	asm volatile("nop");
-	asm volatile("nop");
+	asm volatile("sync");
+	while((char*)ptr < (char*) limit) {
+	    ptr = (char *)ptr + 128;
+	    asm volatile ("icbi 0, %0" : /* */ : "r" (ptr));
+	}
+	asm volatile("isync");
 #else
 	int nbytes = (char*)limit - (char*)base;
 	for(; nbytes > 0;nbytes -= 8) {
 	    asm("add %i0, 8, %i0");
-	    asm ("iflush %i0");
+	    asm ("iflush %r3");
 	}
-
-	asm ("nop");
-	asm ("nop");
-	asm ("nop");
-	asm ("nop");
-	asm ("nop");
-#endif
-#ifdef USE_MEMBAR
-	asm("membar #Sync");
 #endif
     }
 #endif
@@ -83,7 +69,6 @@ extern char *
 ppc64le_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
     char *tmp = code;
-    dill_lookup_xfer_addrs(t, &ppc64le_xfer_recs[0]);
 #ifdef USE_MMAP_CODE_SEG
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON

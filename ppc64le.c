@@ -622,26 +622,54 @@ ppc64le_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offs
     if (offset == 0) {
 	ppc64le_pbsload(s, type, junk, dest, src, _gpr0);
     } else {
-	ppc64le_set(s, _gpr2, offset);
-	ppc64le_pbsload(s, type, junk, dest, src, _gpr2);
+	ppc64le_set(s, _gpr0, offset);
+	ppc64le_pbsload(s, type, junk, dest, src, _gpr0);
     }
 }
 
 
 extern void
-ppc64le_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
+ppc64le_pbsload(dill_stream s, int typ, int junk, int dest, int src1, int src2)
 {
-    switch (type) {
-    case DILL_L: case DILL_UL: case DILL_P:
-    {
-	ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-	if (smi->stack_align == 4) {
-	    type = DILL_I;
+    switch (typ) {
+    case DILL_S:
+    case DILL_US:
+	/* lhbrx dest, (src1), (src2) */
+	INSN_OUT(s, X_FORM(31, dest, src1, src2, 790));
+	if (typ == DILL_S) {
+	    /* extsh */
+	    INSN_OUT(s, X_FORM(31, dest, dest, 0/*don't care */, 922));
+	}	    
+	break;
+    case DILL_I:
+    case DILL_U:
+	/* lwbrx dest, (src1), (src2) */
+	INSN_OUT(s, X_FORM(31, dest, src1, src2, 534));
+	if (typ == DILL_I) {
+	    /* extsw */
+	    INSN_OUT(s, X_FORM(31, dest, dest, 0, 986));
 	}
-	/* fall through */
-    }
-    default:
-
+	break;
+    case DILL_L:
+    case DILL_UL:
+	/* ldbrx dest, (src1), (src2) */
+	INSN_OUT(s, X_FORM(31, dest, src1, src2, 532));
+	break;
+    case DILL_F:
+	/* lwbrx _gpr0, (src1), (src2) */
+	INSN_OUT(s, X_FORM(31, _gpr0, src1, src2, 534));
+	/* stfsu  src, -16(r1) */
+	INSN_OUT(s, D_FORM(53, _gpr0, _gpr1, -16 & 0xffff));
+	/* lfs dest, (r1) */
+	INSN_OUT(s, D_FORM(49, dest, _gpr1, 0));
+	/* addi r1, r1, 16 */
+	INSN_OUT(s, D_FORM(14, _gpr1, _gpr1, 16));
+	break;
+    case DILL_D:
+	/* ldbrx _gpr0, (src1), (src2) */
+	INSN_OUT(s, X_FORM(31, _gpr0, src1, src2, 532));
+	/* mtvsrd */
+	INSN_OUT(s, X_FORM(31, dest, _gpr0, 0, 179));
 	break;
     }
 }
@@ -720,9 +748,6 @@ ppc64le_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
     }
 }
 
-extern long dill_ppc64le_hidden_udiv(unsigned long a, unsigned long b);
-
-
 extern void ppc64le_mod(dill_stream s, int is_signed, int type_long, int dest, 
 		      int src1, int src2)
 {
@@ -760,13 +785,6 @@ extern void ppc64le_div(dill_stream s, int op, int type_long, int dest, int src1
 		      int src2)
 {
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-    if ((op == 0x0d /* udiv */) && (type_long == 1)) {
-	int return_reg;
-	return_reg = dill_scalll(s, (void*)&dill_ppc64le_hidden_udiv, "dill_ppc64le_hidden_udiv", "%l%l", src1, src2);
-	dill_movl(s, dest, return_reg);
-	return;
-
-    }
     INSN_OUT(s, XO_FORM(31, dest, src1, src2, op));
 }
 
