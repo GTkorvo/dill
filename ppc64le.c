@@ -720,16 +720,6 @@ ppc64le_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
     }
 }
 
-extern long dill_ppc64le_hidden_modi(int a, int b);
-extern long dill_ppc64le_hidden_mod(long a, long b);
-extern unsigned long dill_ppc64le_hidden_umod(unsigned long a, unsigned long b);
-extern unsigned int dill_ppc64le_hidden_umodi(unsigned int a, unsigned int b);
-extern double dill_ppc64le_hidden_ultod(unsigned long a);
-extern float dill_ppc64le_hidden_ultof(unsigned long a);
-extern unsigned long dill_ppc64le_hidden_dtoul(double a);
-extern unsigned int dill_ppc64le_hidden_dtou(double a);
-extern unsigned long dill_ppc64le_hidden_ftoul(float a);
-extern unsigned int dill_ppc64le_hidden_ftou(float a);
 extern long dill_ppc64le_hidden_udiv(unsigned long a, unsigned long b);
 
 
@@ -1433,13 +1423,6 @@ extern void ppc64le_reti(dill_stream s, int data1, int data2, long imm)
 static void
 ppc64le_data_link(dill_stream s)
 {
-/*    struct branch_table *t = &s->p->branch_table;
-    int i;
-    for (i=0; i < t->data_mark_count; i++) {
-	int label = t->data_marks[i].label;
-	void *label_addr = t->label_locs[label] + (char*)s->p->code_base;
-	*t->data_marks[i].addr = label_addr;
-	}*/
 }
 
 static void

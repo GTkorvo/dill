@@ -1,42 +1,17 @@
 #include "config.h"
 #include "dill.h"
 #include "dill_internal.h"
+#include "sys/mman.h"
+#ifdef HAVE_MEMORY_H
+#include "memory.h"
+#endif
 #include "ppc64le.h"
+#include <string.h>
 
-extern long dill_ppc64le_hidden_modi(int a, int b)
-{ return a % b; }
-extern long dill_ppc64le_hidden_mod(long a, long b)
-{ return a % b; }
-extern unsigned long dill_ppc64le_hidden_umod(unsigned long a, unsigned long b)
-{ return a % b; }
-extern unsigned int dill_ppc64le_hidden_umodi(unsigned int a, unsigned int b)
-{ return a % b; }
-extern double dill_ppc64le_hidden_ultod(unsigned long a)
-{ return (double) a; }
-extern float dill_ppc64le_hidden_ultof(unsigned long a)
-{ return (float) a; }
-extern unsigned long dill_ppc64le_hidden_dtoul(double a)
-{ return (unsigned long) a; }
-extern unsigned int dill_ppc64le_hidden_dtou(double a)
-{ return (unsigned int) a; }
-extern unsigned long dill_ppc64le_hidden_ftoul(float a)
-{ return (unsigned long) a; }
-extern unsigned int dill_ppc64le_hidden_ftou(float a)
-{ return (unsigned int) a; }
 extern long dill_ppc64le_hidden_udiv(unsigned long a, unsigned long b)
 { return a / b; }
 
 static xfer_entry ppc64le_xfer_recs[] = {
-    {"dill_ppc64le_hidden_modi", (void*)dill_ppc64le_hidden_modi},
-    {"dill_ppc64le_hidden_mod", (void*)dill_ppc64le_hidden_mod},
-    {"dill_ppc64le_hidden_umodi", (void*)dill_ppc64le_hidden_umodi},
-    {"dill_ppc64le_hidden_umod", (void*)dill_ppc64le_hidden_umod},
-    {"dill_ppc64le_hidden_ultod", (void*)dill_ppc64le_hidden_ultod},
-    {"dill_ppc64le_hidden_ultof", (void*)dill_ppc64le_hidden_ultof},
-    {"dill_ppc64le_hidden_dtoul", (void*)dill_ppc64le_hidden_dtoul},
-    {"dill_ppc64le_hidden_ftoul", (void*)dill_ppc64le_hidden_ftoul},
-    {"dill_ppc64le_hidden_dtou", (void*)dill_ppc64le_hidden_dtou},
-    {"dill_ppc64le_hidden_ftou", (void*)dill_ppc64le_hidden_ftou},
     {"dill_ppc64le_hidden_udiv", (void*)dill_ppc64le_hidden_udiv},
     {(char*)0, (void*)0}};
 
@@ -107,9 +82,18 @@ ppc64le_flush(void *base, void *limit)
 extern char *
 ppc64le_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
-    int force_plt = 0;
+    char *tmp = code;
     dill_lookup_xfer_addrs(t, &ppc64le_xfer_recs[0]);
-    ppc64le_rt_call_link(code, t, force_plt);
-    ppc64le_flush(code, code + pkg->code_size);
-    return code + pkg->entry_offset;
+#ifdef USE_MMAP_CODE_SEG
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+    tmp = (void*)mmap(0, pkg->code_size,
+		      PROT_EXEC | PROT_READ | PROT_WRITE, 
+		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+    memcpy(tmp, code, pkg->code_size);
+#endif
+    ppc64le_rt_call_link(tmp, t, 0);
+    ppc64le_flush(tmp, tmp + pkg->code_size);
+    return tmp + pkg->entry_offset;
 }
