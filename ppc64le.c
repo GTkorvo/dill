@@ -1256,11 +1256,8 @@ static void internal_push(dill_stream s, int type, int immediate,
 	    }
 	    if (arg.in_reg != -1) {
 		/* put value in int regs too */
-		if (type == DILL_D) {
-		    ppc64le_movd2i(s, arg.in_reg, arg.out_reg);
-		} else {
-		    ppc64le_movf2i(s, arg.in_reg, arg.out_reg);
-		}
+		/* mfvsrc */
+		INSN_OUT(s, X_FORM(31, arg.out_reg, arg.in_reg, 0, 51));
 	    } else {
 		/* put it on the stack as well */
 		ppc64le_pstorei(s, arg.type, 0, arg.out_reg, _sp,
@@ -1315,12 +1312,7 @@ extern int ppc64le_calli(dill_stream s, int type, void *xfer_address, const char
     dill_mark_call_location(s, name, xfer_address);
     /* the next 5 ops will load a location into R12 */
     ppc64le_set(s, _gpr12, 0x1234567812345678);
-/*    ppc64le_nop(s);
-    ppc64le_nop(s);
-    ppc64le_nop(s);
-    ppc64le_nop(s);
-    ppc64le_nop(s);*/
-    /* mtctr r12  (store jump addrss from r12 into control reg */
+    /* mtctr r12  (store jump address from r12 into control reg */
     INSN_OUT(s, XFX_FORM(31, _gpr12, 0x120, 467));
     /* std r2, 24(r1)    (save our r2 value) */
     ppc64le_pstorei(s, DILL_L, 0, _gpr2, _gpr1, 24);
@@ -1342,9 +1334,19 @@ extern int ppc64le_callr(dill_stream s, int type, int src)
 {
     int caller_side_ret_reg = _gpr3;
 
-    /* save temporary registers */
-    /*    ppc64le_jal(s, _o7, src);
-    ppc64le_nop(s);*/
+    /* move the target to r12 */
+    ppc64le_movl(s, _gpr12, src);
+    /* mtctr r12  (store jump address from r12 into control reg */
+    INSN_OUT(s, XFX_FORM(31, _gpr12, 0x120, 467));
+    /* std r2, 24(r1)    (save our r2 value) */
+    ppc64le_pstorei(s, DILL_L, 0, _gpr2, _gpr1, 24);
+    /* bctrl (branch and link to control reg) */
+    INSN_OUT(s, 0x4e800421);
+
+    /* restore temporary registers */
+    /* ld r2, 24(r1)    (load our r2 value back) */
+    ppc64le_ploadi(s, DILL_L, 0, _gpr2, _gpr1, 24);
+
     /* restore temporary registers */
     if ((type == DILL_D) || (type == DILL_F)) {
 	caller_side_ret_reg = _fpr0;
