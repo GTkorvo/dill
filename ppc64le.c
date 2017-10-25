@@ -791,8 +791,20 @@ extern void ppc64le_mod(dill_stream s, int is_signed, int type_long, int dest,
 extern void ppc64le_modi(dill_stream s, int data1, int data2, int dest, int src1, 
 		      long imm)
 {
-    ppc64le_set(s, dest, imm);
-    ppc64le_mod(s, data1, data2, dest, src1, dest);
+    /* 
+     * mod uses _gpr0, so we need something else to use as a temporary reg.
+     * Push the value of _gpr3, pop it when done.
+     */
+    int tmp_reg = _gpr3;
+    /* stdu  tmp_reg, -8(r1) */
+    INSN_OUT(s, D_FORM(62, tmp_reg, _gpr1, (-8 & 0xffff) | 0x1));
+    ppc64le_set(s, tmp_reg, imm);
+    ppc64le_mod(s, data1, data2, dest, src1, tmp_reg);
+    /* ld tmp_reg, (r1) */
+    INSN_OUT(s, D_FORM(58, tmp_reg, _gpr1, 0));
+    /* addi r1, r1, 16 */
+    INSN_OUT(s, D_FORM(14, _gpr1, _gpr1, 8));
+    
 }
 
 extern void ppc64le_div(dill_stream s, int op, int type_long, int dest, int src1,
