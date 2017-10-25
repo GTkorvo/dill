@@ -264,8 +264,8 @@ long imm;
     if (((long)imm) < 32767 && ((long)imm) >= -32768) {
 	INSN_OUT(s, D_FORM(op, dest, src1, imm));
     } else {
-	ppc64le_set(s, dest, imm);
-	ppc64le_XOFORM_arith(s, 31, full_op, dest, src1, dest);
+	ppc64le_set(s, _gpr0, imm);
+	ppc64le_XOFORM_arith(s, 31, full_op, dest, src1, _gpr0);
     }
 }
 
@@ -311,8 +311,8 @@ long imm;
 	/* D-FORM */
 	INSN_OUT(s, D_FORM(op, src1, dest, imm));
     } else {
-	ppc64le_set(s, dest, imm);
-	ppc64le_log_arith(s, 31, full_op, dest, src1, dest);
+	ppc64le_set(s, _gpr0, imm);
+	ppc64le_log_arith(s, 31, full_op, dest, src1, _gpr0);
     }
 }
 
