@@ -116,11 +116,14 @@ extern int
 ppc64le_localb(dill_stream s, int size)
 {
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
+    int ret_offset = smi->act_rec_size + smi->stack_constant_offset;
+
     if (size < 0) size = 0;
+
     smi->act_rec_size = roundup(smi->act_rec_size, size);
 
     smi->act_rec_size += roundup(size, smi->stack_align);
-    return smi->act_rec_size + smi->stack_constant_offset;
+    return ret_offset;
 }
 
 extern int ppc64le_local_op(dill_stream s, int flag, int val)
@@ -486,6 +489,7 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 		args[i].is_register = 1;
 		reg = ++last_incoming_fp_arg;
 		args[i].in_reg = args[i].out_reg = reg;
+		last_incoming_int_arg++;
 	    } else {
 		args[i].is_register = 0;
 	    }
@@ -619,10 +623,16 @@ static char ld_bs_opcodes[] = {  /* load from alternate space */
 extern void
 ppc64le_pbsloadi(dill_stream s, int type, int junk, int dest, int src, long offset)
 {
+    if ((type == DILL_C) || (type == DILL_UC)) {
+	ppc64le_ploadi(s, type, junk, dest, src, offset);
+	return;
+    }
     if (offset == 0) {
-	ppc64le_pbsload(s, type, junk, dest, src, _gpr0);
+	/* _gpr0 in src1 position is immediate 0 */
+	ppc64le_pbsload(s, type, junk, dest, _gpr0, src);
     } else {
 	ppc64le_set(s, _gpr0, offset);
+	/* _gpr0 in src2 position uses the value of gpr0 */
 	ppc64le_pbsload(s, type, junk, dest, src, _gpr0);
     }
 }
@@ -632,6 +642,10 @@ extern void
 ppc64le_pbsload(dill_stream s, int typ, int junk, int dest, int src1, int src2)
 {
     switch (typ) {
+    case DILL_C:
+    case DILL_UC:
+	ppc64le_pload(s, typ, junk, dest, src1, src2);
+	break;
     case DILL_S:
     case DILL_US:
 	/* lhbrx dest, (src1), (src2) */
@@ -792,8 +806,8 @@ extern void ppc64le_divi(dill_stream s, int op, int type_long,
 		       int dest, int src, long imm)
 {
     ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-    ppc64le_set(s, dest, imm);
-    ppc64le_div(s, op, type_long, dest, src, dest);
+    ppc64le_set(s, _gpr0, imm);
+    ppc64le_div(s, op, type_long, dest, src, _gpr0);
 }
 
 extern void
@@ -917,20 +931,21 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	INSN_OUT(s, X_FORM(31, dest, dest, 0/*don't care */, 922));
 	break;
     case CONV(DILL_F,DILL_UC):
-	INSN_OUT(s, XX2_FORM(60, src, src, 328));
+	INSN_OUT(s, XX2_FORM(60, src, src, 408));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	ppc64le_andi(s, dest, dest, 0xff);
 	break;
     case CONV(DILL_F,DILL_US):
 	/* xscvdpsxd */
-	INSN_OUT(s, XX2_FORM(60, src, src, 328));
+	INSN_OUT(s, XX2_FORM(60, src, src, 408));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	ppc64le_andi(s, dest, dest, 0xffff);
 	break;
     case CONV(DILL_F,DILL_U):
-	INSN_OUT(s, XX2_FORM(60, src, src, 328));
+	INSN_OUT(s, XX2_FORM(60, src, src, 408));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
-	ppc64le_andi(s, dest, dest, 0xffffffff);
+	/* ppc64le_andi(s, dest, dest, 0xffffffff); */
+	INSN_OUT(s, M_FORM(21, dest, dest, 0, 0, 31));
 	break;
     case CONV(DILL_F,DILL_UL):
 	INSN_OUT(s, XX2_FORM(60, src, src, 328));
@@ -974,14 +989,14 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	INSN_OUT(s, XX2_FORM(60, src, src, 344));
 	/* mfvsrc */
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
-	ppc64le_andi(s, dest, dest, 0xffffffff);
+	/* ppc64le_andi(s, dest, dest, 0xffffffff); */
+	INSN_OUT(s, M_FORM(21, dest, dest, 0, 0, 31));
 	break;
     case CONV(DILL_D,DILL_UL):
 	/* xscvdpsxds */
 	INSN_OUT(s, XX2_FORM(60, src, src, 328));
 	/* mfvsrc */
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
-	ppc64le_andi(s, dest, dest, 0xffffffff);
 	break;
     case CONV(DILL_C,DILL_D):
     case CONV(DILL_S,DILL_D):
@@ -1011,7 +1026,9 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_S,DILL_F):
     case CONV(DILL_I,DILL_F):
     case CONV(DILL_L,DILL_F):
+	/* mtvsrd */
 	INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
+	/* xscvsxdsp */
 	INSN_OUT(s, XX2_FORM(60, dest, dest, 312));
 	break;
     case CONV(DILL_C,DILL_UL):
