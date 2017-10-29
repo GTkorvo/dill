@@ -7,7 +7,7 @@
 #endif
 #include "ppc64le.h"
 #include <string.h>
-
+#include <stdio.h>
 
 #define ppc64le_ori(s, dest, src, imm) 	INSN_OUT(s, D_FORM(24, dest, src, lo16(imm)));
 #define ppc64le_andi(s, dest, src, imm) INSN_OUT(s, D_FORM(28, dest, src, lo16(imm)));
@@ -18,6 +18,20 @@
 #define hi16(im) ((((long)im) & 0xffffffff) >> 16)
 #define lo32(im) (((long)im) & 0xfffffffff)
 #define hi32(im) ((((long)im) >> 32) &  0xfffffffff)
+
+extern unsigned long dill_ppc64le_hidden_ftoul(float a)
+{ return (unsigned long) a; }
+extern unsigned int dill_ppc64le_hidden_ftou(float a)
+{ long l = (long) a;  unsigned int ret = l & 0xffffffff; return ret; }
+extern unsigned int dill_ppc64le_hidden_dtou(double a)
+{ long l = (long) a;  unsigned int ret = l & 0xffffffff; return ret; }
+
+static xfer_entry ppc64le_xfer_recs[] = {
+    {"dill_ppc64le_hidden_ftoul", (void*)dill_ppc64le_hidden_ftoul},
+    {"dill_ppc64le_hidden_ftou", (void*)dill_ppc64le_hidden_ftou},
+    {"dill_ppc64le_hidden_dtou", (void*)dill_ppc64le_hidden_dtou},
+    {(char*)0, (void*)0}};
+
 
 extern void
 ppc64le_rt_call_link(char *code, call_t *t, int force_plt)
@@ -69,6 +83,7 @@ extern char *
 ppc64le_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
     char *tmp = code;
+    dill_lookup_xfer_addrs(t, &ppc64le_xfer_recs[0]);
 #ifdef USE_MMAP_CODE_SEG
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON

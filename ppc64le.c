@@ -103,6 +103,10 @@ dump_bits(int val)
     printf("\n");
 }
 
+extern unsigned long dill_ppc64le_hidden_ftoul(float a);
+extern unsigned int dill_ppc64le_hidden_ftou(float a);
+extern unsigned int dill_ppc64le_hidden_dtou(double a);
+
 extern int
 ppc64le_local(dill_stream s, int type)
 {
@@ -521,7 +525,13 @@ ppc64le_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list 
 	    if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
 		ppc64le_int_mov(s, tmp_reg, args[i].in_reg);
 	    } else {
-		ppc64le_movf(s, tmp_reg, args[i].in_reg);
+		if (args[i].type == DILL_F) {
+		    /* frsp */
+		    /* convert from double to single in our permanent reg */
+		    INSN_OUT(s, X_FORM(63, tmp_reg, 0, args[i].in_reg, 12));
+		} else {
+		    ppc64le_movf(s, tmp_reg, args[i].in_reg);
+		}
 	    }
 	} else {
 	    /* load the old SP into our int temporary */
@@ -889,8 +899,7 @@ extern void
 ppc64le_convert(dill_stream s, int from_type, int to_type, 
 	      int dest, int src)
 {
-    ppc64le_mach_info smi = (ppc64le_mach_info) s->p->mach_info;
-    int word_size = smi->stack_align << 3;
+    int return_reg;
 
     from_type &= 0xf;
     to_type &= 0xf;
@@ -927,8 +936,11 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	break;
     case CONV(DILL_F,DILL_I):
-	INSN_OUT(s, XX2_FORM(60, src, src, 344));
+	/* xscvdpsxws */
+	INSN_OUT(s, XX2_FORM(60, src, src, 88));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
+	/* extsw */
+	INSN_OUT(s, X_FORM(31, dest, dest, 0, 986));
 	break;
     case CONV(DILL_F,DILL_C):
 	INSN_OUT(s, XX2_FORM(60, src, src, 344));
@@ -943,27 +955,42 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	INSN_OUT(s, X_FORM(31, dest, dest, 0/*don't care */, 922));
 	break;
     case CONV(DILL_F,DILL_UC):
-	INSN_OUT(s, XX2_FORM(60, src, src, 408));
+	INSN_OUT(s, XX2_FORM(60, src, src, 344));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	ppc64le_andi(s, dest, dest, 0xff);
 	break;
     case CONV(DILL_F,DILL_US):
 	/* xscvdpsxd */
-	INSN_OUT(s, XX2_FORM(60, src, src, 408));
+	INSN_OUT(s, XX2_FORM(60, src, src, 344));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	ppc64le_andi(s, dest, dest, 0xffff);
 	break;
     case CONV(DILL_F,DILL_U):
+#define CALL_VERSION 1
+#ifdef ORIG	
 	INSN_OUT(s, XX2_FORM(60, src, src, 408));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
-	/* ppc64le_andi(s, dest, dest, 0xffffffff); */
-	INSN_OUT(s, M_FORM(21, dest, dest, 0, 0, 31));
+#endif
+#ifdef CALL_VERSION
+	return_reg = dill_scalli(s, (void*)dill_ppc64le_hidden_ftou, "dill_ppc64le_hidden_ftou", "%f", src);
+	dill_movi(s, dest, return_reg);
+#endif
+#ifdef FCTIWUZ
+	/* round from double to single   xvcvspsxds */
+//	INSN_OUT(s, XX2_FORM(60, src, src, 408));
+	/* fctiwuz */
+	INSN_OUT(s, X_FORM(63, _fpr0, 0, src, 143));
+	INSN_OUT(s, X_FORM(31, _fpr0, dest, 0, 51));
+	/* ppc64le_andi(s, src, src, src, 0xffffffff); */
+//	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
+#endif
 	break;
     case CONV(DILL_F,DILL_UL):
 	INSN_OUT(s, XX2_FORM(60, src, src, 328));
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	break;
     case CONV(DILL_D,DILL_F):
+	/* frsp */
 	INSN_OUT(s, X_FORM(63, dest, 0, src, 12));
 	break;
     case CONV(DILL_D,DILL_L):
@@ -973,8 +1000,8 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	break;
     case CONV(DILL_D,DILL_I):
-	/* xscvdpsxds */
-	INSN_OUT(s, XX2_FORM(60, src, src, 344));
+	/* xscvdpsxws */
+	INSN_OUT(s, XX2_FORM(60, src, src, 88));
 	/* mfvsrc */
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	break;
@@ -997,12 +1024,18 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
 	ppc64le_andi(s, dest, dest, 0xffff);
 	break;
     case CONV(DILL_D,DILL_U):
+#ifdef CALL_VERSION
+	return_reg = dill_scalli(s, (void*)dill_ppc64le_hidden_dtou, "dill_ppc64le_hidden_ftou", "%f", src);
+	dill_movi(s, dest, return_reg);
+#endif
+#ifdef ORIG
 	/* xscvdpsxds */
 	INSN_OUT(s, XX2_FORM(60, src, src, 344));
 	/* mfvsrc */
 	INSN_OUT(s, X_FORM(31, src, dest, 0, 51));
 	/* ppc64le_andi(s, dest, dest, 0xffffffff); */
 	INSN_OUT(s, M_FORM(21, dest, dest, 0, 0, 31));
+#endif
 	break;
     case CONV(DILL_D,DILL_UL):
 	/* xscvdpsxds */
@@ -1025,14 +1058,19 @@ ppc64le_convert(dill_stream s, int from_type, int to_type,
     case CONV(DILL_US,DILL_D):
     case CONV(DILL_U,DILL_D):
     case CONV(DILL_UL,DILL_D): 
+	/* mtvsrd */
+	INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
+	/* xscvuxddp */
+	INSN_OUT(s, XX2_FORM(60, dest, dest, 360));
+	break;
     case CONV(DILL_UC,DILL_F):
     case CONV(DILL_US,DILL_F):
     case CONV(DILL_U,DILL_F):
     case CONV(DILL_UL,DILL_F):
 	/* mtvsrd */
 	INSN_OUT(s, X_FORM(31, dest, src, 0, 179));
-	/* xscvuxddp */
-	INSN_OUT(s, XX2_FORM(60, dest, dest, 360));
+	/* xscvuxdsp */
+	INSN_OUT(s, XX2_FORM(60, dest, dest, 296));
 	break;
     case CONV(DILL_C,DILL_F):
     case CONV(DILL_S,DILL_F):
