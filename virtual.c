@@ -4245,7 +4245,7 @@ virtual_proc_start(dill_stream c, char *subr_name, int arg_count,
 
 extern void dill_virtual_init(dill_stream c);
 
-static label_translation_table
+static void
 fill_label_translation(dill_stream c, label_translation_table lt)
 {
     int i = 0;
