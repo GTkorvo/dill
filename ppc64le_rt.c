@@ -69,11 +69,16 @@ ppc64le_flush(void *base, void *limit)
 	}
 	asm volatile("isync");
 #else
-	int nbytes = (char*)limit - (char*)base;
-	for(; nbytes > 0;nbytes -= 8) {
-	    asm("add %i0, 8, %i0");
-	    asm ("iflush %r3");
+	while((char*)ptr < (char*) limit) {
+	    ptr = (char *)ptr + 128;
+	    asm("dcbst 0, %r0");
 	}
+	asm ("sync");
+	while((char*)ptr < (char*) limit) {
+	    ptr = (char *)ptr + 128;
+	    asm("icbi 0, %r0");
+	}
+	asm ("isync");
 #endif
     }
 #endif
