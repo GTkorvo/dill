@@ -6,7 +6,7 @@
  
 # Compute paths
 get_filename_component(DILL_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-set(DILL_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+set(DILL_INCLUDE_DIRS "@INSTALL_INCLUDE_DIR@")
  
 # Our library dependencies (contains definitions for IMPORTED targets)
 if(NOT TARGET dill AND NOT dill_BINARY_DIR)
