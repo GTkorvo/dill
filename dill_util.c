@@ -44,6 +44,12 @@
 extern char *getenv(const char *name);
 #endif
 
+static char *DILL_version = "DILL Version "DILL_VERSION"\n";
+
+void DILLprint_version(){
+    printf("%s",DILL_version);
+}
+
 extern void init_code_block(dill_stream s);
 static void free_code_blocks(dill_stream s);
 

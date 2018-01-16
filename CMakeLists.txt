@@ -9,13 +9,36 @@ include(CheckFunctionExists)
 include(CheckLibraryExists)
 include(CheckIncludeFiles)
 include(CheckTypeSize)
-include(CreateLibtoolFile)
 include(Compile)
-include(FindCERCSProject)
-include(AddLibtoolLibrary)
 include(TestBigEndian)
-include(CERCS_package)
 
+set(DILL_MAJOR_VERSION 2)
+set(DILL_MINOR_VERSION 3)
+set(DILL_PATCH_VERSION 0)
+set(DILL_VERSION
+  ${DILL_MAJOR_VERSION}.${DILL_MINOR_VERSION}.${DILL_PATCH_VERSION})
+
+# Offer the user the choice of overriding the installation directories
+set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
+set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
+set(INSTALL_INCLUDE_DIR include CACHE PATH
+  "Installation directory for header files")
+if(WIN32 AND NOT CYGWIN)
+  set(DEF_INSTALL_CMAKE_DIR CMake)
+else()
+  set(DEF_INSTALL_CMAKE_DIR lib/CMake/dill)
+endif()
+set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
+  "Installation directory for CMake files")
+ 
+# Make relative paths absolute (needed later on)
+foreach(p LIB BIN INCLUDE CMAKE)
+  set(var INSTALL_${p}_DIR)
+  if(NOT IS_ABSOLUTE "${${var}}")
+    set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
+  endif()
+endforeach()
+ 
 
 # use, i.e. don't skip the full RPATH for the build tree
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -39,11 +62,7 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 
 set (CMAKE_MACOSX_RPATH 1)
 
-file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/version.c" VERSION_TEXT REGEX "^static.*")
-STRING(REGEX REPLACE ".*Version ([0-9]+.[0-9]+.[0-9]+).*" "\\1" VERSION_TEXT "${VERSION_TEXT}")
-STRING(REGEX REPLACE "([0-9]+)[0-9.]*$" "\\1" MAJOR_VERSION_STRING ${VERSION_TEXT})
-
-set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c version.c)
+set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c)
 
 IF( NOT CMAKE_BUILD_TYPE )
     SET( CMAKE_BUILD_TYPE "RelWithDebInfo" )
@@ -129,9 +148,6 @@ find_package (LibFFI PATHS ${CMAKE_INSTALL_PREFIX} QUIET)
 IF (LIBFFI_FOUND) 
   set (EMULATION_POSSIBLE true)
 ENDIF (LIBFFI_FOUND) 
-IF(NOT DEFINED BUILD_SHARED_STATIC)
-  SET( BUILD_SHARED_STATIC "BOTH")
-ENDIF(NOT DEFINED BUILD_SHARED_STATIC)
 option(ENABLE_DISASSEMBLY "enable binutils-based disassembly (default is OFF)"
          OFF)
 
@@ -187,20 +203,53 @@ CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
 CHECK_INCLUDE_FILES(stdarg.h STDC_HEADERS)
 CHECK_INCLUDE_FILES(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILES(memory.h HAVE_MEMORY_H)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 set (NO_DISASSEMBLER TRUE)
 if (ENABLE_DISASSEMBLY)
-    FIND_CERCS_PROJECT(binutils LIBRARY opcodes INCLUDES dis-asm.h REQUIRED)
-    if (NOT BINUTILS_LIBRARIES)
+    if (BINUTILS_DIR) 
+      set(BINUTILS_LIB_SEARCH ${BINUTILS_DIR}/lib ${BINUTILS_DIR}/lib64)
+      set(BINUTILS_INC_SEARCH ${BINUTILS_DIR}/include)
+    endif()
+    find_library(LIBOPCODES NAMES opcodes HINTS ${BINUTILS_LIBRARIES} PATHS /usr/lib
+      /usr/lib64
+      /usr/local/lib
+      /usr/local/lib64
+      /opt/local/lib
+      /opt/local/lib64
+      ${BINUTILS_LIB_SEARCH}
+      ENV LIBRARY_PATH
+      ENV LD_LIBRARY_PATH)
+    find_library(LIBBFD NAMES bfd HINTS ${BINUTILS_LIBRARIES} PATHS /usr/lib
+      /usr/lib64
+      /usr/local/lib
+      /usr/local/lib64
+      /opt/local/lib
+      /opt/local/lib64
+      ${BINUTILS_LIB_SEARCH}
+      ENV LIBRARY_PATH
+      ENV LD_LIBRARY_PATH)
+    find_path (BINUTILS_INCLUDE_DIR
+      NAMES
+      dis-asm.h
+      PATHS
+      /usr/include
+      /usr/local/include
+      /opt/local/include
+      /opt/include
+      ${BINUTILS_INC_SEARCH}
+      ENV 
+      ENV CPATH)
+    if (("${LIBOPCODES}" STREQUAL "LIBOPCODES-NOTFOUND") OR 
+	("${BINUTILS_INCLUDE_DIR}" STREQUAL "BINUTILS_INCLUDE_DIR-NOTFOUND"))
 	message(FATAL_ERROR "libopcodes not found, You need to install binutils for disassembler support.")
     else()
 	INCLUDE_DIRECTORIES(${BINUTILS_INCLUDE_DIR})
 	LINK_DIRECTORIES(${BINUTILS_LIB_DIR})
-	LIST(APPEND TARGET_DEP_LIBS ${BINUTILS_LIBRARIES} opcodes)
+	LIST(APPEND TARGET_DEP_LIBS ${BINUTILS_LIBRARIES})
 	set(DIS_LIBS ${TARGET_DEP_LIBS})
 	set (NO_DISASSEMBLER FALSE)
     endif()
+    set (BINUTILS_LIBRARIES ${LIBOPCODES} ${LIBBFD})
     if(NOT DEFINED INIT_DISASSEMBLE_INFO_THREE_ARG)
 	#if not in Cache
     	FILE (WRITE check_init_disassemble_args.c "#include \"dis-asm.h\"
@@ -210,51 +259,102 @@ extern int main() {struct disassemble_info info;INIT_DISASSEMBLE_INFO(info, stdo
 	message (STATUS "Checking to see that the INIT_DISASSEMBLE_INFO macro requires three arguments :${INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS}")
 	set (INIT_DISASSEMBLE_INFO_THREE_ARG ${INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS} CACHE BOOL "Does the INIT_DISASSEMBLE_INFO macro require three arguments")
     endif()
-    SET (CMAKE_REQUIRED_LIBRARIES "bfd")
-    CHECK_LIBRARY_EXISTS(opcodes print_insn_sparc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_SPARC)
-    CHECK_LIBRARY_EXISTS(opcodes print_insn_big_powerpc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_BIG_POWERPC)
-    CHECK_LIBRARY_EXISTS(opcodes print_insn_little_powerpc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_LITTLE_POWERPC)
-    CHECK_LIBRARY_EXISTS(opcodes print_insn_ia64 "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_IA64)
-    CHECK_LIBRARY_EXISTS(opcodes print_insn_i386 "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_I386)
-    CHECK_LIBRARY_EXISTS(opcodes print_insn_arm "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_ARM)
-    CHECK_LIBRARY_EXISTS(opcodes print_insn_little_arm "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_LITTLE_ARM)
+    SET (CMAKE_REQUIRED_LIBRARIES ${LIBBFD})
+    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_sparc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_SPARC)
+    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_big_powerpc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_BIG_POWERPC)
+    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_little_powerpc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_LITTLE_POWERPC)
+    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_ia64 "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_IA64)
+    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_i386 "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_I386)
+    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_arm "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_ARM)
+    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_little_arm "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_LITTLE_ARM)
 
 endif()
 
-add_libtool_library(NAME dill SRC_LIST ${SRC_LIST} dill.h DEP_LIBS ${TARGET_DEP_LIBS} LINK_LIBS ${TARGET_DEP_LIBS})
+add_library(dill ${SRC_LIST})
+set(DILL_VERSION_MAJOR 2)
+set(DILL_VERSION_MINOR 2)
+set(DILL_VERSION_PATCH 1)
+set(DILL_VERSION_STRING ${DILL_VERSION_MAJOR}.${DILL_VERSION_MINOR}.${DILL_VERSION_PATCH})
+set_target_properties(dill PROPERTIES VERSION ${DILL_VERSION_STRING}
+                                          SOVERSION ${DILL_VERSION_MAJOR})
+target_include_directories(dill PUBLIC
+                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+		       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+                       $<INSTALL_INTERFACE:${include_dest}>
+                       $<INSTALL_INTERFACE:${lib_dest}>)
+
+
+target_link_libraries(dill ${TARGET_DEP_LIBS})
 
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.h DESTINATION include)
-install(TARGETS ${INSTALL_TARGETS}
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-)
+install(TARGETS dill
+  # IMPORTANT: Add the dill library to the "export-set"
+  EXPORT dillTargets
+  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
+  PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/dill"
+    COMPONENT dev)
 
 if (${CMAKE_C_COMPILER_ID} MATCHES "Intel") 
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
 endif()
 
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
-CONFIGURE_FILE(CTestCustom.ctest.in CTestCustom.ctest @ONLY)
+
+# Add all targets to the build-tree export set
+export(TARGETS dill
+  FILE "${PROJECT_BINARY_DIR}/dillTargets.cmake")
+ 
+# Export the package for use from the build-tree
+# (this registers the build-tree with a global CMake-registry)
+export(PACKAGE dill)
+ 
+# Create the dillConfig.cmake and dillConfigVersion files
+file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
+   "${INSTALL_INCLUDE_DIR}")
+# ... for the build tree
+set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+configure_file(dillConfig.cmake.in
+  "${PROJECT_BINARY_DIR}/dillConfig.cmake" @ONLY)
+# ... for the install tree
+set(CONF_INCLUDE_DIRS "\${DILL_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+configure_file(dillConfig.cmake.in
+  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/dillConfig.cmake" @ONLY)
+# ... for both
+configure_file(dillConfigVersion.cmake.in
+  "${PROJECT_BINARY_DIR}/dillConfigVersion.cmake" @ONLY)
+ 
+# Install the dillConfig.cmake and dillConfigVersion.cmake
+install(FILES
+  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/dillConfig.cmake"
+  "${PROJECT_BINARY_DIR}/dillConfigVersion.cmake"
+  DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+ 
+# Install the export set for use with the install-tree
+install(EXPORT dillTargets DESTINATION
+  "${INSTALL_CMAKE_DIR}" COMPONENT dev)
 
 # display status message for important variables
 MESSAGE( STATUS )
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
 MESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
-MESSAGE( STATUS "BUILD_SHARED_STATIC = ${BUILD_SHARED_STATIC}" )
 MESSAGE( STATUS "ENABLE_DISASSEMBLY = ${ENABLE_DISASSEMBLY}" )
 MESSAGE( STATUS "MULTI_TARGET = ${MULTI_TARGET}" )
+MESSAGE( STATUS "BUILD_TESTING = ${BUILD_TESTING}" )
 MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 
 INCLUDE(CTest)
-ENABLE_TESTING()
+mark_as_advanced(BUILD_TESTING)
+
 IF(BUILD_TESTING)
+  ENABLE_TESTING()
   SET(BUILDNAME "${BUILDNAME}" CACHE STRING "Name of build on the dashboard")
   MARK_AS_ADVANCED(BUILDNAME)
-ENDIF(BUILD_TESTING)
+  ADD_SUBDIRECTORY( tests )
+  ADD_SUBDIRECTORY( vtests )
 
-ADD_SUBDIRECTORY( tests )
-ADD_SUBDIRECTORY( vtests )
+ENDIF(BUILD_TESTING)
 

@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define with the build version of atl */
+#cmakedefine DILL_VERSION "@DILL_VERSION@"
+
 /* Define if bfd functions use bfd_byte arguments. */
 #undef BFD_BYTE
 
