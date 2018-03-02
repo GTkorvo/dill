@@ -62,6 +62,18 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 
 set (CMAKE_MACOSX_RPATH 1)
 
+include(CMakeDependentOption)
+
+# Setup shared library defaults.  If explicitly specified somehow, then default 
+# to that.  Otherwise base the default on whether or not shared libs are even
+# supported.
+get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
+cmake_dependent_option(BUILD_SHARED_LIBS
+  "Build shared libraries (so/dylib/dll)." ${SHARED_LIBS_SUPPORTED}
+  "SHARED_LIBS_SUPPORTED" OFF
+)
+mark_as_advanced(BUILD_SHARED_LIBS)
+
 set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c)
 
 IF( NOT CMAKE_BUILD_TYPE )
