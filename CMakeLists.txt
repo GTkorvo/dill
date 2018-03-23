@@ -1,8 +1,41 @@
 cmake_minimum_required(VERSION 2.8.3)
-cmake_policy(VERSION 2.8.3)
-project(dill C CXX)
+if(POLICY CMP0048)
+  cmake_policy(SET CMP0048 NEW)
+  project(DILL VERSION 2.3.0 LANGUAGES C CXX)
+else()
+  project(DILL C CXX)
+  set(DILL_MAJOR_VERSION 2)
+  set(DILL_MINOR_VERSION 3)
+  set(DILL_PATCH_VERSION 0)
+  set(DILL_VERSION
+    ${DILL_MAJOR_VERSION}.${DILL_MINOR_VERSION}.${DILL_PATCH_VERSION})
+endif()
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+# Some boilerplate to setup nice output directories
+set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
+set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
+set(CMAKE_INSTALL_INCLUDEDIR include
+  CACHE STRING "Installation include subdirectory")
+set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/atl
+  CACHE STRING "Installation CMake subdirectory")
+mark_as_advanced(CMAKE_INSTALL_BINDIR)
+mark_as_advanced(CMAKE_INSTALL_LIBDIR)
+mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
+mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
+
+list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+endif()
+if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+endif()
+if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+endif()
 
 include(CheckCSourceCompiles)
 include(CheckFunctionExists)
@@ -12,33 +45,6 @@ include(CheckTypeSize)
 include(Compile)
 include(TestBigEndian)
 
-set(DILL_MAJOR_VERSION 2)
-set(DILL_MINOR_VERSION 3)
-set(DILL_PATCH_VERSION 0)
-set(DILL_VERSION
-  ${DILL_MAJOR_VERSION}.${DILL_MINOR_VERSION}.${DILL_PATCH_VERSION})
-
-# Offer the user the choice of overriding the installation directories
-set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
-set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
-set(INSTALL_INCLUDE_DIR include CACHE PATH
-  "Installation directory for header files")
-if(WIN32 AND NOT CYGWIN)
-  set(DEF_INSTALL_CMAKE_DIR CMake)
-else()
-  set(DEF_INSTALL_CMAKE_DIR lib/CMake/dill)
-endif()
-set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
-  "Installation directory for CMake files")
- 
-# Make relative paths absolute (needed later on)
-foreach(p LIB BIN INCLUDE CMAKE)
-  set(var INSTALL_${p}_DIR)
-  if(NOT IS_ABSOLUTE "${${var}}")
-    set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
-  endif()
-endforeach()
- 
 
 # use, i.e. don't skip the full RPATH for the build tree
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -52,7 +58,6 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 # add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
 
 # the RPATH to be used when installing, but only if it's not a system directory
 LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
@@ -74,11 +79,32 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
+# Setup PIC defaults.  If explicitly specified somehow, then default 
+# to that.  Otherwise base the default on whether or not shared libs are even
+# supported.
+if(DEFINED DILL_ENABLE_PIC)
+  set(DILL_ENABLE_PIC_DEFAULT ${DILL_ENABLE_PIC})
+elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
+  set(DILL_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
+else()
+  set(DILL_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
+endif()
+cmake_dependent_option(DILL_ENABLE_PIC
+  "Build with Position Independent Code" ${DILL_ENABLE_PIC_DEFAULT}
+  "SHARED_LIBS_SUPPORTED" OFF
+)
+mark_as_advanced(DILL_ENABLE_PIC)
+set(CMAKE_POSITION_INDEPENDENT_CODE ${DILL_ENABLE_PIC})
+mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
+
+# Default to a RelWithDebInfo build if not specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebugInfo)
+endif()
+
+
 set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c)
 
-IF( NOT CMAKE_BUILD_TYPE )
-    SET( CMAKE_BUILD_TYPE "RelWithDebInfo" )
-ENDIF()
 
 CHECK_TYPE_SIZE("void*" CMAKE_SIZEOF_VOID_P)
 CHECK_TYPE_SIZE("long" SIZEOF_LONG)
@@ -282,91 +308,87 @@ extern int main() {struct disassemble_info info;INIT_DISASSEMBLE_INFO(info, stdo
 
 endif()
 
+set(DILL_LIBRARY_PREFIX "" CACHE STRING
+  "Prefix to prepend to the output library name")
+mark_as_advanced(DILL_LIBRARY_PREFIX)
+
 add_library(dill ${SRC_LIST})
-set(DILL_VERSION_MAJOR 2)
-set(DILL_VERSION_MINOR 2)
-set(DILL_VERSION_PATCH 1)
-set(DILL_VERSION_STRING ${DILL_VERSION_MAJOR}.${DILL_VERSION_MINOR}.${DILL_VERSION_PATCH})
-set_target_properties(dill PROPERTIES VERSION ${DILL_VERSION_STRING}
-                                          SOVERSION ${DILL_VERSION_MAJOR})
+if(DILL_LIBRARY_PREFIX)
+  set_target_properties(dill PROPERTIES
+    LIBRARY_OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill)
+endif()
+set_target_properties(dill PROPERTIES
+  VERSION ${DILL_VERSION}
+  SOVERSION ${DILL_VERSION_MAJOR})
 target_include_directories(dill PUBLIC
                        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 		       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
                        $<INSTALL_INTERFACE:${include_dest}>
                        $<INSTALL_INTERFACE:${lib_dest}>)
-
-
 target_link_libraries(dill ${TARGET_DEP_LIBS})
 
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.h DESTINATION include)
+add_library(dill::dill ALIAS dill)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dill.h"
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
 install(TARGETS dill
   # IMPORTANT: Add the dill library to the "export-set"
-  EXPORT dillTargets
-  RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
-  LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
-  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
-  PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/dill"
-    COMPONENT dev)
+  EXPORT dill-targets
+  RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"          COMPONENT bin
+  LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT shlib
+  ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT lib
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/dill" COMPONENT dev)
 
 if (${CMAKE_C_COMPILER_ID} MATCHES "Intel") 
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
 endif()
 
-CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # Add all targets to the build-tree export set
-export(TARGETS dill
-  FILE "${PROJECT_BINARY_DIR}/dillTargets.cmake")
+export(TARGETS dill NAMESPACE dill::
+  FILE "${PROJECT_BINARY_DIR}/dill-targets.cmake")
  
-# Export the package for use from the build-tree
-# (this registers the build-tree with a global CMake-registry)
-export(PACKAGE dill)
+configure_file(dill-config.cmake.in
+  "${PROJECT_BINARY_DIR}/dill-config.cmake" @ONLY)
+
+configure_file(dill-config-version.cmake.in
+  "${PROJECT_BINARY_DIR}/dill-config-version.cmake" @ONLY)
  
-# Create the dillConfig.cmake and dillConfigVersion files
-file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
-   "${INSTALL_INCLUDE_DIR}")
-# ... for the build tree
-set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
-configure_file(dillConfig.cmake.in
-  "${PROJECT_BINARY_DIR}/dillConfig.cmake" @ONLY)
-# ... for the install tree
-set(CONF_INCLUDE_DIRS "\${DILL_CMAKE_DIR}/${REL_INCLUDE_DIR}")
-configure_file(dillConfig.cmake.in
-  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/dillConfig.cmake" @ONLY)
-# ... for both
-configure_file(dillConfigVersion.cmake.in
-  "${PROJECT_BINARY_DIR}/dillConfigVersion.cmake" @ONLY)
- 
-# Install the dillConfig.cmake and dillConfigVersion.cmake
+# Install the dill-config.cmake and dill-config-version.cmake
 install(FILES
-  "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/dillConfig.cmake"
-  "${PROJECT_BINARY_DIR}/dillConfigVersion.cmake"
-  DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+  "${PROJECT_BINARY_DIR}/dill-config.cmake"
+  "${PROJECT_BINARY_DIR}/dill-config-version.cmake"
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
  
 # Install the export set for use with the install-tree
-install(EXPORT dillTargets DESTINATION
-  "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+install(EXPORT dill-targets DESTINATION
+  "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
 
 # display status message for important variables
-MESSAGE( STATUS )
-MESSAGE( STATUS "-------------------------------------------------------------------------------" )
-MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
-MESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
-MESSAGE( STATUS "ENABLE_DISASSEMBLY = ${ENABLE_DISASSEMBLY}" )
-MESSAGE( STATUS "MULTI_TARGET = ${MULTI_TARGET}" )
-MESSAGE( STATUS "BUILD_TESTING = ${BUILD_TESTING}" )
-MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
-MESSAGE( STATUS "-------------------------------------------------------------------------------" )
-
-INCLUDE(CTest)
+include(CTest)
 mark_as_advanced(BUILD_TESTING)
 
-IF(BUILD_TESTING)
+if(BUILD_TESTING)
   ENABLE_TESTING()
   SET(BUILDNAME "${BUILDNAME}" CACHE STRING "Name of build on the dashboard")
   MARK_AS_ADVANCED(BUILDNAME)
   ADD_SUBDIRECTORY( tests )
   ADD_SUBDIRECTORY( vtests )
+endif()
 
-ENDIF(BUILD_TESTING)
-
+option(DILL_QUIET "Suppress summary output" OFF)
+if(NOT DILL_QUIET)
+  message(STATUS )
+  message(STATUS "-----------------------------------------------------------------------------" )
+  message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
+  message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
+  message(STATUS "ENABLE_DISASSEMBLY = ${ENABLE_DISASSEMBLY}" )
+  message(STATUS "MULTI_TARGET = ${MULTI_TARGET}" )
+  message(STATUS "BUILD_TESTING = ${BUILD_TESTING}" )
+  message(STATUS "Change a value with: cmake -D<Variable>=<Value>" )
+  message(STATUS "-----------------------------------------------------------------------------" )
+endif()
