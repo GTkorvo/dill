@@ -16,7 +16,7 @@ set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
 set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
 set(CMAKE_INSTALL_INCLUDEDIR include
   CACHE STRING "Installation include subdirectory")
-set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/atl
+set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake
   CACHE STRING "Installation CMake subdirectory")
 mark_as_advanced(CMAKE_INSTALL_BINDIR)
 mark_as_advanced(CMAKE_INSTALL_LIBDIR)
@@ -186,8 +186,8 @@ find_package (LibFFI PATHS ${CMAKE_INSTALL_PREFIX} QUIET)
 IF (LIBFFI_FOUND) 
   set (EMULATION_POSSIBLE true)
 ENDIF (LIBFFI_FOUND) 
-option(ENABLE_DISASSEMBLY "enable binutils-based disassembly (default is OFF)"
-         OFF)
+option(DILL_ENABLE_DISASSEMBLY
+  "enable binutils-based disassembly (default is OFF)" OFF)
 
 set (ARCHITECTURES sparc powerpc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm7 arm8)
 foreach(_arch ${ARCHITECTURES})
@@ -206,21 +206,21 @@ add_custom_command(
   DEPENDS base.ops
 ) 
 
-OPTION(MULTI_TARGET  "Build all available target architectures" OFF)
+option(DILL_MULTI_TARGET  "Build all available target architectures" OFF)
 
-if (MULTI_TARGET)
-  message (STATUS "arch files is ${arch_files}")
-    set (SRC_LIST ${SRC_LIST} ${arch_files})
-elseif (NOT "${NATIVE_ARCH}" STREQUAL "UNSUPPORTED") 
-   set (SRC_LIST ${SRC_LIST} dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
-endif (MULTI_TARGET)
+if(DILL_MULTI_TARGET)
+  message(STATUS "arch files is ${arch_files}")
+  list(APPEND SRC_LIST ${arch_files})
+elseif(NOT "${NATIVE_ARCH}" STREQUAL "UNSUPPORTED") 
+  list(APPEND SRC_LIST dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
+endif()
 
-if (MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
+if(DILL_MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
     if (EMULATION_POSSIBLE)
 	set (EMU_LIB ${LIBFFI_LIBRARY})
 	INCLUDE_DIRECTORIES(${LIBFFI_INCLUDE_DIR})
     endif(EMULATION_POSSIBLE)
-    if ((NOT MULTI_TARGET) AND (NOT NATIVE_CG))
+    if ((NOT DILL_MULTI_TARGET) AND (NOT NATIVE_CG))
         message ( STATUS "Configure has detected no native dynamic code generation support 
 	for this architecture (\"$NATIVE_ARCH\").  However, the libffi
 	library was found, so library configure for emulation will be built.")
@@ -230,7 +230,7 @@ if (MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
     endif()
 else ()
     message ( FATAL_ERROR "Configure has detected no native dynamic code generation support 
-	for this architecture (\"$NATIVE_ARCH\"), -DMULTI_TARGET=ON 
+    for this architecture (\"$NATIVE_ARCH\"), -DDILL_MULTI_TARGET=ON 
 	was not specified, and no emulation is possible (avcall library 
 	not found)
 		       NO LIBRARY WILL BE BUILT")
@@ -243,7 +243,7 @@ CHECK_INCLUDE_FILES(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILES(memory.h HAVE_MEMORY_H)
 
 set (NO_DISASSEMBLER TRUE)
-if (ENABLE_DISASSEMBLY)
+if (DILL_ENABLE_DISASSEMBLY)
     if (BINUTILS_DIR) 
       set(BINUTILS_LIB_SEARCH ${BINUTILS_DIR}/lib ${BINUTILS_DIR}/lib64)
       set(BINUTILS_INC_SEARCH ${BINUTILS_DIR}/include)
@@ -362,11 +362,11 @@ configure_file(dill-config-version.cmake.in
 install(FILES
   "${PROJECT_BINARY_DIR}/dill-config.cmake"
   "${PROJECT_BINARY_DIR}/dill-config-version.cmake"
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/dill" COMPONENT dev)
  
 # Install the export set for use with the install-tree
-install(EXPORT dill-targets DESTINATION
-  "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+install(EXPORT dill-targets NAMESPACE dill::
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/dill" COMPONENT dev)
 
 # display status message for important variables
 include(CTest)
@@ -386,8 +386,8 @@ if(NOT DILL_QUIET)
   message(STATUS "-----------------------------------------------------------------------------" )
   message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
   message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
-  message(STATUS "ENABLE_DISASSEMBLY = ${ENABLE_DISASSEMBLY}" )
-  message(STATUS "MULTI_TARGET = ${MULTI_TARGET}" )
+  message(STATUS "DILL_ENABLE_DISASSEMBLY = ${DILL_ENABLE_DISASSEMBLY}" )
+  message(STATUS "DILL_MULTI_TARGET = ${DILL_MULTI_TARGET}" )
   message(STATUS "BUILD_TESTING = ${BUILD_TESTING}" )
   message(STATUS "Change a value with: cmake -D<Variable>=<Value>" )
   message(STATUS "-----------------------------------------------------------------------------" )
