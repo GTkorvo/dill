@@ -319,18 +319,17 @@ mark_as_advanced(DILL_LIBRARY_PREFIX)
 
 add_library(dill ${SRC_LIST})
 set_target_properties(dill PROPERTIES
-  OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill)
-set_target_properties(dill PROPERTIES
+  OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill
   VERSION ${DILL_VERSION}
   SOVERSION ${DILL_VERSION_MAJOR})
+add_library(dill::dill ALIAS dill)
+
 target_include_directories(dill PUBLIC
                        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 		       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
                        $<INSTALL_INTERFACE:${include_dest}>
                        $<INSTALL_INTERFACE:${lib_dest}>)
 target_link_libraries(dill ${TARGET_DEP_LIBS})
-
-add_library(dill::dill ALIAS dill)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dill.h"
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
