@@ -318,10 +318,8 @@ set(DILL_LIBRARY_PREFIX "" CACHE STRING
 mark_as_advanced(DILL_LIBRARY_PREFIX)
 
 add_library(dill ${SRC_LIST})
-if(DILL_LIBRARY_PREFIX)
-  set_target_properties(dill PROPERTIES
-    LIBRARY_OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill)
-endif()
+set_target_properties(dill PROPERTIES
+  OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill)
 set_target_properties(dill PROPERTIES
   VERSION ${DILL_VERSION}
   SOVERSION ${DILL_VERSION_MAJOR})
