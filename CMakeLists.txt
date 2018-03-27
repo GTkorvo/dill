@@ -16,7 +16,7 @@ set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
 set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
 set(CMAKE_INSTALL_INCLUDEDIR include
   CACHE STRING "Installation include subdirectory")
-set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake
+set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/dill
   CACHE STRING "Installation CMake subdirectory")
 mark_as_advanced(CMAKE_INSTALL_BINDIR)
 mark_as_advanced(CMAKE_INSTALL_LIBDIR)
@@ -364,11 +364,11 @@ configure_file(dill-config-version.cmake.in
 install(FILES
   "${PROJECT_BINARY_DIR}/dill-config.cmake"
   "${PROJECT_BINARY_DIR}/dill-config-version.cmake"
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/dill" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
  
 # Install the export set for use with the install-tree
 install(EXPORT dill-targets NAMESPACE dill::
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/dill" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
 
 # display status message for important variables
 include(CTest)
