@@ -325,10 +325,9 @@ set_target_properties(dill PROPERTIES
 add_library(dill::dill ALIAS dill)
 
 target_include_directories(dill PUBLIC
-                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-		       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                       $<INSTALL_INTERFACE:${include_dest}>
-                       $<INSTALL_INTERFACE:${lib_dest}>)
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(dill PRIVATE ${TARGET_DEP_LIBS})
 
 # Setup pkgconfig
