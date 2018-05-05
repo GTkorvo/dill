@@ -57,10 +57,11 @@ sub upperc {
 &compare_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "arm8_compare");
 &comparei_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "arm8_comparei");
 
-print COUT "jmp_table ${mach}_jump_table;\n";
+
+print COUT "DECLARE_JUMP_TABLE(${mach});\n";
 print COUT "static void gen_arm8_jump_table()\n";
 print COUT "{\n";
-print COUT "\t  ${mach}_jump_table = alloc_dill_jump_table();\n";
+print COUT "\t  FILL_JUMP_STRUCTURE($mach);\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
 print COUT $jmp_a2_assigns;
