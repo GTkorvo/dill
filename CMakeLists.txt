@@ -36,27 +36,26 @@ include(CheckTypeSize)
 include(Compile)
 include(TestBigEndian)
 
-
 # use, i.e. don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 
 # when building, don't use the install RPATH already
 # (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
 
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 # add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # the RPATH to be used when installing, but only if it's not a system directory
-LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-IF("${isSystemDir}" STREQUAL "-1")
-   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-ENDIF("${isSystemDir}" STREQUAL "-1")
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif("${isSystemDir}" STREQUAL "-1")
 
-set (CMAKE_MACOSX_RPATH 1)
+set(CMAKE_MACOSX_RPATH 1)
 
 include(CMakeDependentOption)
 include(ExternalProject)
@@ -76,100 +75,108 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebugInfo)
 endif()
 
-
-set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c)
-
+set(SRC_list
+  dill_util.c
+  dill_pkg.c
+  dill_cplus.c
+  dill_virtual.c
+  virtual.c
+  dill.c
+  vm.c
+)
 
 CHECK_TYPE_SIZE("void*" CMAKE_SIZEOF_VOID_P)
 CHECK_TYPE_SIZE("long" SIZEOF_LONG)
-set (NATIVE_CG true)
-if (("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86") OR
-	("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64") OR
-	("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64"))
-    if (CMAKE_SIZEOF_VOID_P MATCHES "8")
-      	set (NATIVE_ARCH x86_64)
-	set (HOST_X86_64 1)
-	set (TEST_PERL_FLAGS "-max_arg=4")
-	set (ARCH_FILE x86_64)
-    else (CMAKE_SIZEOF_VOID_P MATCHES "8")
-	set (NATIVE_ARCH x86)
-	set (HOST_X86 1)
-	set (TEST_PERL_FLAGS -no_float -max_arg=2)
-	set (ARCH_FILE x86)
-    endif (CMAKE_SIZEOF_VOID_P MATCHES "8")
-elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.*")
-    if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.5.*")
-	set (NATIVE_ARCH arm5)
-	set (HOST_ARM5 1)
-	set (TEST_PERL_FLAGS -max_arg=4)
-	set (ARCH_FILE arm5)
-    elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.6.")
-	set (NATIVE_ARCH arm6)
-	set (HOST_ARM6 1)
-	set (TEST_PERL_FLAGS -max_arg=4)
-	set (ARCH_FILE arm6)
-    elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.7.")
-	set (NATIVE_ARCH arm6)
-	set (HOST_ARM7 1)
-	set (TEST_PERL_FLAGS -max_arg=4)
-	set (ARCH_FILE arm6)
-    else ()
-	set (NATIVE_ARCH arm6)
-	set (HOST_ARM6 1)
-	set (TEST_PERL_FLAGS -max_arg=4)
-	set (ARCH_FILE arm6)
-    endif()
-elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
-    set (NATIVE_ARCH arm8)
-    set (HOST_ARM8 1)
-    set (ARCH_FILE arm8)
-elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "ppc64le")
-    set (NATIVE_ARCH ppc64le)
-    set (HOST_PPC64LE 1)
-    set (ARCH_FILE ppc64le)
-elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "s64fx")
-    set (NATIVE_ARCH sparcv9)
-    set (HOST_SPARCV9 1)
-    set (ARCH_FILE sparc)
+set(NATIVE_CG true)
+if(("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86") OR
+   ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64") OR
+   ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64"))
+  if(CMAKE_SIZEOF_VOID_P MATCHES "8")
+    set(NATIVE_ARCH x86_64)
+    set(HOST_X86_64 1)
+    set(TEST_PERL_FLAGS "-max_arg=4")
+    set(ARCH_FILE x86_64)
+  else(CMAKE_SIZEOF_VOID_P MATCHES "8")
+    set(NATIVE_ARCH x86)
+    set(HOST_X86 1)
+    set(TEST_PERL_FLAGS -no_float -max_arg=2)
+    set(ARCH_FILE x86)
+  endif(CMAKE_SIZEOF_VOID_P MATCHES "8")
+elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.*")
+  if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.5.*")
+    set(NATIVE_ARCH arm5)
+    set(HOST_ARM5 1)
+    set(TEST_PERL_FLAGS -max_arg=4)
+    set(ARCH_FILE arm5)
+  elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.6.")
+    set(NATIVE_ARCH arm6)
+    set(HOST_ARM6 1)
+    set(TEST_PERL_FLAGS -max_arg=4)
+    set(ARCH_FILE arm6)
+  elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.7.")
+    set(NATIVE_ARCH arm6)
+    set(HOST_ARM7 1)
+    set(TEST_PERL_FLAGS -max_arg=4)
+    set(ARCH_FILE arm6)
+  else()
+    set(NATIVE_ARCH arm6)
+    set(HOST_ARM6 1)
+    set(TEST_PERL_FLAGS -max_arg=4)
+    set(ARCH_FILE arm6)
+  endif()
+elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
+  set(NATIVE_ARCH arm8)
+  set(HOST_ARM8 1)
+  set(ARCH_FILE arm8)
+elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "ppc64le")
+  set(NATIVE_ARCH ppc64le)
+  set(HOST_PPC64LE 1)
+  set(ARCH_FILE ppc64le)
+elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "s64fx")
+  set(NATIVE_ARCH sparcv9)
+  set(HOST_SPARCV9 1)
+  set(ARCH_FILE sparc)
 else()
-    message (STATUS "NO CG for Processor \"${CMAKE_SYSTEM_PROCESSOR}\"")
-    set (NATIVE_CG false)
-    set (NATIVE_ARCH UNSUPPORTED)
+  message (STATUS "NO CG for Processor \"${CMAKE_SYSTEM_PROCESSOR}\"")
+  set(NATIVE_CG false)
+  set(NATIVE_ARCH UNSUPPORTED)
 endif()
 
-IF ((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
-    set (USE_MMAP_CODE_SEG 1)
-ENDIF()
+if((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+  set(USE_MMAP_CODE_SEG 1)
+endif()
 
 TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
-set (HARDFP_AVAILABLE 0)
+set(HARDFP_AVAILABLE 0)
 # Determine float ABI of ARM Linux
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    find_program(READELF readelf)
-    if (READELF MATCHES "NOTFOUND")
-        message(WARNING "readelf not found; float ABI detection disabled")
-    else (READELF MATCHES "NOTFOUND")
-        find_library(MATH_LIBRARY m /usr/lib)
-        execute_process(
-            COMMAND ${READELF} -A ${MATH_LIBRARY}
-            OUTPUT_VARIABLE ELF_ARCH
-            ERROR_QUIET)
-        if (ELF_ARCH MATCHES "Tag_ABI_VFP_args: VFP registers")
-	    set(HARDFP_AVAILABLE 1)
-        endif ()
-    endif (READELF MATCHES "NOTFOUND")
-endif (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  find_program(READELF readelf)
+  if(READELF MATCHES "NOTFOUND")
+    message(WARNING "readelf not found; float ABI detection disabled")
+  else(READELF MATCHES "NOTFOUND")
+    find_library(MATH_LIBRARY m /usr/lib)
+    execute_process(
+      COMMAND ${READELF} -A ${MATH_LIBRARY}
+      OUTPUT_VARIABLE ELF_ARCH
+      ERROR_QUIET
+    )
+    if(ELF_ARCH MATCHES "Tag_ABI_VFP_args: VFP registers")
+      set(HARDFP_AVAILABLE 1)
+    endif()
+  endif(READELF MATCHES "NOTFOUND")
+endif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
 set(ARM_HARD_FLOAT ${HARDFP_AVAILABLE})
 
-option(DILL_IGNORE_NATIVE  "Build to do emulation, regardless of architecture" OFF)
-if (DILL_IGNORE_NATIVE)
-    set (NATIVE_CG false)
-    set (NATIVE_ARCH UNSUPPORTED)
+option(DILL_IGNORE_NATIVE  "Build to do emulation, regardless of architecture"
+  OFF)
+if(DILL_IGNORE_NATIVE)
+  set(NATIVE_CG false)
+  set(NATIVE_ARCH UNSUPPORTED)
 endif()
 find_package (LibFFI PATHS ${CMAKE_INSTALL_PREFIX} QUIET)
-IF (LIBFFI_FOUND) 
-  set (EMULATION_POSSIBLE true)
-ELSEIF (DILL_IGNORE_NATIVE)
+if(LIBFFI_FOUND) 
+  set(EMULATION_POSSIBLE true)
+elseif(DILL_IGNORE_NATIVE)
   set(FFI_PREFIX_DIR ${CMAKE_BINARY_DIR}/libffi)
   set(FFI_SRC_DIR ${FFI_PREFIX_DIR}/src/LibFFI)
   set(FFI_INSTALL_DIR ${FFI_PREFIX_DIR}/install)
@@ -177,18 +184,18 @@ ELSEIF (DILL_IGNORE_NATIVE)
     PREFIX ${FFI_PREFIX_DIR}
     GIT_REPOSITORY https://github.com/libffi/libffi.git
     CONFIGURE_COMMAND cd ${FFI_SRC_DIR} && ./autogen.sh COMMAND ${FFI_SRC_DIR}/configure --prefix=${FFI_PREFIX_DIR}
-    )
-  set (EMULATION_POSSIBLE true)
+  )
+  set(EMULATION_POSSIBLE true)
   ExternalProject_Get_property(LibFFI install_dir)
-  set (LIBFFI_INCLUDE_DIR ${install_dir}/include)
+  set(LIBFFI_INCLUDE_DIR ${install_dir}/include)
   link_directories(${install_dir}/lib)
-  set (LIBFFI_LIBRARY -lffi)
-ENDIF()
+  set(LIBFFI_LIBRARY -lffi)
+endif()
 
 option(DILL_ENABLE_DISASSEMBLY
   "enable binutils-based disassembly (default is OFF)" OFF)
 
-set (ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
+set(ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
 foreach(_arch ${ARCHITECTURES})
   add_custom_command(
     OUTPUT "dill_${_arch}.c"
@@ -209,9 +216,9 @@ option(DILL_MULTI_TARGET  "Build all available target architectures" OFF)
 
 if(DILL_MULTI_TARGET)
   message(STATUS "arch files is ${arch_files}")
-  list(APPEND SRC_LIST ${arch_files})
+  list(APPEND SRC_list ${arch_files})
 elseif(NOT "${NATIVE_ARCH}" STREQUAL "UNSUPPORTED") 
-  list(APPEND SRC_LIST dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
+  list(APPEND SRC_list dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
 endif()
 
 # The MULTI_TARGET variable is only used to generate the preprocessor symbol
@@ -220,39 +227,60 @@ endif()
 set(MULTI_TARGET ${DILL_MULTI_TARGET})
 
 if(DILL_MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
-    if (EMULATION_POSSIBLE)
-	set (EMU_LIB ${LIBFFI_LIBRARY})
-	INCLUDE_DIRECTORIES(${LIBFFI_INCLUDE_DIR})
-    endif(EMULATION_POSSIBLE)
-    if ((NOT DILL_MULTI_TARGET) AND (NOT NATIVE_CG))
-        message ( STATUS "Configure has detected no native dynamic code generation support 
-	for this architecture (\"$NATIVE_ARCH\").  However, the libffi
-	library was found, so library configure for emulation will be built.")
-	set (EMULATION_ONLY true)
-	set (BUILD_EMULATOR true)
-	LIST(APPEND TARGET_DEP_LIBS ${EMU_LIB})
-    endif()
-else ()
-    message ( FATAL_ERROR "Configure has detected no native dynamic code generation support 
+  if(EMULATION_POSSIBLE)
+    set(EMU_LIB ${LIBFFI_LIBRARY})
+    include_directories(${LIBFFI_INCLUDE_DIR})
+  endif(EMULATION_POSSIBLE)
+  if((NOT DILL_MULTI_TARGET) AND (NOT NATIVE_CG))
+    message(STATUS
+      "Configure has detected no native dynamic code generation support 
+      for this architecture (\"$NATIVE_ARCH\").  However, the libffi
+      library was found, so library configure for emulation will be built."
+    )
+    set(EMULATION_ONLY true)
+    set(BUILD_EMULATOR true)
+    list(APPEND TARGET_DEP_LIBS ${EMU_LIB})
+  endif()
+else()
+  message(FATAL_ERROR
+    "Configure has detected no native dynamic code generation support 
     for this architecture (\"$NATIVE_ARCH\"), -DDILL_MULTI_TARGET=ON 
-	was not specified, and no emulation is possible (libffi library 
-	not found)
-		       NO LIBRARY WILL BE BUILT")
+    was not specified, and no emulation is possible (libffi library 
+    not found)
+    NO LIBRARY WILL BE BUILT"
+  )
 endif()
 
 CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
-
 CHECK_INCLUDE_FILES(stdarg.h STDC_HEADERS)
 CHECK_INCLUDE_FILES(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILES(memory.h HAVE_MEMORY_H)
 
-set (NO_DISASSEMBLER TRUE)
-if (DILL_ENABLE_DISASSEMBLY)
-    if (BINUTILS_DIR) 
-      set(BINUTILS_LIB_SEARCH ${BINUTILS_DIR}/lib ${BINUTILS_DIR}/lib64)
-      set(BINUTILS_INC_SEARCH ${BINUTILS_DIR}/include)
-    endif()
-    find_library(LIBOPCODES NAMES opcodes HINTS ${BINUTILS_LIBRARIES} PATHS /usr/lib
+set(NO_DISASSEMBLER TRUE)
+if(DILL_ENABLE_DISASSEMBLY)
+  if(BINUTILS_DIR) 
+    set(BINUTILS_LIB_SEARCH ${BINUTILS_DIR}/lib ${BINUTILS_DIR}/lib64)
+    set(BINUTILS_INC_SEARCH ${BINUTILS_DIR}/include)
+  endif()
+  find_library(LIBOPCODES
+    NAMES opcodes
+    HINTS ${BINUTILS_LIBRARIES}
+    PATHS
+      /usr/lib
+      /usr/lib64
+      /usr/local/lib
+      /usr/local/lib64
+      /opt/local/lib
+      /opt/local/lib64
+      ${BINUTILS_LIB_SEARCH}
+      ENV LIBRARY_PATH
+      ENV LD_LIBRARY_PATH
+  )
+  find_library(LIBBFD
+    NAMES bfd
+    HINTS ${BINUTILS_LIBRARIES}
+    PATHS
+      /usr/lib
       /usr/lib64
       /usr/local/lib
       /usr/local/lib64
@@ -261,64 +289,73 @@ if (DILL_ENABLE_DISASSEMBLY)
       ${BINUTILS_LIB_SEARCH}
       ENV LIBRARY_PATH
       ENV LD_LIBRARY_PATH)
-    find_library(LIBBFD NAMES bfd HINTS ${BINUTILS_LIBRARIES} PATHS /usr/lib
-      /usr/lib64
-      /usr/local/lib
-      /usr/local/lib64
-      /opt/local/lib
-      /opt/local/lib64
-      ${BINUTILS_LIB_SEARCH}
-      ENV LIBRARY_PATH
-      ENV LD_LIBRARY_PATH)
-    find_path (BINUTILS_INCLUDE_DIR
-      NAMES
-      dis-asm.h
-      PATHS
+  find_path(BINUTILS_INCLUDE_DIR
+    NAMES dis-asm.h
+    PATHS
       /usr/include
       /usr/local/include
       /opt/local/include
       /opt/include
       ${BINUTILS_INC_SEARCH}
       ENV 
-      ENV CPATH)
-    if (("${LIBOPCODES}" STREQUAL "LIBOPCODES-NOTFOUND") OR 
-	("${BINUTILS_INCLUDE_DIR}" STREQUAL "BINUTILS_INCLUDE_DIR-NOTFOUND"))
-	message(FATAL_ERROR "libopcodes not found, You need to install binutils for disassembler support.")
-    else()
-	INCLUDE_DIRECTORIES(${BINUTILS_INCLUDE_DIR})
-	set(HAVE_DIS_ASM_H true)
-	LINK_DIRECTORIES(${BINUTILS_LIB_DIR})
-	LIST(APPEND TARGET_DEP_LIBS opcodes bfd )
-	set(DIS_LIBS ${TARGET_DEP_LIBS})
-	set (NO_DISASSEMBLER FALSE)
-    endif()
-    set (BINUTILS_LIBRARIES ${LIBOPCODES} ${LIBBFD})
-    if(NOT DEFINED INIT_DISASSEMBLE_INFO_THREE_ARG)
-	#if not in Cache
-    	FILE (WRITE check_init_disassemble_args.c "#include \"dis-asm.h\"
-extern int main() {struct disassemble_info info;INIT_DISASSEMBLE_INFO(info, stdout, fprintf);}" )
-    	TRY_COMPILE (INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/check_init_disassemble_args.c CMAKE_FLAGS "-DCMAKE_C_LINK_EXECUTABLE=echo" COMPILE_DEFINITIONS -I${BINUTILS_INCLUDE_DIR} OUTPUT_VARIABLE LOG2)
-    	FILE (REMOVE check_init_disassemble_args.c)
-	message (STATUS "Checking to see that the INIT_DISASSEMBLE_INFO macro requires three arguments :${INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS}")
-	set (INIT_DISASSEMBLE_INFO_THREE_ARG ${INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS} CACHE BOOL "Does the INIT_DISASSEMBLE_INFO macro require three arguments")
-    endif()
-    SET (CMAKE_REQUIRED_LIBRARIES ${LIBBFD})
-    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_sparc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_SPARC)
-    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_big_powerpc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_BIG_POWERPC)
-    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_little_powerpc "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_LITTLE_POWERPC)
-    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_ia64 "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_IA64)
-    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_i386 "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_I386)
-    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_arm "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_ARM)
-    CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_little_arm "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_LITTLE_ARM)
-
+      ENV CPATH
+  )
+  if(("${LIBOPCODES}" STREQUAL "LIBOPCODES-NOTFOUND") OR 
+     ("${BINUTILS_INCLUDE_DIR}" STREQUAL "BINUTILS_INCLUDE_DIR-NOTFOUND"))
+    message(FATAL_ERROR "libopcodes not found, You need to install binutils for disassembler support.")
+  else()
+    include_directories(${BINUTILS_INCLUDE_DIR})
+    set(HAVE_DIS_ASM_H true)
+    link_directories(${BINUTILS_LIB_DIR})
+    list(APPEND TARGET_DEP_LIBS opcodes bfd )
+    set(DIS_LIBS ${TARGET_DEP_LIBS})
+    set(NO_DISASSEMBLER FALSE)
+  endif()
+  set(BINUTILS_LIBRARIES ${LIBOPCODES} ${LIBBFD})
+  if(NOT DEFINED INIT_DISASSEMBLE_INFO_THREE_ARG)
+    #if not in Cache
+    file(WRITE check_init_disassemble_args.c [=[
+#include "dis-asm.h"
+extern int main()
+{
+  struct disassemble_info info;
+  INIT_DISASSEMBLE_INFO(info, stdout, fprintf);
+  return 0;
+}]=])
+    try_compile(INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS
+      ${CMAKE_CURRENT_BINARY_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}/check_init_disassemble_args.c
+      CMAKE_FLAGS "-DCMAKE_C_LINK_EXECUTABLE=echo"
+      COMPILE_DEFINITIONS -I${BINUTILS_INCLUDE_DIR}
+      OUTPUT_VARIABLE LOG2
+    )
+    file(REMOVE check_init_disassemble_args.c)
+    message(STATUS "Checking to see that the INIT_DISASSEMBLE_INFO macro requires three arguments :${INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS}")
+    set(INIT_DISASSEMBLE_INFO_THREE_ARG ${INIT_DISASSEMBLE_INFO_THREE_ARGUMENTS} CACHE BOOL "Does the INIT_DISASSEMBLE_INFO macro require three arguments")
+  endif()
+  set(CMAKE_REQUIRED_LIBRARIES ${LIBBFD})
+  CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_sparc
+    "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_SPARC)
+  CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_big_powerpc
+    "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_BIG_POWERPC)
+  CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_little_powerpc
+    "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_LITTLE_POWERPC)
+  CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_ia64
+    "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_IA64)
+  CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_i386
+    "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_I386)
+  CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_arm
+    "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_ARM)
+  CHECK_LIBRARY_EXISTS(${LIBOPCODES} print_insn_little_arm
+    "${BINUTILS_LIB_DIR}" HAVE_PRINT_INSN_LITTLE_ARM)
 endif()
 
 set(DILL_LIBRARY_PREFIX "" CACHE STRING
   "Prefix to prepend to the output library name")
 mark_as_advanced(DILL_LIBRARY_PREFIX)
 
-add_library(dill ${SRC_LIST})
-if (FFI_PREFIX_DIR)
+add_library(dill ${SRC_list})
+if(FFI_PREFIX_DIR)
   add_dependencies (dill LibFFI)
 endif()
 set_target_properties(dill PROPERTIES
@@ -328,9 +365,10 @@ set_target_properties(dill PROPERTIES
 add_library(dill::dill ALIAS dill)
 
 target_include_directories(dill PUBLIC
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 target_link_libraries(dill PRIVATE ${TARGET_DEP_LIBS})
 
 # Setup pkgconfig
@@ -374,7 +412,7 @@ install(TARGETS dill
   ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"          COMPONENT lib
   PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/dill" COMPONENT dev)
 
-if (${CMAKE_C_COMPILER_ID} MATCHES "Intel") 
+if(${CMAKE_C_COMPILER_ID} MATCHES "Intel") 
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
 endif()
 
@@ -407,22 +445,24 @@ include(CTest)
 mark_as_advanced(BUILD_TESTING)
 
 if(BUILD_TESTING)
-  ENABLE_TESTING()
-  SET(BUILDNAME "${BUILDNAME}" CACHE STRING "Name of build on the dashboard")
-  MARK_AS_ADVANCED(BUILDNAME)
-  ADD_SUBDIRECTORY( tests )
-  ADD_SUBDIRECTORY( vtests )
+  enable_testing()
+  set(BUILDNAME "${BUILDNAME}" CACHE STRING "Name of build on the dashboard")
+  mark_as_advanced(BUILDNAME)
+  if(NATIVE_CG)
+    add_subdirectory(tests)
+  endif()
+  add_subdirectory(vtests)
 endif()
 
 option(DILL_QUIET "Suppress summary output" OFF)
 if(NOT DILL_QUIET)
-  message(STATUS )
-  message(STATUS "-----------------------------------------------------------------------------" )
+  message(STATUS)
+  message(STATUS "-----------------------------------------------------------------------------")
   message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
   message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
   message(STATUS "DILL_ENABLE_DISASSEMBLY = ${DILL_ENABLE_DISASSEMBLY}" )
   message(STATUS "DILL_MULTI_TARGET = ${DILL_MULTI_TARGET}" )
   message(STATUS "BUILD_TESTING = ${BUILD_TESTING}" )
   message(STATUS "Change a value with: cmake -D<Variable>=<Value>" )
-  message(STATUS "-----------------------------------------------------------------------------" )
+  message(STATUS "-----------------------------------------------------------------------------")
 endif()
