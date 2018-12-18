@@ -24,4 +24,4 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LibFFI  DEFAULT_MSG
                                   LIBFFI_LIBRARY LIBFFI_INCLUDE_DIR)
 
-mark_as_advanced(LIBFFI_INCLUDE_DIR LIBFFI_LIBRARY )
+mark_as_advanced(LIBFFI_INCLUDE_DIR LIBFFI_LIBRARY)

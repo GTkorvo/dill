@@ -26,7 +26,7 @@ endforeach()
 
 set_target_properties(vgeneral PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")
 
-set_test_properties(vtest_basic_call
+set_tests_properties(vtest_basic_call
   PROPERTIES PASS_REGULAR_EXPRESSION "########## A
 In ff  a=1, b=2, c=3, d=4, e=5, f=6, g=7, h=8, i=9, j=0
 In ff  a=1, b=2, c=3, d=4, e=5, f=6, g=7, h=8, i=9, j=0
