@@ -142,11 +142,13 @@ option(DILL_IGNORE_NATIVE  "Build to do emulation, regardless of architecture"
 if(DILL_IGNORE_NATIVE)
   set(NATIVE_CG FALSE)
 endif()
+set(LIBFFI_INTERNAL OFF)
 find_package(LibFFI)
 if(LIBFFI_FOUND)
   message(STATUS "Enabling emulation")
   set(EMULATION_POSSIBLE TRUE)
 elseif(DILL_IGNORE_NATIVE)
+  set(LIBFFI_INTERNAL ON)
   message(STATUS "Using private copy of libffi")
   include(ExternalProject)
   if(BUILD_SHARED_LIBS)
@@ -156,6 +158,7 @@ elseif(DILL_IGNORE_NATIVE)
   endif()
   ExternalProject_Add(libffi
     PREFIX ${CMAKE_BINARY_DIR}/libffi
+    INSTALL_DIR ${CMAKE_BINARY_DIR}/libffi/install
     URL https://github.com/libffi/libffi/archive/master.zip
     BUILD_IN_SOURCE TRUE
     CONFIGURE_COMMAND
@@ -169,13 +172,27 @@ elseif(DILL_IGNORE_NATIVE)
         --disable-docs
   )
   ExternalProject_Get_property(libffi INSTALL_DIR)
-  set(LIBFFI_INCLUDE_DIR ${INSTALL_DIR}/include)
-  install(DIRECTORY ${INSTALL_DIR}/lib/ DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  set(LIBFFI_PREFIX "${INSTALL_DIR}")
+  install(DIRECTORY ${LIBFFI_PREFIX}/lib/ DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+  # This directory has to exist at configure time or we get a buggy CMake error
+  file(MAKE_DIRECTORY "${LIBFFI_PREFIX}/include")
+
+  set(LIBFFI_INCLUDE_DIRS ${LIBFFI_PREFIX}/include)
   if(BUILD_SHARED_LIBS)
-    set(LIBFFI_LIBRARY ${INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}ffi${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(LIBFFI_LIBRARIES ${LIBFFI_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}ffi${CMAKE_SHARED_LIBRARY_SUFFIX})
   else()
-    set(LIBFFI_LIBRARY ${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ffi${CMAKE_STATIC_LIBRARY_SUFFIX})
+    set(LIBFFI_LIBRARIES ${LIBFFI_PREFIX}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ffi${CMAKE_STATIC_LIBRARY_SUFFIX})
   endif()
+  set(PC_LIBFFI_FOUND IGNORE)
+  find_package(LibFFI)
+  add_dependencies(libffi::libffi libffi)
+
+  if(NOT BUILD_SHARED_LIBS)
+    install(FILES ${PROJECT_SOURCE_DIR}/cmake/FindLibFFI.cmake
+      DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+  endif()
+
   message(STATUS "Enabling emulation")
   set(EMULATION_POSSIBLE TRUE)
 else()
@@ -221,8 +238,7 @@ set(MULTI_TARGET ${DILL_MULTI_TARGET})
 
 if(DILL_MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
   if(EMULATION_POSSIBLE)
-    list(APPEND TARGET_DEP_INC ${LIBFFI_INCLUDE_DIR})
-    list(APPEND TARGET_DEP_LIBS ${LIBFFI_LIBRARY})
+    list(APPEND TARGET_DEP_TGT libffi::libffi)
     list(APPEND PKG_DEP_PKG libffi)
   endif()
   if(NOT DILL_MULTI_TARGET AND NOT NATIVE_CG)
@@ -253,8 +269,8 @@ check_include_files(memory.h HAVE_MEMORY_H)
 set(NO_DISASSEMBLER TRUE)
 if(DILL_ENABLE_DISASSEMBLY)
   find_package(BinUtils REQUIRED)
-  list(APPEND TARGET_DEP_INC ${BinUtils_INCLUDE_DIRS})
-  list(APPEND TARGET_DEP_LIBS ${BinUtils_LIBRARIES})
+  #list(APPEND TARGET_DEP_TGT binutils::opcodes)
+  list(APPEND TARGET_DEP_TGT binutils::bfd)
   list(APPEND PKG_DEP_LIBS ${BinUtils_LIBRARIES})
 
   set(HAVE_DIS_ASM_H TRUE)
@@ -287,6 +303,11 @@ void main()
   check_function_exists(print_insn_little_arm     HAVE_PRINT_INSN_LITTLE_ARM)
 
   cmake_pop_check_state()
+
+  if(NOT BUILD_SHARED_LIBS)
+    install(FILES ${PROJECT_SOURCE_DIR}/cmake/FindBinUtils.cmake
+      DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+  endif()
 endif()
 
 set(DILL_LIBRARY_PREFIX "" CACHE STRING
@@ -294,9 +315,6 @@ set(DILL_LIBRARY_PREFIX "" CACHE STRING
 mark_as_advanced(DILL_LIBRARY_PREFIX)
 
 add_library(dill ${SRC_list})
-if(TARGET libffi)
-  add_dependencies(dill libffi)
-endif()
 set_target_properties(dill PROPERTIES
   OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill
   VERSION ${DILL_VERSION}
@@ -311,7 +329,7 @@ target_include_directories(dill
   PRIVATE
     ${TARGET_DEP_INC}
 )
-target_link_libraries(dill PRIVATE ${TARGET_DEP_LIBS})
+target_link_libraries(dill PRIVATE ${TARGET_DEP_TGT} ${TARGET_DEP_LIBS})
 
 # Setup pkgconfig
 set(_pkg_config_private_libs)
@@ -370,16 +388,27 @@ configure_file(
 export(TARGETS dill NAMESPACE dill::
   FILE "${PROJECT_BINARY_DIR}/dill-targets.cmake")
  
-configure_file(dill-config.cmake.in
-  "${PROJECT_BINARY_DIR}/dill-config.cmake" @ONLY)
+configure_file(dill-config-common.cmake.in
+  "${PROJECT_BINARY_DIR}/dill-config-common.cmake" @ONLY)
 
 configure_file(dill-config-version.cmake.in
   "${PROJECT_BINARY_DIR}/dill-config-version.cmake" @ONLY)
  
+configure_file(dill-config.cmake.in
+  "${PROJECT_BINARY_DIR}/dill-config.cmake" @ONLY)
+
+configure_file(dill-config-install.cmake.in
+  "${PROJECT_BINARY_DIR}/dill-config-install.cmake" @ONLY)
+
 # Install the dill-config.cmake and dill-config-version.cmake
 install(FILES
-  "${PROJECT_BINARY_DIR}/dill-config.cmake"
+  "${PROJECT_BINARY_DIR}/dill-config-common.cmake"
   "${PROJECT_BINARY_DIR}/dill-config-version.cmake"
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+
+install(
+  FILES "${PROJECT_BINARY_DIR}/dill-config-install.cmake"
+  RENAME dill-config.cmake
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
  
 # Install the export set for use with the install-tree
