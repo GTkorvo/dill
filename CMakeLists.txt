@@ -333,41 +333,49 @@ target_include_directories(dill
 target_link_libraries(dill PRIVATE ${TARGET_DEP_TGT} ${TARGET_DEP_LIBS})
 
 # Setup pkgconfig
-set(_pkg_config_private_libs)
-foreach(L ${PKG_DEP_LIBS})
-  if(L MATCHES "(.*)/?lib(.*)\\.")
-    if(CMAKE_MATCH_1)
-      list(APPEND _pkg_config_private_libs "-L${CMAKE_MATCH_1}")
+option(DILL_INSTALL_PKGCONFIG "Install Dill pkgconfig files" ON)
+mark_as_advanced(DILL_INSTALL_PKGCONFIG)
+if(DILL_INSTALL_PKGCONFIG)
+  set(_pkg_config_private_libs)
+  foreach(L ${PKG_DEP_LIBS})
+    if(L MATCHES "(.*)/?lib(.*)\\.")
+      if(CMAKE_MATCH_1)
+        list(APPEND _pkg_config_private_libs "-L${CMAKE_MATCH_1}")
+      endif()
+      list(APPEND _pkg_config_private_libs "-l${CMAKE_MATCH_2}")
+    elseif(L MATCHES "^-")
+      list(APPEND _pkg_config_private_libs "${L}")
+    else()
+      list(APPEND _pkg_config_private_libs "-l${L}")
     endif()
-    list(APPEND _pkg_config_private_libs "-l${CMAKE_MATCH_2}")
-  elseif(L MATCHES "^-")
-    list(APPEND _pkg_config_private_libs "${L}")
-  else()
-    list(APPEND _pkg_config_private_libs "-l${L}")
+  endforeach()
+  if(_pkg_config_private_libs)
+    list(REMOVE_DUPLICATES _pkg_config_private_libs)
   endif()
-endforeach()
-if(_pkg_config_private_libs)
-  list(REMOVE_DUPLICATES _pkg_config_private_libs)
+  string(REPLACE ";" " " _pkg_config_private_libs "${_pkg_config_private_libs}")
+  string(REPLACE ";" " " _pkg_config_req_pkg "${PKG_DEP_PKG}")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/dill.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/dill.pc
+    @ONLY
+  )
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.pc
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/dill-config.in
+    ${CMAKE_CURRENT_BINARY_DIR}/dill-config
+    @ONLY
+  )
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/dill-config
+    DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()
-string(REPLACE ";" " " _pkg_config_private_libs "${_pkg_config_private_libs}")
-string(REPLACE ";" " " _pkg_config_req_pkg "${PKG_DEP_PKG}")
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/dill.pc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/dill.pc
-  @ONLY
-)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.pc
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/dill-config.in
-  ${CMAKE_CURRENT_BINARY_DIR}/dill-config
-  @ONLY
-)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/dill-config
-  DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dill.h"
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+option(DILL_INSTALL_HEADERS "Install Dill header files" ON)
+mark_as_advanced(DILL_INSTALL_HEADERS)
+if(DILL_INSTALL_HEADERS)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dill.h"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+endif()
 
 install(TARGETS dill
   # IMPORTANT: Add the dill library to the "export-set"
