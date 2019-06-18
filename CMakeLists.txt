@@ -3,15 +3,9 @@ cmake_minimum_required(VERSION 3.0)
 project(DILL VERSION 2.4.0 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
-set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
-set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
-set(CMAKE_INSTALL_INCLUDEDIR include
-  CACHE STRING "Installation include subdirectory")
+include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/dill
   CACHE STRING "Installation CMake subdirectory")
-mark_as_advanced(CMAKE_INSTALL_BINDIR)
-mark_as_advanced(CMAKE_INSTALL_LIBDIR)
-mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_INSTALL_PREFIX})
