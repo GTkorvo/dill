@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(DILL VERSION 2.4.0 LANGUAGES C CXX)
+project(DILL VERSION 2.4.1 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
