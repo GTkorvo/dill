@@ -147,7 +147,14 @@ elseif(DILL_IGNORE_NATIVE OR (NATIVE_ARCH STREQUAL "UNSUPPORTED"))
   find_program (AUTOCONF autoconf)
   find_program (AUTOMAKE automake)
   if ((AUTOCONF STREQUAL "AUTOCONF-NOTFOUND") OR (AUTOMAKE STREQUAL "AUTOMAKE-NOTFOUND"))
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+      # I am top-level project.
       message(FATAL_ERROR "DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
+    else()
+      # I am called from other project with add_subdirectory().
+      message(STATUS "DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
+      return()
+    endif()
   endif()
   set(LIBFFI_INTERNAL ON)
   message(STATUS "Using private copy of libffi")
@@ -252,13 +259,20 @@ if(DILL_MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
     set(BUILD_EMULATOR TRUE)
   endif()
 else()
-  message(FATAL_ERROR
-    "Configure has detected no native dynamic code generation support 
-   for this architecture (\"${NATIVE_ARCH}\"), -DDILL_MULTI_TARGET=ON 
-   was not specified, and no emulation is possible (libffi library 
-   not found)
-   NO LIBRARY WILL BE BUILT"
-  )
+  if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    # I am top-level project.
+    message(FATAL_ERROR
+	"Configure has detected no native dynamic code generation support 
+	 for this architecture (\"${NATIVE_ARCH}\"), -DDILL_MULTI_TARGET=ON 
+	 was not specified, and no emulation is possible (libffi library 
+	 not found)  NO LIBRARY WILL BE BUILT" )
+  else()
+    message(STATUS
+	"No native dynamic code generation support for this architecture 
+	(\"${CMAKE_SYSTEM_PROCESSOR}\"), -DDILL_MULTI_TARGET=ON was not specified, and no emulation 
+	is possible (libffi library not found) NO DILL LIBRARY WILL BE BUILT, but this is not a failure")
+    return()
+  endif()
 endif()
 
 include(CheckIncludeFiles)
