@@ -49,7 +49,7 @@ mark_as_advanced(BUILD_SHARED_LIBS)
 
 # Default to a RelWithDebInfo build if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebugInfo)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebInfo)
 endif()
 
 set(SRC_list
