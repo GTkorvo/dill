@@ -4,11 +4,6 @@ echo
 echo "Installing ninja"
 brew install ninja
 
-echo
-echo "Installing libfabric"
-brew install pkg-config
-brew install libfabric
-
 # Install cmake
 echo
 echo "Installing CMake"
