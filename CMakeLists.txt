@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 
+# The directory label is used for CDash to treat DILL as a subproject of GTKorvo
+set(CMAKE_DIRECTORY_LABELS DILL)
+
 project(DILL VERSION 2.4.1 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
@@ -472,6 +475,12 @@ if(BUILD_TESTING)
   endif()
   add_subdirectory(vtests)
 endif()
+
+configure_file(
+  ${PROJECT_SOURCE_DIR}/CTestCustom.cmake.in
+  ${PROJECT_BINARY_DIR}/CTestCustom.cmake
+  @ONLY
+)
 
 option(DILL_QUIET "Suppress summary output" OFF)
 if(NOT DILL_QUIET)
