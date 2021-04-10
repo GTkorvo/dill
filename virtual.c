@@ -310,17 +310,13 @@ insn_same_except_dest(virtual_insn *i, virtual_insn *j)
     case iclass_compare:
 	return ((icode == jcode) && (i->opnds.a3.src1 == j->opnds.a3.src1) &&
 		(i->opnds.a3.src2 == j->opnds.a3.src2));
-        break;
     case iclass_arith3i:
 	return ((icode == jcode) && (i->opnds.a3i.src == j->opnds.a3i.src) &&
 		(i->opnds.a3i.u.imm == j->opnds.a3i.u.imm));
-        break;
     case iclass_arith2:
 	return ((icode == jcode) && (i->opnds.a2.src == j->opnds.a2.src));
-        break;
     case iclass_convert:
 	return ((icode == jcode) && (i->opnds.a2.src == j->opnds.a2.src));
-	break;
     case iclass_loadstore:
 	return ((icode == jcode) && (i->opnds.a3.src1 == j->opnds.a3.src1) &&
 		(i->opnds.a3.src2 == j->opnds.a3.src2));
@@ -3806,14 +3802,17 @@ is_convert_noop(int insn_code)
     int to_type = insn_code & 0xf;
 
     /* GSE -bug  This test should be for *generated* target, not host */
-    if (sizeof(long) != sizeof(int)) return 0;
-    switch(from_type) {
-    case DILL_I: case DILL_U:
-    case DILL_L: case DILL_UL:
-	switch(to_type) {
+    if (sizeof(long) != sizeof(int)) {
+	return 0;
+    } else {
+	switch(from_type) {
 	case DILL_I: case DILL_U:
 	case DILL_L: case DILL_UL:
-	    return 1;
+	    switch(to_type) {
+	    case DILL_I: case DILL_U:
+	    case DILL_L: case DILL_UL:
+		return 1;
+	    }
 	}
     }
     return 0;

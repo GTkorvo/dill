@@ -567,7 +567,7 @@ int src;
     {
 	int rex1 = 0;
 	if (dest > XMM7) rex1 = REX_R|REX_B;
-	BYTE_OUT3R(s, rex, 0x0f, 0x57, ModRM(0x3, dest, dest));
+	BYTE_OUT3R(s, rex1, 0x0f, 0x57, ModRM(0x3, dest, dest));   // GSE really rex1?  Late fix.
     }
     if (typ == DILL_D) op = 0xf2;
     BYTE_OUT1R3(s, op, rex, 0x0f, 0x5c, ModRM(0x3, dest, src));
