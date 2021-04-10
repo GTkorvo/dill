@@ -214,7 +214,7 @@ sub branchi_insn {
 	$c_op = $c_operations{$op};
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_bi[dill_jmp_b${op}${_}] = $subr;\n";
-	    $vm_bri_code .=  "\t  case dill_jmp_b${op}${_}:  return ($src1_cast{$_} src1->u.${_}.${_}) $c_op $src1_cast{$_} imm; break;\n";
+	    $vm_bri_code .=  "\t  case dill_jmp_b${op}${_}:  return ($src1_cast{$_} src1->u.${_}.${_}) $c_op $src1_cast{$_} imm;\n";
 	}
     }
 }

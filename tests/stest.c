@@ -120,7 +120,7 @@ int main() {
 #endif
 	{
 	    int size = dill_code_size(s);
-	    static unsigned long ps = -1;
+	    static long ps = -1;
 	    if (ps == -1) {
 	        ps = (getpagesize ());
 	    }

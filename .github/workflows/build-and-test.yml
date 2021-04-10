@@ -42,12 +42,12 @@ jobs:
           container: ubuntu:18.04
         - os: ubuntu2004
           container: ubuntu:20.04
-        #- os: centos7
-        #  compiler: nvhpc
-        #  container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-centos7
-        #- os: ubuntu2004
-        #  compiler: nvhpc
-        #  container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-ubuntu20.04
+        - os: centos7
+          compiler: nvhpc
+          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-centos7
+        - os: ubuntu2004
+          compiler: nvhpc
+          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-ubuntu20.04
 
     steps:
     - uses: actions/checkout@v2

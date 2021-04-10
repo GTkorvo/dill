@@ -85,14 +85,14 @@ print HOUT<<EOF;
 typedef enum {iclass_arith3, iclass_arith3i, iclass_arith2, iclass_ret, iclass_convert, iclass_loadstore, iclass_loadstorei, iclass_set, iclass_setf, iclass_mov, iclass_reti, iclass_branch, iclass_branchi, iclass_jump_to_label, iclass_special, iclass_jump_to_reg, iclass_jump_to_imm, iclass_push, iclass_pushi, iclass_pushf, iclass_call, iclass_lea, iclass_compare, iclass_mark_label, iclass_nop} insn_class;
 
 struct arith3 {
-    unsigned short dest;
-    unsigned short src1;
-    unsigned short src2;
+    int dest;
+    int src1;
+    int src2;
 };
 
 struct arith3i {
-    unsigned short dest;
-    unsigned short src;
+    int dest;
+    int src;
     union {
 	long imm;
 	void *imm_a;
@@ -100,41 +100,41 @@ struct arith3i {
 };
 
 struct arith2 {
-    unsigned short dest;
-    unsigned short src;
+    int dest;
+    int src;
 };
 
 struct arith1 {
-    unsigned short src;
+    int src;
 };
 
 struct setf {
-    unsigned short dest;
+    int dest;
     double imm;
 };
 
 struct branch {
-    unsigned short src1;
-    unsigned short src2;
-    unsigned short label;
+    int src1;
+    int src2;
+    int label;
 };
 
 struct branchi {
-    unsigned short src;
-    unsigned short label;
+    int src;
+    int label;
     void *imm_a;
     long imm_l;
 };
 
 struct calli {
-    unsigned short src;
+    int src;
     void *imm_a;
     long imm_l;
     const char *xfer_name;
 };
 
 struct label {
-    unsigned short label;
+    int label;
     char *label_name;
 };
 

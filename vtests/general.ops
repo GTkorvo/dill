@@ -6,6 +6,7 @@ sub upperc {
 }
 
 %c_types = ('c', 'signed char', 'uc', 'unsigned char', 's', 'short', 'us', 'unsigned short', 'i', 'int', 'u', 'unsigned int', 'l', 'long', 'ul', 'unsigned long', 'p', 'char*', 'f', 'float', 'd', 'double');
+%c_arg_types = ('c', 'signed int', 'uc', 'unsigned int', 's', 'signed int', 'us', 'unsigned int', 'i', 'int', 'u', 'unsigned int', 'l', 'long', 'ul', 'unsigned long', 'p', 'char*', 'f', 'float', 'd', 'double');
 %rand_types = ('c', 'l', 'uc', 'l', 's', 'l', 'us', 'l', 'i', 'l', 'u', 'l', 'l', 'l', 'ul', 'l', 'p', '(char *)l', 'f', 'd', 'd', 'd');
 %c_print_formats = ('c', '%d', 'uc', '%u', 's', '%d', 'us', '%u', 'i', '%d', 'u', '%u', 'l', '%ld', 'ul', '%lu', 'p', '%lx', 'f', '%g', 'd', '%g');
 %drisc_arg_formats = ('c', '%i', 'uc', '%u', 's', '%i', 'us', '%u', 'i', '%i', 'u', '%u', 'l', '%l', 'ul', '%ul', 'p', '%p', 'f', '%f', 'd', '%d');
@@ -467,6 +468,7 @@ sub branch_insn {
 	foreach(split(' ', $type_list)) {
 	    $dill_type = "DILL_".&upperc(${_});
 	    $c_type = $c_types{${_}};
+	    $c_arg_type = $c_arg_types{${_}};
 	    $c_pformat = $c_print_formats{${_}};
 	    $line = __LINE__ + 3;
 	    $arg_str = "$drisc_arg_formats{${_}}$drisc_arg_formats{${_}}";
@@ -505,7 +507,7 @@ print COUT<<EOF;
 	    int label;
 	    int result;
 	    int expected_result;
-	    int (*proc)(dill_exec_ctx ec, $c_type a, $c_type b);
+	    int (*proc)(dill_exec_ctx ec, $c_arg_type a, $c_arg_type b);
 	    dill_exec_handle h;
 
 	    if (verbose) {printf(".");fflush(stdout);}
@@ -520,7 +522,7 @@ print COUT<<EOF;
 	    dill_mark_label(c, label);	    
 	    dill_retii(c, 1);
 	    h = dill_finalize(c);
-	    proc = (int(*)(dill_exec_ctx, $c_type, $c_type)) dill_get_fp(h);
+	    proc = (int(*)(dill_exec_ctx, $c_arg_type, $c_arg_type)) dill_get_fp(h);
 	    expected_result = source1_$_ $c_op source2_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -551,6 +553,7 @@ sub branchi_insn {
 	foreach(split(' ', $type_list)) {
 	    $dill_type = "DILL_".&upperc(${_});
 	    $c_type = $c_types{${_}};
+	    $c_arg_type = $c_arg_types{${_}};
 	    $c_pformat = $c_print_formats{${_}};
 	    $line = __LINE__ + 3;
 	    $arg_str = "$drisc_arg_formats{${_}}";
@@ -591,7 +594,7 @@ print COUT<<EOF;
 	    int label;
 	    int result;
 	    int expected_result;
-	    int (*proc)(dill_exec_ctx, $c_type a);
+	    int (*proc)(dill_exec_ctx, $c_arg_type a);
 	    dill_exec_handle h;
 
 	    if (verbose) {printf(".");fflush(stdout);}
@@ -605,7 +608,7 @@ print COUT<<EOF;
 	    dill_mark_label(c, label);	    
 	    dill_retii(c, 1);
 	    h = dill_finalize(c);
-	    proc = (int(*)(dill_exec_ctx, $c_type)) dill_get_fp(h);
+	    proc = (int(*)(dill_exec_ctx, $c_arg_type)) dill_get_fp(h);
 	    expected_result = source1_$_ $c_op source2_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -636,6 +639,7 @@ sub compare_insn {
 	foreach(split(' ', $type_list)) {
 	    $dill_type = "DILL_".&upperc(${_});
 	    $c_type = $c_types{${_}};
+	    $c_arg_type = $c_arg_types{${_}};
 	    $c_pformat = $c_print_formats{${_}};
 	    $line = __LINE__ + 3;
 	    $arg_str = "$drisc_arg_formats{${_}}$drisc_arg_formats{${_}}";
@@ -673,7 +677,7 @@ print COUT<<EOF;
 	    dill_reg opnd1, opnd2, dest;
 	    int result;
 	    int expected_result;
-	    int (*proc)(dill_exec_ctx ec, $c_type a, $c_type b);
+	    int (*proc)(dill_exec_ctx ec, $c_arg_type a, $c_arg_type b);
 	    dill_exec_handle h;
 
 	    if (verbose) {printf(".");fflush(stdout);}
@@ -686,7 +690,7 @@ print COUT<<EOF;
 	    dill_$full_op(c, dest, opnd1, opnd2);
 	    dill_reti(c, dest);
 	    h = dill_finalize(c);
-	    proc = (int(*)(dill_exec_ctx, $c_type, $c_type)) dill_get_fp(h);
+	    proc = (int(*)(dill_exec_ctx, $c_arg_type, $c_arg_type)) dill_get_fp(h);
 	    expected_result = source1_$_ $c_op source2_$_;
 
 	    ec = dill_get_exec_context(c);
@@ -721,6 +725,7 @@ sub convert {
 	    $dill_to_type = "DILL_".&upperc(${_});
 	    $c_to_type = $c_types{${to}};
 	    $c_from_type = $c_types{${from}};
+	    $c_from_arg_type = $c_arg_types{${from}};
 	    $c_to_pformat = $c_print_formats{${to}};
 	    $c_from_pformat = $c_print_formats{${from}};
 	    $line = __LINE__ + 3;
@@ -746,7 +751,7 @@ print COUT<<EOF;
 	    dill_reg opnd1, dest;
 	    $c_to_type result;
 	    $c_to_type expected_result;
-	    $c_to_type (*proc)(dill_exec_ctx ec, $c_from_type a);
+	    $c_to_type (*proc)(dill_exec_ctx ec, $c_from_arg_type a);
 	    dill_exec_handle h;
 	    $range_decl
 	    if (verbose) {printf(".");fflush(stdout);}
@@ -758,7 +763,7 @@ print COUT<<EOF;
 	    dill_ret${to}(c, dest);
 	    
 	    h = dill_finalize(c);
-	    proc = ($c_to_type(*)(dill_exec_ctx, $c_from_type)) dill_get_fp(h);
+	    proc = ($c_to_type(*)(dill_exec_ctx, $c_from_arg_type)) dill_get_fp(h);
 	    expected_result = ($c_to_type) source1_${from};
 
 	    ec = dill_get_exec_context(c);
@@ -1130,6 +1135,13 @@ EOF
 print COUT<<EOF;
     /* reference these values since they currently aren't done elsewhere */
     src2p_vals[0] = src1p_vals[0] = rand1_p; src2p_vals[1] = src1p_vals[1] = rand2_p;
+    (void)src2d_vals[0];
+    (void)src2s_vals[0];
+    (void)src2p_vals[0];
+    (void)src2c_vals[0];
+    (void)src2uc_vals[0];
+    (void)src2us_vals[0];
+    (void)src2f_vals[0];
     if (argc > 1) verbose++;
 EOF
     %c_src2_values = ("rshi", "sh_src2_vals", "rshl", "sh_src2_vals", 

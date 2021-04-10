@@ -792,7 +792,7 @@ init_code_block(dill_stream s)
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
-    static unsigned long ps = -1;
+    static long ps = -1;
     if (ps == -1) {
         ps = (getpagesize ());
     }
@@ -1048,7 +1048,6 @@ dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int class)
 	    *reg_p = reg;
 	    return (reg != -1);
 	}
-	break;
     default:
 	if (class == DILL_VAR) {
 	    if ((reg = reg_alloc(&s->p->var_i)) == -1) {
@@ -1072,7 +1071,6 @@ dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int class)
 	    *reg_p = reg;
 	    return (reg != -1);
 	}
-	break;
     }
 }	
 
