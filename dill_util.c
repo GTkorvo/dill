@@ -470,6 +470,7 @@ extern dill_exec_handle
 dill_finalize(dill_stream s)
 {
     dill_exec_handle handle = malloc(sizeof(*handle));
+    fprintf(stderr, "Calling End %p\n", s->j->end);
     (s->j->end)(s);
     s->p->save_param_count = s->p->c_param_count;
     s->p->c_param_count = 0;
