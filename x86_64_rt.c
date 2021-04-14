@@ -1,5 +1,6 @@
 #include "config.h"
 #include <stdint.h>
+#include <stdio.h>
 #include "dill.h"
 #include "dill_internal.h"
 #ifdef HAVE_SYS_MMAN_H
@@ -7,6 +8,10 @@
 #endif
 #ifdef HAVE_MEMORY_H
 #include "memory.h"
+#endif
+#ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
+#include <memoryapi.h>
 #endif
 #include "x86.h"
 
@@ -68,6 +73,12 @@ x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg)
 		      PROT_EXEC | PROT_READ | PROT_WRITE, 
 		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
     memcpy(tmp, code, pkg->code_size);
+#endif
+#ifdef USE_VIRTUAL_PROTECT
+    int result;
+    DWORD dummy;
+    result = VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy);
+    printf("Virtualprotect of buffer %p, size %d, old privs %lx, result %d\n", tmp, pkg->code_size, dummy, result);
 #endif
     return tmp + pkg->entry_offset;
 }

@@ -142,6 +142,8 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
   set(USE_MMAP_CODE_SEG 1)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set(USE_VIRTUAL_PROTECT 1)
 endif()
 
 include(TestBigEndian)
