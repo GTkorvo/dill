@@ -1,7 +1,10 @@
 #include "config.h"
+#include <stdint.h>
 #include "dill.h"
 #include "dill_internal.h"
+#ifdef HAVE_SYS_MMAN_H
 #include "sys/mman.h"
+#endif
 #ifdef HAVE_MEMORY_H
 #include "memory.h"
 #endif
@@ -23,7 +26,7 @@ x86_64_rt_call_link(char *code, call_t *t)
     int i;
 
     for(i=0; i< t->call_count; i++) {
-	unsigned long tmp = (unsigned long) t->call_locs[i].xfer_addr;
+	uintptr_t tmp = (uintptr_t) t->call_locs[i].xfer_addr;
 	long *call_addr = (long *) (code + t->call_locs[i].loc + 2);
 	memcpy(call_addr, &tmp, 8);
     }

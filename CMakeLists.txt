@@ -39,6 +39,23 @@ if(NOT DEFINED DILL_HEADER_COMPONENT)
   set(DILL_HEADER_COMPONENT dev)
 endif()
 
+if(WIN32)
+  # Automagic to do the DLL / LIB song and dance
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+
+  # Silence MSVC warnings
+  if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
+     CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+    add_definitions(
+      -D_CRT_SECURE_NO_DEPRECATE
+      -D_CRT_SECURE_NO_WARNINGS
+      -D_SCL_SECURE_NO_DEPRECATE
+      -D_WINSOCK_DEPRECATED_NO_WARNINGS
+      -D_CRT_NONSTDC_NO_DEPRECATE)
+    set (MSVC_PERL_FLAGS "-msvc-long")
+  endif()
+endif()
+
 # Setup shared library defaults.  If explicitly specified somehow, then default 
 # to that.  Otherwise base the default on whether or not shared libs are even
 # supported.
@@ -86,6 +103,9 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "i.86|x86_64|AMD64")
     set(HOST_X86 1)
     set(TEST_PERL_FLAGS -no_float -max_arg=2)
     set(ARCH_FILE x86)
+  endif()
+  if(NOT (CMAKE_SIZEOF_VOID_P EQUAL SIZEOF_LONG))
+    set(BASE_OPS_ARG "-msvc_long")
   endif()
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm.5.*")
   set(NATIVE_ARCH arm5)
@@ -242,7 +262,7 @@ endforeach()
 
 add_custom_command(
   OUTPUT dill.h dill.c
-  COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/base.ops
+  COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/base.ops ${BASE_OPS_ARG}
   DEPENDS base.ops
 ) 
 
@@ -296,6 +316,7 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(stdarg.h STDC_HEADERS)
 check_include_files(malloc.h HAVE_MALLOC_H)
 check_include_files(memory.h HAVE_MEMORY_H)
+check_include_files(sys/mman.h HAVE_SYS_MMAN_H)
 include(CheckSymbolExists)
 check_symbol_exists(__clear_cache "" CLEAR_CACHE_DEFINED)
 message(STATUS "Clear cache defined is ${CLEAR_CACHE_DEFINED}")

@@ -39,7 +39,7 @@ unpack_package(char *package, call_t *t, char **code_p)
     *code_p = p;
 }
 
-EXTERN void*
+extern void*
 dill_package_entry(char* package)
 {
     struct dill_pkg_1 *pkg = (struct dill_pkg_1 *) package;
@@ -71,7 +71,7 @@ dill_lookup_xfer_addrs(call_t *t, xfer_entry *x)
     }
 }
 
-EXTERN dill_exec_handle
+extern dill_exec_handle
 dill_package_stitch(char *pkg, dill_extern_entry* extra_externs)
 {
     dill_exec_handle handle = malloc(sizeof(*handle));
