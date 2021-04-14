@@ -40,7 +40,9 @@ x86_64_rt_call_link(char *code, call_t *t)
 static void
 x86_64_flush(void *base, void *limit)
 {
+    fprintf(stderr, "x86_64 flush\n");
 #if defined(HOST_X86_64)
+    fprintf(stderr, "flushing\n");
     {
 	volatile void *ptr = base;
 
@@ -63,6 +65,7 @@ x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg)
 {
     char *tmp = code;
     dill_lookup_xfer_addrs(t, &x86_64_xfer_recs[0]);
+    fprintf(stderr, "Pkg stitch\n");
     x86_64_rt_call_link(code, t);
     x86_64_flush(code, code + 1024);
 #ifdef USE_MMAP_CODE_SEG
@@ -78,7 +81,7 @@ x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg)
     int result;
     DWORD dummy;
     result = VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy);
-    printf("Virtualprotect of buffer %p, size %d, old privs %lx, result %d\n", tmp, pkg->code_size, dummy, result);
+    fprintf(stderr, "Virtualprotect of buffer %p, size %d, old privs %lx, result %d\n", tmp, pkg->code_size, dummy, result);
 #endif
     return tmp + pkg->entry_offset;
 }
