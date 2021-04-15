@@ -2592,9 +2592,7 @@ x86_64_emit_save(dill_stream s)
 static void
 x86_64_flush(void *base, void *limit)
 {
-    fprintf(stderr, "x86_64 flush NOT RT\n");
 #if defined(HOST_X86_64)
-    fprintf(stderr, "flushing NOT RT\n");
     {
 	volatile void *ptr = base;
 
@@ -2615,7 +2613,6 @@ x86_64_flush(void *base, void *limit)
     DWORD dummy;
     size_t size = ((intptr_t)limit - (intptr_t)base);
     result = VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy);
-    fprintf(stderr, "Virtualprotect of buffer %p, size %zu, old privs %lx, result %d\n", base, size, dummy, result);
 #endif
 }    
 extern void
@@ -2627,7 +2624,6 @@ dill_stream s;
     x86_64_call_link(s);
     x86_64_data_link(s);
     x86_64_emit_save(s);
-    fprintf(stderr, "In x86_64_end, code_base %p, code_limit %p\n", s->p->code_base, s->p->code_limit);
     x86_64_flush(s->p->code_base, s->p->code_limit);
 }
 
