@@ -5,13 +5,13 @@ sub upperc {
     return $_;
 }
 
-%c_types = ('c', 'signed char', 'uc', 'unsigned char', 's', 'short', 'us', 'unsigned short', 'i', 'int', 'u', 'unsigned int', 'l', 'long', 'ul', 'unsigned long', 'p', 'char*', 'f', 'float', 'd', 'double');
-%c_arg_types = ('c', 'signed int', 'uc', 'unsigned int', 's', 'signed int', 'us', 'unsigned int', 'i', 'int', 'u', 'unsigned int', 'l', 'long', 'ul', 'unsigned long', 'p', 'char*', 'f', 'float', 'd', 'double');
+%c_types = ('c', 'signed char', 'uc', 'unsigned char', 's', 'short', 'us', 'unsigned short', 'i', 'int', 'u', 'unsigned int', 'l', 'IMM_TYPE', 'ul', 'UIMM_TYPE', 'p', 'char*', 'f', 'float', 'd', 'double');
+%c_arg_types = ('c', 'signed int', 'uc', 'unsigned int', 's', 'signed int', 'us', 'unsigned int', 'i', 'int', 'u', 'unsigned int', 'l', 'IMM_TYPE', 'ul', 'UIMM_TYPE', 'p', 'char*', 'f', 'float', 'd', 'double');
 %rand_types = ('c', 'l', 'uc', 'l', 's', 'l', 'us', 'l', 'i', 'l', 'u', 'l', 'l', 'l', 'ul', 'l', 'p', '(char *)l', 'f', 'd', 'd', 'd');
-%c_print_formats = ('c', '%d', 'uc', '%u', 's', '%d', 'us', '%u', 'i', '%d', 'u', '%u', 'l', '%ld', 'ul', '%lu', 'p', '%lx', 'f', '%g', 'd', '%g');
+%c_print_formats = ('c', '%d', 'uc', '%u', 's', '%d', 'us', '%u', 'i', '%d', 'u', '%u', 'l', '%zx', 'ul', '%zu', 'p', '%p', 'f', '%g', 'd', '%g');
 %drisc_arg_formats = ('c', '%i', 'uc', '%u', 's', '%i', 'us', '%u', 'i', '%i', 'u', '%u', 'l', '%l', 'ul', '%ul', 'p', '%p', 'f', '%f', 'd', '%d');
 
-%print_cast = ('p', '(long)');
+%print_cast = ('p', '(void*)');
 
 $FT = "f";
 $DT = "d";
@@ -89,7 +89,7 @@ sub arith_insn {
 		$div_label = "skip$skip_count: ;\n";
 		$skip_count++;
 	    } elsif (($dill_op eq "rsh") || ($dill_op eq "lsh")) {
-		$div_continue = "if (source2_$_ >= sizeof(long)) goto skip$skip_count;";
+		$div_continue = "if (source2_$_ >= sizeof(IMM_TYPE)) goto skip$skip_count;";
 		$div_label = "skip$skip_count: ;\n";
 		$skip_count++;
 	    } else {
@@ -184,10 +184,10 @@ sub arithp_insn {
 	    if (defined($c_src2_values{"addl"})) {
 		$vals = $c_src2_values{'addl'};
 		print COUT "        for (j=0 ; j < sizeof($vals)/sizeof($vals\[0\]) ; j++) {\n";
-		print COUT "            long source2_l = $vals\[j\];\n";
+		print COUT "            IMM_TYPE source2_l = $vals\[j\];\n";
 	    } else {
 		print COUT "        {\n";
-		print COUT "            long source2_l = rand2_$_;\n";
+		print COUT "            IMM_TYPE source2_l = rand2_$_;\n";
 	    }
 # print COUT "# line ". (__LINE__ + 2) . " \"general.ops\"\n";
 print COUT<<EOF;
@@ -196,7 +196,7 @@ print COUT<<EOF;
 	    dill_exec_ctx ec;
 	    $c_type result;
 	    $c_type expected_result;
-	    $c_type (*proc)(dill_exec_ctx ec, $c_type a, long b);
+	    $c_type (*proc)(dill_exec_ctx ec, $c_type a, IMM_TYPE b);
 	    dill_exec_handle h;
 
 	    if (verbose) {printf(".");fflush(stdout);}
@@ -209,7 +209,7 @@ print COUT<<EOF;
 	    dill_ret${_}(c, dest);
 	    
 	    h = dill_finalize(c);
-	    proc = ($c_type(*)(dill_exec_ctx, $c_type, long)) dill_get_fp(h);
+	    proc = ($c_type(*)(dill_exec_ctx, $c_type, IMM_TYPE)) dill_get_fp(h);
 	    expected_result = source1_$_ $c_op source2_l;
 
 	    ec = dill_get_exec_context(c);
@@ -217,7 +217,7 @@ print COUT<<EOF;
 	    dill_free_handle(h);
 	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
-		printf("Failed dill_$dill_op${_} test, expected $c_pformat, got $c_pformat, for $c_pformat $c_op %ld\\n",
+		printf("Failed dill_$dill_op${_} test, expected $c_pformat, got $c_pformat, for $c_pformat $c_op %zx\\n",
 		       $print_cast{$_} expected_result, $print_cast{$_} result, $print_cast{$_} source1_$_, source2_l);
 		dill_dump(c);
 		failed++;
@@ -320,7 +320,7 @@ sub arithi_insn {
 		$div_label = "skip$skip_count: ;\n";
 		$skip_count++;
 	    } elsif (($dill_op eq "rsh") || ($dill_op eq "lsh")) {
-		$div_continue = "if ((source2_$_ >= sizeof(long)) || (source2_$_ <= 0)) goto skip$skip_count;";
+		$div_continue = "if ((source2_$_ >= sizeof(IMM_TYPE)) || (source2_$_ <= 0)) goto skip$skip_count;";
 		$div_label = "skip$skip_count: ;\n";
 		$skip_count++;
 	    } else {
@@ -413,10 +413,10 @@ sub arithpi_insn {
 	    if (defined($c_src2_values{'addl'})) {
 		$vals = $c_src2_values{'addl'};
 		print COUT "        for (j=0 ; j < sizeof($vals)/sizeof($vals\[0\]) ; j++) {\n";
-		print COUT "            long source2_l = $vals\[j\];\n";
+		print COUT "            IMM_TYPE source2_l = $vals\[j\];\n";
 	    } else {
 		print COUT "        {\n";
-		print COUT "            long source2_l = rand2_$_;\n";
+		print COUT "            IMM_TYPE source2_l = rand2_$_;\n";
 	    }
 # print COUT "# line ". (__LINE__ + 2) . " \"general.ops\"\n";
 print COUT<<EOF;
@@ -445,7 +445,7 @@ print COUT<<EOF;
 	    dill_free_handle(h);
 	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
-		printf("Failed dill_$dill_op${_}i (immediate) test, expected $c_pformat, got $c_pformat, for $c_pformat $c_op %ld\\n",
+		printf("Failed dill_$dill_op${_}i (immediate) test, expected $c_pformat, got $c_pformat, for $c_pformat $c_op %zx\\n",
 		       $print_cast{$_} expected_result, $print_cast{$_} result, $print_cast{$_} source1_$_, source2_l);
 		dill_dump(c);
 		failed++;
@@ -492,7 +492,7 @@ sub branch_insn {
 		print COUT "            $c_type source2_$_ = rand2_$_;\n";
 	    }
 	    if ($_ eq "p") {
-		$br_continue = "if (((long)source2_$_ < 0) || ((long)source1_$_ < 0))goto skip$skip_count;";
+		$br_continue = "if (((IMM_TYPE)source2_$_ < 0) || ((IMM_TYPE)source1_$_ < 0))goto skip$skip_count;";
 		$br_label = "skip$skip_count: ;\n";
 		$skip_count++;
 	    } else {
@@ -578,8 +578,8 @@ sub branchi_insn {
 	    }
 	    $cast = "";
 	    if ($_ eq 'p') {
-		$cast = "(long)";
-		$br_continue = "if (((long)source2_$_ < 0) || ((long)source1_$_ < 0))goto skip$skip_count;";
+		$cast = "(IMM_TYPE)";
+		$br_continue = "if (((IMM_TYPE)source2_$_ < 0) || ((IMM_TYPE)source1_$_ < 0))goto skip$skip_count;";
 		$br_label = "skip$skip_count: ;\n";
 		$skip_count++;
 	    } else {
@@ -663,7 +663,7 @@ sub compare_insn {
 		print COUT "            $c_type source2_$_ = rand2_$_;\n";
 	    }
 	    if ($_ eq "p") {
-		$br_continue = "if (((long)source2_$_ < 0) || ((long)source1_$_ < 0))goto skip$skip_count;";
+		$br_continue = "if (((IMM_TYPE)source2_$_ < 0) || ((IMM_TYPE)source1_$_ < 0))goto skip$skip_count;";
 		$br_label = "skip$skip_count: ;\n";
 		$skip_count++;
 	    } else {
@@ -807,7 +807,7 @@ sub load {
 		$vals = "src1l_vals";
 	    }
 	    print COUT "        for (j=0 ; j < sizeof($vals)/sizeof($vals\[0\]) ; j++) {\n";
-	    print COUT "            long offset = $vals\[j\];\n";
+	    print COUT "            IMM_TYPE offset = $vals\[j\];\n";
 	    if ($imm eq 'i') {
 # print COUT "# line ". (__LINE__ + 2) . " \"general.ops\"\n";
 	        print COUT<<EOF;
@@ -838,7 +838,7 @@ sub load {
 	    dill_free_handle(h);
 	    dill_free_exec_context(ec);
 	    if (expected_result != result) {
-		printf("Failed dill_$dill_op${_}i test, expected $c_pformat, got $c_pformat, for loading $c_pformat at offset %ld\\n",
+		printf("Failed dill_$dill_op${_}i test, expected $c_pformat, got $c_pformat, for loading $c_pformat at offset %zx\\n",
 		       expected_result, result, source1_$_, offset);
 		dill_dump(c);
 		failed++;
@@ -913,7 +913,7 @@ sub store {
 		$vals = "src1l_vals";
 	    }
 	    print COUT "        for (j=0 ; j < sizeof($vals)/sizeof($vals\[0\]) ; j++) {\n";
-	    print COUT "            long offset = $vals\[j\];\n";
+	    print COUT "            IMM_TYPE offset = $vals\[j\];\n";
 	    if ($imm eq 'i') {
 # print COUT "# line ". (__LINE__ + 2) . " \"general.ops\"\n";
 	        print COUT<<EOF;
@@ -1058,16 +1058,20 @@ print COUT<<EOF;
 #include "dill.h"
 #include "stdio.h"
 #include "math.h"
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
 
-#ifdef HAVE_WINDOWS_H
+#ifdef _MSC_VER
+#include <stdlib.h>
 #define srand48(s) srand(s)
-#define drand48() (((double)rand())/((double)RAND_MAX))
-#define lrand48() rand()
+#define drand48() (rand()*(1./RAND_MAX))
+#define lrand48() ((long long)rand() << 32 | rand())
 #define kill(x,y) 
 #else
 extern double drand48();
-extern long lrand48();
-void srand48(long seedval);
+extern IMM_TYPE lrand48();
+void srand48(IMM_TYPE seedval);
 #endif
 
 int
@@ -1093,7 +1097,7 @@ EOF
     }
     print COUT " 63};\n\n";
 
-    print COUT "    unsigned long bit_pattern_vals[] = {";
+    print COUT "    UIMM_TYPE bit_pattern_vals[] = {";
     for (0..31) {
 	printf COUT " 0x%x, 0x%x, ",(1<<$_), ((1<<$_) - 1);
     }

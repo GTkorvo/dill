@@ -24,7 +24,10 @@ foreach(TEST ${TESTS})
   add_test(NAME vtest_${TEST} COMMAND v${TEST})
 endforeach()
 
-set_target_properties(vgeneral PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")
+if(NOT (CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
+     CMAKE_C_SIMULATE_ID MATCHES "MSVC"))
+     set_target_properties(vgeneral PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")
+ENDIF()
 
 set_tests_properties(vtest_basic_call
   PROPERTIES PASS_REGULAR_EXPRESSION "########## A

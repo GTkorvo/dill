@@ -7,6 +7,7 @@
 #ifndef LINUX_KERNEL_MODULE
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -62,7 +63,7 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 	       OPND(insn->opnds.a3.src2));
         break;
     case iclass_arith3i:
-        printf("%si %c%d, %c%d, %ld", arith3_name[insn_code], 
+        printf("%si %c%d, %c%d, %zu", arith3_name[insn_code], 
 	       OPND(insn->opnds.a3i.dest),
 	       OPND(insn->opnds.a3i.src), insn->opnds.a3i.u.imm);
         break;
@@ -95,7 +96,7 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 	int typ = insn->insn_code & 0xf;
 	int store = (insn->insn_code & 0x10) == 0x10;
 	int bswap = (insn->insn_code & 0x20) == 0x20;
-        printf("%s%s%si %c%d, %c%d, %ld", bswap ? "bs" : "",
+        printf("%s%s%si %c%d, %c%d, %zu", bswap ? "bs" : "",
 	       store == 0 ? "ld" : "st", 
 	       dill_type_names[typ], OPND(insn->opnds.a3i.dest),
 	       OPND(insn->opnds.a3i.src), insn->opnds.a3i.u.imm);
@@ -103,14 +104,14 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     }
     case iclass_lea:
     {
-        printf("lea %c%d, %c%d, %ld", OPND(insn->opnds.a3i.dest),
+        printf("lea %c%d, %c%d, %zx", OPND(insn->opnds.a3i.dest),
 	       OPND(insn->opnds.a3i.src), insn->opnds.a3i.u.imm);
         break;
     }
     case iclass_set:
     {
 	int typ = insn->insn_code & 0xf;
-        printf("set%s %c%d, %ld", 
+        printf("set%s %c%d, %zx", 
 	       dill_type_names[typ], OPND(insn->opnds.a3i.dest),
 	       insn->opnds.a3i.u.imm);
         break;
@@ -139,7 +140,7 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     case iclass_reti:
     {
 	int typ = insn->insn_code & 0xf;
-        printf("ret%si %ld", 
+        printf("ret%si %zu", 
 	       dill_type_names[typ], insn->opnds.a3i.u.imm);
         break;
     }
@@ -175,9 +176,9 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
     {
 	int br_op = insn->insn_code;
 	struct branch_table *t = &c->p->branch_table;
-        printf("b%si %c%d, %ld, L%d", branch_op_names[br_op], 
+        printf("b%si %c%d, %p, L%d", branch_op_names[br_op], 
 	       OPND(insn->opnds.bri.src), 
-	       insn->opnds.bri.imm_l, insn->opnds.bri.label);
+	       (void*)insn->opnds.bri.imm_l, insn->opnds.bri.label);
 	if (t->label_name[insn->opnds.bri.label] != NULL) {
 	    printf("<%s>", t->label_name[insn->opnds.bri.label]);
 	}
@@ -230,8 +231,8 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 	int reg = insn->insn_code & 0x10;
 	if (typ != DILL_V) {
 	    if (reg != 0) {
-		printf("call%s R%ld, %c%d", dill_type_names[typ], 
-		       insn->opnds.calli.imm_l, OPND(insn->opnds.calli.src));
+		printf("call%s R%p, %c%d", dill_type_names[typ], 
+		       (void*)insn->opnds.calli.imm_l, OPND(insn->opnds.calli.src));
 	    } else {
 		const char *call_name = insn->opnds.calli.xfer_name;
 		if (call_name) {
@@ -245,8 +246,8 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 	    }
 	} else {
 	    if (reg != 0) {
-		printf("call%s R%ld", dill_type_names[typ], 
-		       insn->opnds.calli.imm_l);
+		printf("call%s R%p", dill_type_names[typ], 
+		       (void*)insn->opnds.calli.imm_l);
 	    } else {
 		const char *call_name = insn->opnds.calli.xfer_name;
 		if (call_name) {
@@ -282,7 +283,7 @@ virtual_print_insn(dill_stream c, void *info_ptr, void *i)
 	if (typ == DILL_P) {
 	    printf("push%si 0x%p", dill_type_names[typ], insn->opnds.a3i.u.imm_a);
 	} else {
-	    printf("push%si 0x%lx", dill_type_names[typ], insn->opnds.a3i.u.imm);
+	    printf("push%si 0x%zx", dill_type_names[typ], insn->opnds.a3i.u.imm);
 	}
         break;
     }
@@ -2559,7 +2560,7 @@ static void
 put_tentative_assigns(dill_stream c, int preg_assigned, bit_vec vec, int typ)
 {
     foreach_bit(vec, (bv_func) put_unless, c, 
-		(void*)(long)((preg_assigned&0xffffff) | (long)typ<<24));
+		(void*)(intptr_t)((preg_assigned&0xffffff) | (intptr_t)typ<<24));
 }
 
 typedef struct reg_state {
@@ -3374,7 +3375,7 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
     int set_typ = set_ip->insn_code & 0xf;
     int found = 0;
     union {
-      long imm;
+      intptr_t imm;
       char *imm_a;
     } set;
     set.imm = set_ip->opnds.a3i.u.imm;
@@ -3467,7 +3468,7 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 	int src_vreg = ip->opnds.a3i.src;
 	int insn_code = ip->insn_code;
 	union {
-	  long imm;
+	  intptr_t imm;
 	  char *imm_a;
 	} u;
 	u.imm = ip->opnds.a3i.u.imm;
@@ -4444,20 +4445,20 @@ virtual_do_end(dill_stream s, int package)
     }
 }
 
-EXTERN void
+extern void
 virtual_end(dill_stream c)
 {
     virtual_do_end(c, 0 /* package */);
 }
 
-EXTERN void
+extern void
 virtual_package_end(dill_stream c)
 {
     virtual_do_end(c, 1 /* package */);
 }
 
 
-EXTERN dill_exec_ctx
+extern dill_exec_ctx
 dill_get_exec_context(dill_stream c)
 {
     dill_exec_ctx ec = malloc(sizeof(struct dec));
@@ -4488,7 +4489,7 @@ dill_get_exec_context(dill_stream c)
     return ec;
 }
     
-EXTERN void
+extern void
 dill_free_exec_context(dill_exec_ctx ec)
 {
     if (ec->r) free(ec->r);
@@ -4498,8 +4499,8 @@ dill_free_exec_context(dill_exec_ctx ec)
     free(ec);
 }
 
-EXTERN void
-dill_assoc_client_data(dill_exec_ctx ec, int key, long value)
+extern void
+dill_assoc_client_data(dill_exec_ctx ec, int key, IMM_TYPE value)
 {
     int i = 0;
     for (i=0; i < ec->client_data_count; i++) {
@@ -4518,7 +4519,7 @@ dill_assoc_client_data(dill_exec_ctx ec, int key, long value)
     ec->client_data[ec->client_data_count++].value = value;
 }
 
-EXTERN long
+extern IMM_TYPE
 dill_get_client_data(dill_exec_ctx ec, int key)
 {
     int i = 0;

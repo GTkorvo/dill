@@ -25,8 +25,7 @@ jobs:
       matrix:
         buildtype: [ release, debug ]
         os: [ centos7, centos8, ubuntu1604, ubuntu1804, ubuntu2004 ]
-        #compiler: [ clang, gcc, nvhpc ]
-        compiler: [ clang, gcc ]
+        compiler: [ clang, gcc, nvhpc ]
         exclude:
           - { os: centos8, compiler: nvhpc }
           - { os: ubuntu1604, compiler: nvhpc }
@@ -81,13 +80,13 @@ jobs:
         buildtype: [ release, debug ]
         jobname: [
         #  windows-vs2019-msvc,
-        #  windows-vs2019-clang,
+          windows-vs2019-clang,
           macos-clang ]
         include:
         #- jobname: windows-vs2019-msvc
         #  vm: windows-latest
-        #- jobname: windows-vs2019-clang
-        #  vm: windows-latest
+        - jobname: windows-vs2019-clang
+          vm: windows-latest
         - jobname: macos-clang
           vm: macos-latest
 
