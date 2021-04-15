@@ -2584,6 +2584,11 @@ x86_64_emit_save(dill_stream s)
     s->p->cur_ip = save_ip;
 }
     
+#ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
+#include <memoryapi.h>
+#endif
+
 static void
 x86_64_flush(void *base, void *limit)
 {
@@ -2608,8 +2613,9 @@ x86_64_flush(void *base, void *limit)
 #ifdef USE_VIRTUAL_PROTECT
     int result;
     DWORD dummy;
-    result = VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy);
-    fprintf(stderr, "Virtualprotect of buffer %p, size %d, old privs %lx, result %d\n", tmp, pkg->code_size, dummy, result);
+    size_t size = ((intptr_t)limit - (intptr_t)base);
+    result = VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy);
+    fprintf(stderr, "Virtualprotect of buffer %p, size %zu, old privs %lx, result %d\n", base, size, dummy, result);
 #endif
 }    
 extern void
