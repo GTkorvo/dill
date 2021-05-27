@@ -2587,6 +2587,7 @@ x86_64_emit_save(dill_stream s)
 #ifdef USE_VIRTUAL_PROTECT
 #include <windows.h>
 #include <memoryapi.h>
+#include <intrin.h>
 #endif
 
 static void
@@ -2598,14 +2599,20 @@ x86_64_flush(void *base, void *limit)
 
 	/* flush every 8 bytes of preallocated insn stream. */
 	while((char*)ptr < (char*) limit) {
+#ifndef _MSC_VER
 	    asm volatile ("clflush (%0)" : /* */ : "r" (ptr));
+#else
+		_mm_clflush(ptr);
+#endif
 	    ptr = (char *)ptr + 8;
 	}
+#ifndef _MSC_VER
 	asm volatile("nop");
 	asm volatile("nop");
 	asm volatile("nop");
 	asm volatile("nop");
 	asm volatile("nop");
+#endif
     }
 #endif
 #ifdef USE_VIRTUAL_PROTECT
