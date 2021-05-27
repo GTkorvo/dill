@@ -824,7 +824,7 @@ insn_uses(virtual_insn *insn, int *used)
     case iclass_call: {
 	int reg = insn->insn_code & 0x10;
 	if (reg != 0) {
-	    long imm = insn->opnds.calli.imm_l;
+	    long imm = (long) insn->opnds.calli.imm_l;
 	    int src1_vreg = imm;
 	    used[0] = src1_vreg;
 	}
@@ -1006,7 +1006,7 @@ insn_use_test(virtual_insn *insn, int vreg)
     case iclass_call:{
 	int reg = insn->insn_code & 0x10;
 	if (reg != 0) {
-	    long imm = insn->opnds.calli.imm_l;
+	    long imm = (long) insn->opnds.calli.imm_l;
 	    int src1_vreg = imm;
 	    if (vreg == src1_vreg) return 1;
 	}
@@ -1176,12 +1176,11 @@ build_bbs(dill_stream c, void *vinsns, void *prefix_begin, void *code_end)
 {
     virtual_mach_info vmi = (virtual_mach_info)c->p->mach_info;
     basic_block bb;
-    int i;
     virtual_insn *insn, *insns = vinsns;
 
     vmi->bbcount = 0;
     vmi->bblist = malloc(sizeof(struct basic_block));
-    i = 0;
+    size_t i = 0;
     bb = vmi->bblist;
     bb->start = 0;
     bb->label = -1;
@@ -1356,7 +1355,7 @@ do_use_def_count(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	    set_defined(c, insn->opnds.calli.src);
 	}
 	if (reg != 0) {
-	    long imm = insn->opnds.calli.imm_l;
+	    long imm = (long)insn->opnds.calli.imm_l;
 	    int src1_vreg = imm;
 	    set_used(c, src1_vreg);
 	}
@@ -1947,7 +1946,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		/* arith 3 immediate operand integer insns */
 		int dest_vreg = ip->opnds.a3i.dest;
 		int src_vreg = ip->opnds.a3i.src;
-		long imm = ip->opnds.a3i.u.imm;
+		intptr_t imm = ip->opnds.a3i.u.imm;
 		int dest_preg = preg_of(c, bb, dest_vreg);
 		int src_preg = preg_of(c, bb, src_vreg);
 		int insn_code = ip->insn_code;
@@ -2114,7 +2113,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		/* load effective address */
 		int dest_vreg = ip->opnds.a3i.dest;
 		int src_vreg = ip->opnds.a3i.src;
-		long imm = ip->opnds.a3i.u.imm;
+		intptr_t imm = ip->opnds.a3i.u.imm;
 		int dest_preg = preg_of(c, bb, dest_vreg);
 		int src_preg = preg_of(c, bb, src_vreg);
 		if (src_preg == -1) {
@@ -2151,7 +2150,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		/* load store immediate operand integer insns */
 		int dest_vreg = ip->opnds.a3i.dest;
 		int src_vreg = ip->opnds.a3i.src;
-		long imm = ip->opnds.a3i.u.imm;
+		intptr_t imm = ip->opnds.a3i.u.imm;
 		int dest_preg = preg_of(c, bb, dest_vreg);
 		int src_preg = preg_of(c, bb, src_vreg);
 		int store = ((ip->insn_code & 0x10) == 0x10);
@@ -2203,7 +2202,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    {
 		/* load store immediate operand integer insns */
 		int dest_vreg = ip->opnds.a3i.dest;
-		long imm = ip->opnds.a3i.u.imm;
+		intptr_t imm = ip->opnds.a3i.u.imm;
 		int dest_preg = preg_of(c, bb, dest_vreg);
 		int typ = ip->insn_code & 0xf;
 		if (dest_preg == -1) {
@@ -2280,7 +2279,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    case iclass_reti:
 	    {
 		/* return immediate integer insns */
-		long imm = ip->opnds.a3i.u.imm;
+		intptr_t imm = ip->opnds.a3i.u.imm;
 		int typ = ip->insn_code & 0xf;
 		( c->j->reti)(c, typ, 0, imm);
 		last_dest_vreg = -1;
@@ -2334,7 +2333,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		int br_op = ip->insn_code;
 		int label = get_new_label(ip->opnds.bri.label, ltable);
 		int src1_vreg = ip->opnds.bri.src;
-		long imm = ip->opnds.bri.imm_l;
+		intptr_t imm = ip->opnds.bri.imm_l;
 		int src1_preg = preg_of(c, bb, src1_vreg);
 		if (src1_preg == -1) {
 		    /* load src1 */
@@ -2412,7 +2411,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		
 		if (typ != DILL_V) dest_preg = preg_of(c, next_bb, dest_vreg);
 		if (reg != 0) {
-		    int src1_vreg = ip->opnds.calli.imm_l;
+		    intptr_t src1_vreg = ip->opnds.calli.imm_l;
 		    int src1_preg = preg_of(c, bb, src1_vreg);
 		    if (src1_preg == -1) {
 			/* load src1 */
@@ -2492,7 +2491,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		    void *imm = ip->opnds.a3i.u.imm_a;
 		    dill_push_argpi(c, imm);
 		} else {
-		    long imm = ip->opnds.a3i.u.imm;
+		    intptr_t imm = ip->opnds.a3i.u.imm;
 		    dill_push_argii(c, imm);
 		}
 		last_dest_vreg = -1;
@@ -3177,7 +3176,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    }
 	    break;
 	    case iclass_lea: {
-		int offset = ip->opnds.a3i.u.imm + offset_of(c, vused[0]);
+		int offset = (int) ip->opnds.a3i.u.imm + offset_of(c, vused[0]);
 		int add_code = dill_jmp_addp;
 		if (offset == 0) {
 		    c->j->mov(c, DILL_P, 0, pdest, dill_lp(c));
@@ -3239,7 +3238,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		/* branch immediate */
 		int br_op = ip->insn_code;
 		int label = get_new_label(ip->opnds.bri.label, ltable);
-		long imm = ip->opnds.bri.imm_l;
+		intptr_t imm = ip->opnds.bri.imm_l;
 		( c->j->jmp_bi)[br_op](c, c->j->b_data[br_op].data1,
 				       c->j->b_data[br_op].data2,
 				       pused[0], imm, label);
@@ -3294,7 +3293,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		    void *imm = ip->opnds.a3i.u.imm_a;
 		    dill_push_argpi(c, imm);
 		} else {
-		    long imm = ip->opnds.a3i.u.imm;
+		    intptr_t imm = ip->opnds.a3i.u.imm;
 		    dill_push_argii(c, imm);
 		}
 		break;
@@ -4311,7 +4310,7 @@ extern void dill_begin_prefix_code(dill_stream s)
     assert(s->j->proc_start ==  (dill_mach_proc_start)virtual_proc_start);
     /* insert a return, so we don't fall into prefix code */
     virtual_reti(s, DILL_I, 0, 0);
-    vmi->prefix_code_start = (s->p->cur_ip - s->p->code_base) / sizeof(virtual_insn);
+    vmi->prefix_code_start = (int) (s->p->cur_ip - s->p->code_base) / sizeof(virtual_insn);
 }
 
 static dill_foreign_cg_func dill_foreign_cg = NULL;
