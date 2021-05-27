@@ -485,7 +485,7 @@ dill_get_handle(dill_stream s)
 {
     char* native_base = s->p->native.code_base;
     dill_exec_handle handle = malloc(sizeof(*handle));
-    int size = (intptr_t)s->p->native.code_limit - (intptr_t)s->p->native.code_base + END_OF_CODE_BUFFER;
+    intptr_t size = (intptr_t)s->p->native.code_limit - (intptr_t)s->p->native.code_base + END_OF_CODE_BUFFER;
     s->p->native.code_base = NULL;
     if (native_base == 0) {
         native_base = s->p->code_base;
@@ -566,7 +566,7 @@ dill_build_package(dill_stream s, int *pkg_len)
     memcpy(pkg + pkg_size, s->p->code_base, dill_code_size(s));
     pkg_size += dill_code_size(s);
     *pkg_len = pkg_size;
-    ((struct dill_pkg_1 *)pkg)->entry_offset = (char*)s->p->fp - (char*)s->p->code_base;
+    ((struct dill_pkg_1 *)pkg)->entry_offset = (short)( (char*)s->p->fp - (char*)s->p->code_base);
     return pkg;
 }
 
