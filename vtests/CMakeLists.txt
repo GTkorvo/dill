@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
 
 set(TESTS basic_call general t1 opt branch prefix_test)
 
@@ -14,7 +13,7 @@ include_directories(BEFORE
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/general.c
-  COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
+  COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
   MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
 )
 
