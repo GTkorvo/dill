@@ -246,6 +246,8 @@ else()
   set(EMULATION_POSSIBLE FALSE)
 endif()
 
+find_package(Perl REQUIRED)
+
 option(DILL_ENABLE_DISASSEMBLY
   "enable binutils-based disassembly (default is OFF)" OFF)
 
@@ -253,7 +255,7 @@ set(ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
 foreach(_arch ${ARCHITECTURES})
   add_custom_command(
     OUTPUT dill_${_arch}.c
-    COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
     DEPENDS ${_arch}.ops
   ) 
   list(APPEND arch_files dill_${_arch}.c ${_arch}.c)
@@ -264,7 +266,7 @@ endforeach()
 
 add_custom_command(
   OUTPUT dill.h dill.c
-  COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/base.ops ${BASE_OPS_ARG}
+  COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/base.ops ${BASE_OPS_ARG}
   DEPENDS base.ops
 ) 
 
