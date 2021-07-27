@@ -33,7 +33,7 @@ unpack_package(char *package, call_t *t, char **code_p)
 	t->call_locs[count].loc = *((int*)p);
 	t->call_locs[count].xfer_name = (p + sizeof(int));
 	call_len = sizeof(int) + strlen(t->call_locs[count].xfer_name) + 1;
-	call_len = (call_len + 7) & -8;  /* round up to mod 8 */
+	call_len = (call_len + 7) & (size_t)-8;  /* round up to mod 8 */
 	p += call_len;
     }
     *code_p = p;
