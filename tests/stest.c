@@ -6,8 +6,10 @@
 #include <malloc.h>
 #endif
 #ifdef STDC_HEADERS
-#include <unistd.h>
 #include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 #include "../config.h"
