@@ -2600,7 +2600,9 @@ x86_64_flush(void *base, void *limit)
 	/* flush every 8 bytes of preallocated insn stream. */
 	while((char*)ptr < (char*) limit) {
 #ifndef _MSC_VER
+#ifdef __x86_64__
 	    asm volatile ("clflush (%0)" : /* */ : "r" (ptr));
+#endif
 #else
 		_mm_clflush(ptr);
 #endif
