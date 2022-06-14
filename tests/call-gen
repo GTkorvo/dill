@@ -107,6 +107,7 @@ print<<"EOF";
 	h = dill_finalize(s);
 	proc = ($type{$type} (*)($cast_str)) dill_get_fp(h);
 	result = proc($param_str);
+	dill_dump(s);
 	if (result != s2$type) {
 	    printf(\"test for $cur_arg_count arguments of type \\\"$type\\\" failed, expected $c_print_formats{$type}, got $c_print_formats{$type}\\n\",
 		   s2$type, result);
@@ -121,6 +122,7 @@ print<<"EOF";
 	h2 = dill_finalize(s2);
 	proc2 = ($type{$type} (*) ($cast_str)) dill_get_fp(h2);
 	result = proc2($param_str);
+	dill_dump(s2);
 	if (result != s2$type) {
 	    printf(\"test for calling procedure with %d arguments of type %s failed\\n\", $cur_arg_count,
 		   \"$type\");

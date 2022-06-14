@@ -2854,8 +2854,14 @@ x86_64_count_insn(dill_stream s, int start, int end)
     return end - start;
 }
 extern int
-x86_64_init_disassembly_info(dill_stream s, void * ptr){return 0;}
-extern int x86_64_print_insn(dill_stream s, void *info_ptr, void *insn){return 0;}
+x86_64_init_disassembly_info(dill_stream s, void * ptr){return 1;}
+unsigned int x86_64_disassemble(unsigned char *bytes, unsigned int max, int offset, char *output);
+extern int x86_64_print_insn(dill_stream s, void *info_ptr, void *insn){
+    char out[128] = "";
+    int ret = x86_64_disassemble(insn, sizeof(out), 0, out);
+    printf("%s", out);
+    return ret;
+}
 #endif
 
 extern void

@@ -89,6 +89,7 @@ set(SRC_list
   virtual.c
   dill.c
   vm.c
+  x86_64_disassembler.c
 )
 
 set(TARGET_DEP_INC)
