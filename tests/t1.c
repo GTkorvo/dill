@@ -3,12 +3,14 @@
 #include "dill.h"
 #include <stdlib.h>
 
+#ifdef TESTING
 unsigned int x86_64_disassemble(unsigned char *bytes, unsigned int max, int offset, char *output);
 
 int test (int val)
 {
     return val;
 }
+#endif
 
 int main(int argc, char **argv) 
 { 
@@ -36,7 +38,7 @@ int main(int argc, char **argv)
 	    exit(1);
 	}
     }
-
+#ifdef TESTING
     {
 	dill_stream s = dill_create_raw_stream();
 	dill_reg param0;
@@ -69,5 +71,6 @@ int main(int argc, char **argv)
 	    i += ret;
 	}
     }
-    return 1;
+#endif
+    return 0;
 }
