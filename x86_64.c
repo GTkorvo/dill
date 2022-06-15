@@ -758,7 +758,11 @@ Register Offset
 %xmm15 288
 
 */
+#ifndef USE_WINDOWS_CALLS
 static int arg_regs[] = {RDI, RSI, RDX, RCX, R8, R9};
+#else
+static int arg_regs[] = {RCX, RDX, R8, R9};
+#endif
 
 static void
 save_required_regs(dill_stream s, int force)
