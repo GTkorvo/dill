@@ -710,6 +710,8 @@ x86_64_save_restore_op(dill_stream s, int save_restore, int type, int reg)
 }
 
 /*
+ *     This is linux convention.  Windows is different.
+ *
  * register   use  			       preserved across function calls
  *  %rax temporary register; with variable arguments
  *        passes information about the
@@ -2254,7 +2256,7 @@ static void internal_push(dill_stream s, int type, int immediate,
 	}	    
     }
     if ((arg.type != DILL_D) && (arg.type != DILL_F)) {
-      if (smi->int_arg_count < 6) {
+      if (smi->int_arg_count < sizeof(arg_regs) / sizeof(arg_regs[0])) {
 	arg.is_register = 1;
 	arg.in_reg = arg.out_reg = arg_regs[smi->int_arg_count];
 	smi->int_arg_count++;
