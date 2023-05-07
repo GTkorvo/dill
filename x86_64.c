@@ -2367,13 +2367,29 @@ extern void x86_64_pushfi(dill_stream s, int type, double value)
 extern int x86_64_calli(dill_stream s, int type, void *xfer_address, const char *name)
 {
     int rex = REX_W;
+    int i;
     int tmp_call_reg = R11;
     if (tmp_call_reg > RDI) rex |= REX_B;
     
     /* save temporary registers */
+    for (i=XMM8; i < XMM15 ; i+=1) {
+	if (dill_mustsave(&s->p->tmp_f, i)) {
+	    x86_64_save_restore_op(s, 0, DILL_D, i);
+	}
+    }
+
+    /* save temporary registers */
     dill_mark_call_location(s, name, xfer_address);
     BYTE_OUT1LR(s, rex, 0xb8 + (0x7 & tmp_call_reg), 0);		/* setl */
-    return x86_64_callr(s, type, R11);
+    int ret_reg = x86_64_callr(s, type, R11);
+
+    /* restore temporary registers */
+    for (i=XMM8; i < XMM15 ; i+=1) {
+	if (dill_mustsave(&s->p->tmp_f, i)) {
+	    x86_64_save_restore_op(s, 1, DILL_D, i);
+	}
+    }
+    return ret_reg;
 }
 
 extern int x86_64_callr(dill_stream s, int type, int src)
