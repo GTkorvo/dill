@@ -38,7 +38,7 @@ endif()
 if(NOT DEFINED DILL_HEADER_COMPONENT)
   set(DILL_HEADER_COMPONENT dev)
 endif()
-
+add_definitions(-DDILL_SRC)
 if(WIN32)
   # Automagic to do the DLL / LIB song and dance
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
