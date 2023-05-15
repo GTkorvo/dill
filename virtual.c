@@ -515,7 +515,7 @@ dump_bb(dill_stream c, struct basic_block *bb, int i)
     if (bb->is_loop_start) printf(" - LOOP_START");
     if (bb->is_loop_end) printf(" - LOOP_END");
     printf("\n");
-    for (j = bb->start; j <= bb->end; j++) {
+    for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
 	printf(" %zd - ", j);
 	virtual_print_insn(c, NULL, ((char *)c->p->virtual.code_base) + 
 			   j * sizeof(virtual_insn));
@@ -1763,7 +1763,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	int insn_start = (int)((char*)c->p->cur_ip - (char *)c->p->code_base);
 	int insn_count = (int)(bb->end - bb->start);
 	foreach_bit(bb->regs_defined, (bv_func) emit_getreg, bb, c);
-	for (j = bb->start; j <= bb->end; j++) {
+	for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
 	    int loc;
 	    ip = &((virtual_insn *)insns)[j];
 	    loc = (int)((char*)ip - (char*)insns);
@@ -3017,7 +3017,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    state.param_info[j].update_in_reg = 0;
 	    state.param_info[j].value_in_mem = -1;
 	}
-	for (j = bb->start; j <= bb->end; j++) {
+	for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
 	    virtual_insn *ip = &((virtual_insn *)insns)[j];
 	    update_vreg_info(&state, bb, ip, (int)j);
 	}
@@ -3046,7 +3046,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    dump_bb(c, bb, (int)i);
 	}
 	insn_start = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
-	for (j = bb->start; j <= bb->end; j++) {
+	for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
 	    virtual_insn *ip;
 	    int vused[3];
 	    int vdest;
@@ -3344,7 +3344,7 @@ apply_to_each(dill_stream c, void *insns, virtual_mach_info vmi,
 
     for (i = 0; i < vmi->bbcount; i++) {
 	basic_block bb = &vmi->bblist[i];
-	for (j = bb->start; j <= bb->end; j++) {
+	for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
 	    (func)(c, bb, insns, (int)j);
 	}
     }
