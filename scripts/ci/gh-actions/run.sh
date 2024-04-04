@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 readlinkf() { perl -MCwd -e 'print Cwd::abs_path shift' "$1"; }
 

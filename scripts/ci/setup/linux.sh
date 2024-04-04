@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 case ${GH_YML_JOBNAME} in
   centos7*) PKG_CMD=yum ;;
