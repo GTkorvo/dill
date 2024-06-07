@@ -10,8 +10,6 @@ while ($_ = $ARGV[0]) {
 	if (/-build_shared/) {$BUILD_SHARED = 1;}
 }
 
-print "BUILD_SHARED is $BUILD_SHARED\n";
-
 sub upperc {
     local($_) = pop(@_);
     tr/[a-z]/[A-Z]/;
