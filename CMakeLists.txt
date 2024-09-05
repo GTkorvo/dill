@@ -273,8 +273,6 @@ option(DILL_ENABLE_DISASSEMBLY
 
 find_package(Perl)
 
-set (PERL_FOUND false)
-
 set(ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
 foreach(_arch ${ARCHITECTURES})
   if(PERL_FOUND)
