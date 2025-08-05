@@ -37,8 +37,6 @@ jobs:
         include:
         - os: alma8
           container: almalinux:8
-        - os: ubuntu1604
-          container: ubuntu:16.04
         - os: ubuntu2404
           container: ubuntu:24.04
         - os: ubuntu2204
