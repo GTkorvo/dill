@@ -43,7 +43,7 @@ jobs:
           container: ubuntu:22.04
         - os: centos7
           compiler: nvhpc
-          container:n nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-centos7
+          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-centos7
         - os: ubuntu2404
           compiler: nvhpc
           container: nvidia/cuda:12.9.1-devel-ubuntu24.04
