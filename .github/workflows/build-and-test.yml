@@ -33,7 +33,7 @@ jobs:
         exclude:
           - { os: alma8, compiler: nvhpc }
           - { os: ubuntu2204, compiler: nvhpc }
-          - { os: ubuntu2404, compiler: nvhpc }
+          - { os: ubuntu2404 }
         include:
         - os: alma8
           container: almalinux:8
@@ -46,9 +46,9 @@ jobs:
         - os: centos7
           compiler: nvhpc
           container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-centos7
-        - os: ubuntu2004
+        - os: ubuntu2404
           compiler: nvhpc
-          container: nvcr.io/nvidia/nvhpc:21.2-devel-cuda11.2-ubuntu20.04
+          container: nvcr.io/nvidia/nvhpc:12.9.1-devel-ubuntu24.04
 
     steps:
     - uses: actions/checkout@v2
