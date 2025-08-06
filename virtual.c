@@ -535,7 +535,7 @@ dump_bbs(dill_stream c)
 #endif
 #  if __GNUC_PREREQ(4,6)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-GCC"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
 #  endif
 #endif
 /* overflow is confused about operation on bit_vec->vec, suppress warning */
@@ -568,7 +568,7 @@ remove_regs(bit_vec dest, bit_vec src)
 }
 #if defined(__GNUC__) && !defined(__clang__)
 #  if __GNUC_PREREQ(4,6)
-pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #  endif
 #endif
 
