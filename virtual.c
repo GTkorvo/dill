@@ -528,7 +528,7 @@ dump_bbs(dill_stream c)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
-/* GCC is confused about operation on bit_vec->vec, suppress warning
+/* GCC is confused about operation on bit_vec->vec, suppress warning */
 static int
 add_regs(bit_vec dest, bit_vec src)
 {
