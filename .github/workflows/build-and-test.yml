@@ -28,14 +28,14 @@ jobs:
       fail-fast: false
       matrix:
         buildtype: [ release, debug ]
-        os: [ alma10, ubuntu2204, ubuntu2404 ]
+        os: [ alma9, ubuntu2204, ubuntu2404 ]
         compiler: [ clang, gcc, nvhpc ]
         exclude:
-          - { os: alma10, compiler: nvhpc }
+          - { os: alma9, compiler: nvhpc }
           - { os: ubuntu2204, compiler: nvhpc }
         include:
-        - os: alma10
-          container: almalinux:10
+        - os: alma9
+          container: almalinux:9
         - os: ubuntu2404
           container: ubuntu:24.04
         - os: ubuntu2204

@@ -526,6 +526,7 @@ dump_bbs(dill_stream c)
     }
 }
 
+#pragma GCC diagnostic ignored "-Wstringop-overflow=4"
 static int
 add_regs(bit_vec dest, bit_vec src)
 {
