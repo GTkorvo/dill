@@ -526,9 +526,11 @@ dump_bbs(dill_stream c)
     }
 }
 
+#ifdef __GNUC__
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-/* GCC is confused about operation on bit_vec->vec, suppress warning */
+#pragma GCC diagnostic ignored "-Wstringop-GCC"
+#endif
+/* overflow is confused about operation on bit_vec->vec, suppress warning */
 static int
 add_regs(bit_vec dest, bit_vec src)
 {
@@ -556,7 +558,9 @@ remove_regs(bit_vec dest, bit_vec src)
         dest->vec[i] = (dest->vec[i] & ~src->vec[i]);
     }
 }
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#endif
 
 static void
 clear_bit_vec(bit_vec b)
