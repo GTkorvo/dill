@@ -3,6 +3,8 @@
 case ${GH_YML_JOBNAME} in
   centos7*) PKG_CMD=yum ;;
   centos8*|alma8*) PKG_CMD=dnf ;;
+  centos9*|alma9*) PKG_CMD=dnf ;;
+  centos9*|alma10*) PKG_CMD=dnf ;;
   ubuntu*)  PKG_CMD=apt-get ;;
 esac
 
