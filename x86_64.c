@@ -851,6 +851,18 @@ save_required_regs(dill_stream s, int force)
         dill_wasused(&s->p->tmp_i, R15)) {
         x86_64_push_reg(s, R15);
     }
+#ifdef USE_WINDOWS_CALLS
+    /* On Windows x64, XMM6-XMM15 are non-volatile (callee-saved) */
+    {
+        int i;
+        for (i = XMM6; i <= XMM15; i++) {
+            if (force || dill_wasused(&s->p->var_f, i) ||
+                dill_wasused(&s->p->tmp_f, i)) {
+                x86_64_save_restore_op(s, 0, DILL_D, i);
+            }
+        }
+    }
+#endif
 }
 
 static int
@@ -1058,6 +1070,19 @@ x86_64_proc_ret(dill_stream s)
      * ret */
     if ((smi->last_proc_ret_end == s->p->cur_ip) && !dill_is_label_mark(s))
         return;
+
+#ifdef USE_WINDOWS_CALLS
+    /* On Windows x64, restore XMM6-XMM15 (non-volatile) before integer regs */
+    {
+        int i;
+        for (i = XMM15; i >= XMM6; i--) {
+            if (force || dill_wasused(&s->p->var_f, i) ||
+                dill_wasused(&s->p->tmp_f, i)) {
+                x86_64_save_restore_op(s, 1, DILL_D, i);
+            }
+        }
+    }
+#endif
 
     if (force || dill_wasused(&s->p->var_i, R15) ||
         dill_wasused(&s->p->tmp_i, R15)) {
@@ -1541,6 +1566,32 @@ x86_64_pstorei(dill_stream s,
     case DILL_D:
         float_op = 0xf2;
         break;
+    default:
+        break;
+    }
+    if (dest > RDI)
+        rex |= REX_R;
+    if (src > RDI)
+        rex |= REX_B;
+    /* Check for large offset case first - handle via push/arith/store/pop
+     * without outputting prefix bytes that would be applied to the push */
+    if (!(((src & 0x7) == ESP) &&
+          (((offset & 0xffffffff80000000) == 0) ||
+           ((offset & 0xffffffff80000000) == 0xffffffff80000000))) &&
+        !((offset == 0) && ((src & 0x7) != 5)) &&
+        !(((intptr_t)offset <= 127) && ((intptr_t)offset > -128)) &&
+        !(((offset & 0xffffffff80000000) == 0) ||
+          ((offset & 0xffffffff80000000) == 0xffffffff80000000))) {
+        /* Large offset that doesn't fit in 32 bits - use push/arith/store/pop.
+         * Don't output 0x66 prefix here; the recursive call will handle it. */
+        x86_64_push_reg(s, src);
+        x86_64_arith3i(s, 0, DILL_L, src, src, offset);
+        x86_64_pstorei(s, type, 0, dest, src, 0);
+        x86_64_pop_reg(s, src);
+        return;
+    }
+    /* Now we know we'll emit a direct store instruction - output prefixes */
+    switch (type) {
     case DILL_S:
     case DILL_US:
         BYTE_OUT1(s, 0x66);
@@ -1552,10 +1603,6 @@ x86_64_pstorei(dill_stream s,
         BYTE_OUT1(s, smi->pending_prefix);
         smi->pending_prefix = 0;
     }
-    if (dest > RDI)
-        rex |= REX_R;
-    if (src > RDI)
-        rex |= REX_B;
     if (((src & 0x7) == ESP) &&
         (((offset & 0xffffffff80000000) == 0) ||
          ((offset & 0xffffffff80000000) == 0xffffffff80000000))) {
@@ -1594,8 +1641,7 @@ x86_64_pstorei(dill_stream s,
                 BYTE_OUT3R(s, rex, st_opcodes[type], ModRM(0x1, dest, src),
                            offset & 0xff);
             }
-        } else if (((offset & 0xffffffff80000000) == 0) ||
-                   ((offset & 0xffffffff80000000) == 0xffffffff80000000)) {
+        } else {
             /* safe INT offset using only low 31 bits */
             if (float_op != 0) {
                 BYTE_OUT1R3I(s, float_op, rex, 0x0f, 0x11,
@@ -1604,11 +1650,6 @@ x86_64_pstorei(dill_stream s,
                 BYTE_OUT2IR(s, rex, st_opcodes[type], ModRM(0x2, dest, src),
                             (int)offset);
             }
-        } else {
-            x86_64_push_reg(s, src);
-            x86_64_arith3i(s, 0, DILL_L, src, src, offset);
-            x86_64_pstorei(s, type, 0, dest, src, 0);
-            x86_64_pop_reg(s, src);
         }
     }
 }
@@ -2573,7 +2614,7 @@ internal_push(dill_stream s, int type, int immediate, void* value_ptr)
         }
     }
     if (arg.is_register == 0) {
-        if (arg.offset == 0) {
+        if (smi->call_stack_space == 0) {
             smi->call_backpatch_offset =
                 (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
             dill_subli(s, ESP, ESP, 0x70909090); /* tentative for backpatch */
@@ -2732,6 +2773,13 @@ x86_64_callr(dill_stream s, int type, int src)
     if (src > RDI)
         rex |= REX_B;
 
+#ifdef USE_WINDOWS_CALLS
+    /* Windows x64 requires 32 bytes of shadow space even when all args fit in registers */
+    if (smi->call_stack_space == 0) {
+        dill_subli(s, ESP, ESP, 32);
+    }
+#endif
+
     /* save temporary registers */
     /* call through reg */
     x86_64_setl(s, EAX, smi->float_arg_count);
@@ -2752,6 +2800,12 @@ x86_64_callr(dill_stream s, int type, int src)
         /* undo arg space reservation */
         dill_addli(s, ESP, ESP, call_stack_size);
     }
+#ifdef USE_WINDOWS_CALLS
+    else {
+        /* Restore shadow space when all args fit in registers */
+        dill_addli(s, ESP, ESP, 32);
+    }
+#endif
     return caller_side_ret_reg;
 }
 
