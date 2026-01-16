@@ -3881,7 +3881,8 @@ is_convert_noop(int insn_code)
     int to_type = insn_code & 0xf;
 
     /* GSE -bug  This test should be for *generated* target, not host */
-    if (sizeof(long) != sizeof(int)) {
+    /* Use sizeof(uintptr_t) since that's what DILL uses for UL/L types */
+    if (sizeof(uintptr_t) != sizeof(int)) {
         return 0;
     } else {
         switch (from_type) {
