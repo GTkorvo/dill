@@ -2203,15 +2203,51 @@ x86_64_convert(dill_stream s, int from_type, int to_type, int dest, int src)
         break;
     }
     case CONV(DILL_L, DILL_F):
-    case CONV(DILL_L, DILL_D):
+    case CONV(DILL_L, DILL_D): {
+        int rex = REX_W;
+        /* cvtsi2s{s,d} - for signed 64-bit long */
+        if (src > RDI)
+            rex |= REX_B;
+        if (dest > RDI)
+            rex |= REX_R;
+        BYTE_OUT1R3(s, (to_type == DILL_D) ? 0xf2 : 0xf3, rex, 0xf, 0x2a,
+                    ModRM(0x3, dest, src));
+        break;
+    }
     case CONV(DILL_U, DILL_D):
-    case CONV(DILL_U, DILL_F):
+    case CONV(DILL_U, DILL_F): {
+        int rex = REX_W;
+        /* First zero-extend 32-bit unsigned to 64-bit, then cvtsi2s{s,d} */
+        x86_64_lshi(s, src, src, 32);
+        x86_64_rshi(s, src, src, 32);
+        if (src > RDI)
+            rex |= REX_B;
+        if (dest > RDI)
+            rex |= REX_R;
+        BYTE_OUT1R3(s, (to_type == DILL_D) ? 0xf2 : 0xf3, rex, 0xf, 0x2a,
+                    ModRM(0x3, dest, src));
+        break;
+    }
     case CONV(DILL_US, DILL_D):
-    case CONV(DILL_US, DILL_F):
+    case CONV(DILL_US, DILL_F): {
+        int rex = REX_W;
+        /* First zero-extend 16-bit unsigned to 64-bit, then cvtsi2s{s,d} */
+        x86_64_lshi(s, src, src, 48);
+        x86_64_rshi(s, src, src, 48);
+        if (src > RDI)
+            rex |= REX_B;
+        if (dest > RDI)
+            rex |= REX_R;
+        BYTE_OUT1R3(s, (to_type == DILL_D) ? 0xf2 : 0xf3, rex, 0xf, 0x2a,
+                    ModRM(0x3, dest, src));
+        break;
+    }
     case CONV(DILL_UC, DILL_D):
     case CONV(DILL_UC, DILL_F): {
         int rex = REX_W;
-        /* cvtsi2s{s,d} */
+        /* First zero-extend 8-bit unsigned to 64-bit, then cvtsi2s{s,d} */
+        x86_64_lshi(s, src, src, 56);
+        x86_64_rshi(s, src, src, 56);
         if (src > RDI)
             rex |= REX_B;
         if (dest > RDI)
