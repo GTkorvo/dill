@@ -482,7 +482,7 @@ add_pred(basic_block bb, int pred)
 static void
 dump_bb(dill_stream c, struct basic_block* bb, int i)
 {
-    int j;
+    size_t j;
     printf(
         "\nBasic block %d, start %zd, end %zd, label %d, fall %d, branch_to "
         "%d\n",
@@ -1825,7 +1825,8 @@ emit_insns(dill_stream c,
            virtual_mach_info vmi)
 {
     int label_xlate = 0;
-    int i, j = 0;
+    int i;
+    size_t j = 0;
     virtual_insn* ip;
     if (count_verbose == -1) {
         count_verbose = (getenv("DILL_COUNTS") != NULL);
@@ -3071,7 +3072,8 @@ new_emit_insns(dill_stream c,
                virtual_mach_info vmi)
 {
     int label_xlate = 0;
-    int i, j = 0;
+    int i;
+    size_t j = 0;
     reg_state state;
 
     if (count_verbose == -1) {
@@ -3419,7 +3421,8 @@ apply_to_each(dill_stream c,
               virtual_mach_info vmi,
               apply_func func)
 {
-    int i, j = 0;
+    int i;
+    size_t j = 0;
 
     for (i = 0; i < vmi->bbcount; i++) {
         basic_block bb = &vmi->bblist[i];
