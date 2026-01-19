@@ -2105,8 +2105,7 @@ x86_reg_init(dill_stream s, x86_mach_info smi)
 #define bit_sse (1<<25)
 
 extern void*
-gen_x86_mach_info(s)
-dill_stream s;
+gen_x86_mach_info(dill_stream s)
 {
     static int host_supports_SSE = -1;
     x86_mach_info smi = malloc(sizeof(*smi));
@@ -2230,7 +2229,7 @@ x86_print_insn(dill_stream s, void *info_ptr, void *insn)
 #endif
 }
 
-extern void null_func(){}
+extern void null_func(void){}
 extern int
 x86_count_insn(dill_stream s, int start, int end)
 {
