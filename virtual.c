@@ -508,7 +508,7 @@ dump_bb(dill_stream c, struct basic_block* bb, int i)
         printf(" - LOOP_END");
     printf("\n");
     for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
-        printf(" %zd - ", j);
+        printf(" %d - ", (int)j);
         virtual_print_insn(
             c, NULL,
             ((char*)c->p->virtual.code_base) + j * sizeof(virtual_insn));
@@ -2564,9 +2564,9 @@ emit_insns(dill_stream c,
         if (count_verbose) {
             int insn_end = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
             printf(
-                "Basic Block %zd, %d virtual instructions, %d physical "
+                "Basic Block %d, %d virtual instructions, %d physical "
                 "instructions\n",
-                i, insn_count, c->j->count_insn(c, insn_start, insn_end));
+                (int)i, insn_count, c->j->count_insn(c, insn_start, insn_end));
         }
     }
     if ((unsigned)ltable[label_xlate].old_location ==
@@ -3130,7 +3130,7 @@ new_emit_insns(dill_stream c,
         }
         reset_reg_state(&state);
         if (c->dill_debug) {
-            printf("============= Starting basic block %zd ===========\n", i);
+            printf("============= Starting basic block %d ===========\n", (int)i);
             dump_bb(c, bb, (int)i);
         }
         insn_start = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
@@ -3385,9 +3385,9 @@ new_emit_insns(dill_stream c,
         if (count_verbose) {
             int insn_end = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
             printf(
-                "Basic Block %zd, %d virtual instructions, %d physical "
+                "Basic Block %d, %d virtual instructions, %d physical "
                 "instructions\n",
-                i, insn_count, c->j->count_insn(c, insn_start, insn_end));
+                (int)i, insn_count, c->j->count_insn(c, insn_start, insn_end));
         }
     }
     if ((unsigned)ltable[label_xlate].old_location ==
