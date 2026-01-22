@@ -576,10 +576,27 @@ arm64_package_end(dill_stream s)
  * Clone code to new location
  */
 void *
-arm64_clone_code(dill_stream s, void *base, int size)
+arm64_clone_code(dill_stream s, void *new_base, int available_size)
 {
-    void *new_base = malloc(size);
-    memcpy(new_base, base, size);
+    int size = dill_code_size(s);
+    void *old_base = s->p->code_base;
+    void *native_base = s->p->code_base;
+    if (available_size < size) {
+        return NULL;
+    }
+    if (native_base == NULL)
+        native_base = s->p->native.code_base;
+    memcpy(new_base, native_base, size);
+    s->p->code_base = new_base;
+    s->p->cur_ip = (char*)new_base + size;
+    s->p->fp = new_base;
+    arm64_branch_link(s);
+    arm64_call_link(s);
+    arm64_data_link(s);
+    s->p->code_base = old_base;
+    s->p->cur_ip = (char*)old_base + size;
+    s->p->fp = old_base;
+    arm64_flush(new_base, (char*)new_base + size);
     return new_base;
 }
 
