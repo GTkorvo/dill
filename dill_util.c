@@ -24,6 +24,13 @@ typedef SSIZE_T ssize_t;
 #ifdef USE_MMAP_CODE_SEG
 #include <sys/mman.h>
 #endif
+#ifdef USE_MACOS_MAP_JIT
+#include <sys/mman.h>
+#include <pthread.h>
+#if defined(HOST_ARM8) || defined(HOST_ARM64)
+#include <libkern/OSCacheControl.h>
+#endif
+#endif
 #include "dill_internal.h"
 
 static char* DILL_version = "DILL Version " DILL_VERSION "\n";
@@ -97,6 +104,9 @@ free_emulator_handler_bits(dill_exec_handle handle);
 static void
 reset_context(dill_stream s)
 {
+#ifdef USE_MACOS_MAP_JIT
+    pthread_jit_write_protect_np(0);  /* enable write for code buffer reuse */
+#endif
     s->p->mach_reset(s);
     s->p->cur_ip = s->p->code_base;
     dill_register_init(s);
@@ -132,6 +142,8 @@ extern void
 dill_arm7_init(dill_stream s);
 extern void
 dill_arm8_init(dill_stream s);
+extern void
+dill_arm64_init(dill_stream s);
 extern void
 dill_ppc64le_init(dill_stream s);
 extern void
@@ -207,6 +219,13 @@ set_mach_reset(dill_stream s, char* arch)
     !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "arm8") == 0) {
         s->p->mach_reset = dill_arm8_init;
+        return 1;
+    }
+#endif
+#if (defined(MULTI_TARGET) || defined(HOST_ARM64)) &&                           \
+    !defined(DILL_IGNORE_NATIVE)
+    if (strcmp(arch, "arm64") == 0) {
+        s->p->mach_reset = dill_arm64_init;
         return 1;
     }
 #endif
@@ -500,6 +519,16 @@ dill_finalize(dill_stream s)
     handle->fp = (void (*)())s->p->fp;
     handle->ref_count = 1;
     handle->size = 0;
+#ifdef USE_MACOS_MAP_JIT
+    pthread_jit_write_protect_np(1);  /* enable execute */
+#if defined(HOST_ARM8) || defined(HOST_ARM64)
+    /* Check for NULL - virtual mode already flushed in its inner dill_finalize */
+    if (s->p->code_base != NULL) {
+        sys_icache_invalidate(s->p->code_base,
+            (size_t)((char*)s->p->cur_ip - (char*)s->p->code_base));
+    }
+#endif
+#endif
     return handle;
 }
 
@@ -517,6 +546,13 @@ dill_get_handle(dill_stream s)
                END_OF_CODE_BUFFER;
         s->p->code_base = NULL;
     }
+#ifdef USE_MACOS_MAP_JIT
+    pthread_jit_write_protect_np(1);  /* enable execute */
+#if defined(HOST_ARM8) || defined(HOST_ARM64)
+    sys_icache_invalidate(native_base,
+        (size_t)((char*)s->p->cur_ip - (char*)native_base));
+#endif
+#endif
     handle->fp = (void (*)())s->p->fp;
     handle->ref_count = 1;
     handle->size = (int)size;
@@ -539,7 +575,7 @@ dill_free_handle(dill_exec_handle handle)
         return;
     if (handle->size != 0) {
         if (handle->code_base) {
-#ifdef USE_MMAP_CODE_SEG
+#if defined(USE_MACOS_MAP_JIT) || defined(USE_MMAP_CODE_SEG)
             if (munmap(handle->code_base, handle->size) == -1)
                 perror("unmap 1");
 #else
@@ -869,7 +905,17 @@ void
 init_code_block(dill_stream s)
 {
     static unsigned long size = INIT_CODE_SIZE;
-#ifdef USE_MMAP_CODE_SEG
+#ifdef USE_MACOS_MAP_JIT
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+    pthread_jit_write_protect_np(0);  /* enable write */
+    s->p->code_base = (void*)mmap(0, size,
+                                  PROT_READ | PROT_WRITE | PROT_EXEC,
+                                  MAP_ANONYMOUS | MAP_PRIVATE | MAP_JIT, -1, 0);
+    if (s->p->code_base == MAP_FAILED)
+        perror("mmap MAP_JIT");
+#elif defined(USE_MMAP_CODE_SEG)
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
@@ -893,7 +939,7 @@ init_code_block(dill_stream s)
 static void
 free_code_blocks(dill_stream s)
 {
-#ifdef USE_MMAP_CODE_SEG
+#if defined(USE_MACOS_MAP_JIT) || defined(USE_MMAP_CODE_SEG)
     if (s->p->code_base) {
         int size =
             (long)s->p->code_limit - (long)s->p->code_base + END_OF_CODE_BUFFER;
@@ -930,7 +976,28 @@ extend_dill_stream(dill_stream s)
                      END_OF_CODE_BUFFER);
     int cur_ip = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
     int new_size = size * 2;
-#ifdef USE_MMAP_CODE_SEG
+    /* Only compute fp_offset if fp is within the code region */
+    int fp_valid = ((char*)s->p->fp >= (char*)s->p->code_base &&
+                    (char*)s->p->fp <= s->p->code_limit);
+    int fp_offset = fp_valid ? (int)((char*)s->p->fp - (char*)s->p->code_base) : 0;
+    if (s->dill_debug) {
+        printf("extend_dill_stream: old_base=%p, cur_ip_offset=%d, fp_offset=%d, old_size=%d, new_size=%d\n",
+               s->p->code_base, cur_ip, fp_offset, size, new_size);
+    }
+#ifdef USE_MACOS_MAP_JIT
+    {
+        void* old = s->p->code_base;
+        pthread_jit_write_protect_np(0);  /* enable write */
+        void* new_mem = mmap(0, new_size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                         MAP_ANONYMOUS | MAP_PRIVATE | MAP_JIT, -1, 0);
+        if (new_mem == MAP_FAILED)
+            perror("mmap MAP_JIT extend");
+        memcpy(new_mem, old, size);
+        s->p->code_base = new_mem;
+        if (munmap(old, size) == -1)
+            perror("munmap exp");
+    }
+#elif defined(USE_MMAP_CODE_SEG)
     {
         void* old = s->p->code_base;
         void* new = mmap(0, new_size, PROT_EXEC | PROT_READ | PROT_WRITE,
@@ -946,6 +1013,10 @@ extend_dill_stream(dill_stream s)
     s->p->code_base = realloc(s->p->code_base, new_size);
 #endif
     s->p->cur_ip = ((char*)s->p->code_base) + cur_ip;
+    /* Only update fp if it was valid in the old code region */
+    if (fp_valid) {
+        s->p->fp = ((char*)s->p->code_base) + fp_offset;
+    }
     s->p->code_limit = ((char*)s->p->code_base) + new_size - END_OF_CODE_BUFFER;
 }
 

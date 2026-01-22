@@ -13,6 +13,9 @@
 #include <intrin.h>
 #include <memoryapi.h>
 #endif
+#ifdef USE_MACOS_MAP_JIT
+#include <pthread.h>
+#endif
 #include "dill_internal.h"
 #include "x86.h"
 
@@ -81,7 +84,21 @@ x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)
     dill_lookup_xfer_addrs(t, &x86_64_xfer_recs[0]);
     x86_64_rt_call_link(code, t);
     x86_64_flush(code, code + 1024);
-#ifdef USE_MMAP_CODE_SEG
+#ifdef USE_MACOS_MAP_JIT
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+    pthread_jit_write_protect_np(0);
+    tmp = (void*)mmap(0, pkg->code_size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                      MAP_ANONYMOUS | MAP_PRIVATE | MAP_JIT, -1, 0);
+    if (tmp == MAP_FAILED) {
+        perror("mmap MAP_JIT package_stitch");
+        return NULL;
+    }
+    memcpy(tmp, code, pkg->code_size);
+    x86_64_flush(tmp, tmp + pkg->code_size);
+    pthread_jit_write_protect_np(1);
+#elif defined(USE_MMAP_CODE_SEG)
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
