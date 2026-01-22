@@ -124,13 +124,42 @@ arm64_simple_ret(dill_stream s)
     dill_mark_ret_location(s);
     /* Emit frame teardown epilogue:
      * mov sp, x29               ; Restore SP to frame pointer (deallocate save area)
-     * ldp x29, x30, [sp], #16   ; Restore FP and LR, post-increment SP
+     * ldp x29, x30, [sp], #16   ; Restore FP and LR
+     * ldp d14, d15, [sp], #16   ; Restore float callee-saved regs
+     * ldp d12, d13, [sp], #16
+     * ldp d10, d11, [sp], #16
+     * ldp d8, d9, [sp], #16
+     * ldp x27, x28, [sp], #16   ; Restore integer callee-saved regs
+     * ldp x25, x26, [sp], #16
+     * ldp x23, x24, [sp], #16
+     * ldp x21, x22, [sp], #16
+     * ldp x19, x20, [sp], #16
      * ret
      */
     /* MOV sp, x29 (ADD sp, x29, #0) = 0x910003BF */
     INSN_OUT(s, 0x910003BF);
     /* LDP x29, x30, [sp], #16 = 0xA8C17BFD */
     INSN_OUT(s, 0xA8C17BFD);
+    /* Restore float callee-saved registers d8-d15 */
+    /* LDP d14, d15, [sp], #16 = 0x6CC13FEE */
+    INSN_OUT(s, 0x6CC13FEE);
+    /* LDP d12, d13, [sp], #16 = 0x6CC137EC */
+    INSN_OUT(s, 0x6CC137EC);
+    /* LDP d10, d11, [sp], #16 = 0x6CC12FEA */
+    INSN_OUT(s, 0x6CC12FEA);
+    /* LDP d8, d9, [sp], #16 = 0x6CC127E8 */
+    INSN_OUT(s, 0x6CC127E8);
+    /* Restore integer callee-saved registers x19-x28 */
+    /* LDP x27, x28, [sp], #16 = 0xA8C173FB */
+    INSN_OUT(s, 0xA8C173FB);
+    /* LDP x25, x26, [sp], #16 = 0xA8C16BF9 */
+    INSN_OUT(s, 0xA8C16BF9);
+    /* LDP x23, x24, [sp], #16 = 0xA8C163F7 */
+    INSN_OUT(s, 0xA8C163F7);
+    /* LDP x21, x22, [sp], #16 = 0xA8C15BF5 */
+    INSN_OUT(s, 0xA8C15BF5);
+    /* LDP x19, x20, [sp], #16 = 0xA8C153F3 */
+    INSN_OUT(s, 0xA8C153F3);
     arm64_ret_insn(s);
     arm64_nop(s);  /* nops for potential epilogue patching */
     arm64_nop(s);
@@ -401,18 +430,58 @@ arm64_proc_start(dill_stream s, char *subr_name, int arg_count,
     s->p->fp = s->p->cur_ip;
 
     /* Emit frame setup prologue:
-     * stp x29, x30, [sp, #-16]!   ; Save FP and LR, pre-decrement SP
-     * mov x29, sp                  ; Set up frame pointer
-     * sub sp, sp, #224            ; Allocate save area (224 bytes, 16-byte aligned)
+     * First save callee-saved registers (x19-x28, d8-d15), then FP/LR:
+     * stp x19, x20, [sp, #-16]!  ; Save integer callee-saved regs (80 bytes)
+     * stp x21, x22, [sp, #-16]!
+     * stp x23, x24, [sp, #-16]!
+     * stp x25, x26, [sp, #-16]!
+     * stp x27, x28, [sp, #-16]!
+     * stp d8, d9, [sp, #-16]!    ; Save float callee-saved regs (64 bytes)
+     * stp d10, d11, [sp, #-16]!
+     * stp d12, d13, [sp, #-16]!
+     * stp d14, d15, [sp, #-16]!
+     * stp x29, x30, [sp, #-16]!  ; Save FP and LR
+     * mov x29, sp                 ; Set up frame pointer
+     * sub sp, sp, #224           ; Allocate save area
      *
-     * Stack layout after prologue:
-     * [FP + 8]  = saved x30 (LR)
-     * [FP + 0]  = saved x29 (old FP)
+     * Stack layout after prologue (offsets from FP):
+     * [FP + 160] = caller's stack (incoming stack args start here)
+     * [FP + 144] = saved x19/x20
+     * [FP + 128] = saved x21/x22
+     * [FP + 112] = saved x23/x24
+     * [FP + 96]  = saved x25/x26
+     * [FP + 80]  = saved x27/x28
+     * [FP + 64]  = saved d8/d9
+     * [FP + 48]  = saved d10/d11
+     * [FP + 32]  = saved d12/d13
+     * [FP + 16]  = saved d14/d15
+     * [FP + 8]   = saved x30 (LR)
+     * [FP + 0]   = saved x29 (old FP)
      * [FP - 16] to [FP - 80]   = integer arg reg save area (x0-x7)
      * [FP - 96] to [FP - 152]  = integer tmp reg save area (x9-x15)
      * [FP - 160] to [FP - 224] = float reg save area (v0-v7)
      * [SP] = bottom of save area (FP - 224)
      */
+    /* Save callee-saved integer registers x19-x28 */
+    /* STP x19, x20, [sp, #-16]! = 0xA9BF53F3 */
+    INSN_OUT(s, 0xA9BF53F3);
+    /* STP x21, x22, [sp, #-16]! = 0xA9BF5BF5 */
+    INSN_OUT(s, 0xA9BF5BF5);
+    /* STP x23, x24, [sp, #-16]! = 0xA9BF63F7 */
+    INSN_OUT(s, 0xA9BF63F7);
+    /* STP x25, x26, [sp, #-16]! = 0xA9BF6BF9 */
+    INSN_OUT(s, 0xA9BF6BF9);
+    /* STP x27, x28, [sp, #-16]! = 0xA9BF73FB */
+    INSN_OUT(s, 0xA9BF73FB);
+    /* Save callee-saved float registers d8-d15 (lower 64 bits of v8-v15) */
+    /* STP d8, d9, [sp, #-16]! = 0x6DBF27E8 */
+    INSN_OUT(s, 0x6DBF27E8);
+    /* STP d10, d11, [sp, #-16]! = 0x6DBF2FEA */
+    INSN_OUT(s, 0x6DBF2FEA);
+    /* STP d12, d13, [sp, #-16]! = 0x6DBF37EC */
+    INSN_OUT(s, 0x6DBF37EC);
+    /* STP d14, d15, [sp, #-16]! = 0x6DBF3FEE */
+    INSN_OUT(s, 0x6DBF3FEE);
     /* STP x29, x30, [sp, #-16]! = 0xA9BF7BFD */
     INSN_OUT(s, 0xA9BF7BFD);
     /* MOV x29, sp (ADD x29, sp, #0) = 0x910003FD */
@@ -513,10 +582,10 @@ arm64_proc_start(dill_stream s, char *subr_name, int arg_count,
 		if (arglist != NULL) arglist[i] = -1;
 		continue;
 	    }
-	    /* Load from stack: incoming stack args are at [FP + 16 + offset]
-	     * (+16 accounts for saved FP and LR in the frame setup)
+	    /* Load from stack: incoming stack args are at [FP + 160 + offset]
+	     * (+16 for FP/LR, +64 for d8-d15, +80 for x19-x28)
 	     */
-	    arm64_ploadi(s, type, 0, tmp_reg, _fp, args[i].offset + 16);
+	    arm64_ploadi(s, type, 0, tmp_reg, _fp, args[i].offset + 160);
 	    args[i].in_reg = tmp_reg;
 	    args[i].out_reg = tmp_reg;
 	    args[i].is_register = 1;
@@ -576,10 +645,27 @@ arm64_package_end(dill_stream s)
  * Clone code to new location
  */
 void *
-arm64_clone_code(dill_stream s, void *base, int size)
+arm64_clone_code(dill_stream s, void *new_base, int available_size)
 {
-    void *new_base = malloc(size);
-    memcpy(new_base, base, size);
+    int size = dill_code_size(s);
+    void *old_base = s->p->code_base;
+    void *native_base = s->p->code_base;
+    if (available_size < size) {
+        return NULL;
+    }
+    if (native_base == NULL)
+        native_base = s->p->native.code_base;
+    memcpy(new_base, native_base, size);
+    s->p->code_base = new_base;
+    s->p->cur_ip = (char*)new_base + size;
+    s->p->fp = new_base;
+    arm64_branch_link(s);
+    arm64_call_link(s);
+    arm64_data_link(s);
+    s->p->code_base = old_base;
+    s->p->cur_ip = (char*)old_base + size;
+    s->p->fp = old_base;
+    arm64_flush(new_base, (char*)new_base + size);
     return new_base;
 }
 
@@ -1203,6 +1289,7 @@ arm64_local_op(dill_stream s, int flag, int val)
 #define GP_ARG_SAVE_OFFSET 16      /* x0-x7 save area starts at FP-16 */
 #define GP_TMP_SAVE_OFFSET 96      /* x9-x15 save area starts at FP-96 */
 #define FP_SAVE_AREA_OFFSET 160    /* v0-v7 save area starts at FP-160 */
+#define CALLEE_SAVE_OFFSET 80      /* x19-x28 saved above FP (5 pairs * 16 bytes) */
 
 void
 arm64_save_restore_op(dill_stream s, int save_restore, int type, int reg)
