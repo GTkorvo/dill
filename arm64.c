@@ -1507,7 +1507,7 @@ void arm64_convert(dill_stream s, int from_type, int to_type, int dest, int src)
 	INSN_OUT(s, insn);
 	break;
 
-    /* Zero extension / truncation to smaller types */
+    /* Zero extension / truncation to unsigned char */
     case CONV(DILL_UC, DILL_C):
     case CONV(DILL_UC, DILL_S):
     case CONV(DILL_UC, DILL_US):
@@ -1523,16 +1523,24 @@ void arm64_convert(dill_stream s, int from_type, int to_type, int dest, int src)
     case CONV(DILL_L, DILL_UC):
     case CONV(DILL_UL, DILL_UC):
     case CONV(DILL_C, DILL_UC):
-    case CONV(DILL_I, DILL_C):
-    case CONV(DILL_U, DILL_C):
-    case CONV(DILL_L, DILL_C):
-    case CONV(DILL_UL, DILL_C):
 	/* AND with 0xFF: UXTB Wd, Wn = UBFM Wd, Wn, #0, #7 = 0x53001C00 */
 	insn = 0x53001C00 | (src << 5) | dest;
 	INSN_OUT(s, insn);
 	break;
 
+    /* Sign extension / truncation to signed char */
+    case CONV(DILL_I, DILL_C):
+    case CONV(DILL_U, DILL_C):
+    case CONV(DILL_L, DILL_C):
+    case CONV(DILL_UL, DILL_C):
+    case CONV(DILL_S, DILL_C):
     case CONV(DILL_US, DILL_C):
+	/* SXTB Xd, Wn = SBFM Xd, Xn, #0, #7 = 0x93401C00 */
+	insn = 0x93401C00 | (src << 5) | dest;
+	INSN_OUT(s, insn);
+	break;
+
+    /* Zero extension / truncation to unsigned short */
     case CONV(DILL_US, DILL_S):
     case CONV(DILL_US, DILL_I):
     case CONV(DILL_US, DILL_U):
@@ -1544,12 +1552,18 @@ void arm64_convert(dill_stream s, int from_type, int to_type, int dest, int src)
     case CONV(DILL_L, DILL_US):
     case CONV(DILL_UL, DILL_US):
     case CONV(DILL_S, DILL_US):
+	/* AND with 0xFFFF: UXTH Wd, Wn = UBFM Wd, Wn, #0, #15 = 0x53003C00 */
+	insn = 0x53003C00 | (src << 5) | dest;
+	INSN_OUT(s, insn);
+	break;
+
+    /* Sign extension / truncation to signed short */
     case CONV(DILL_I, DILL_S):
     case CONV(DILL_U, DILL_S):
     case CONV(DILL_L, DILL_S):
     case CONV(DILL_UL, DILL_S):
-	/* AND with 0xFFFF: UXTH Wd, Wn = UBFM Wd, Wn, #0, #15 = 0x53003C00 */
-	insn = 0x53003C00 | (src << 5) | dest;
+	/* SXTH Xd, Wn = SBFM Xd, Xn, #0, #15 = 0x93403C00 */
+	insn = 0x93403C00 | (src << 5) | dest;
 	INSN_OUT(s, insn);
 	break;
 
