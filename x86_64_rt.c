@@ -48,6 +48,7 @@ x86_64_rt_call_link(char* code, call_t* t)
     }
 }
 
+#if !defined(USE_VIRTUAL_PROTECT)
 static void
 x86_64_flush(void* base, void* limit)
 {
@@ -76,6 +77,7 @@ x86_64_flush(void* base, void* limit)
     }
 #endif
 }
+#endif
 
 extern char*
 x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)

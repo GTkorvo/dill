@@ -59,6 +59,7 @@ x86_package_stitch(char *code, call_t *t, dill_pkg pkg)
                     GetLastError(), (void*)tmp, pkg->code_size);
             return NULL;
         }
+        FlushInstructionCache(GetCurrentProcess(), tmp, pkg->code_size);
     }
 #endif
     return tmp + pkg->entry_offset;
