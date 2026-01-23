@@ -1970,7 +1970,30 @@ x86_emit_save(dill_stream s)
 
     s->p->cur_ip = save_ip;
 }
-    
+
+#ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
+#include <memoryapi.h>
+#endif
+
+static void
+x86_flush(void *base, void *limit)
+{
+#ifdef USE_VIRTUAL_PROTECT
+    {
+        DWORD dummy;
+        size_t size = ((size_t)limit - (size_t)base);
+        if (!VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy)) {
+            fprintf(stderr, "VirtualProtect failed with error %lu for address %p, size %zu\n",
+                    GetLastError(), base, size);
+        }
+    }
+#else
+    (void)base;
+    (void)limit;
+#endif
+}
+
 extern void
 x86_end(s)
 dill_stream s;
@@ -1980,6 +2003,7 @@ dill_stream s;
     x86_call_link(s);
     x86_data_link(s);
     x86_emit_save(s);
+    x86_flush(s->p->code_base, s->p->code_limit);
 }
 
 extern void
@@ -1988,8 +2012,7 @@ x86_package_end(dill_stream s)
     x86_proc_ret(s);
     x86_branch_link(s);
     x86_emit_save(s);
-    /* at this point, code segment is finalized */
-    
+    x86_flush(s->p->code_base, s->p->code_limit);
 }
 
 extern void *
