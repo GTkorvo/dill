@@ -107,11 +107,14 @@ x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)
     memcpy(tmp, code, pkg->code_size);
 #endif
 #ifdef USE_VIRTUAL_PROTECT
-    int result;
-    DWORD dummy;
-    result =
-        VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy);
-    (void) result;
+    {
+        DWORD dummy;
+        if (!VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy)) {
+            fprintf(stderr, "VirtualProtect failed with error %lu for address %p, size %d\n",
+                    GetLastError(), (void*)tmp, pkg->code_size);
+            return NULL;
+        }
+    }
 #endif
     return tmp + pkg->entry_offset;
 }
