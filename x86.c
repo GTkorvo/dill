@@ -1175,6 +1175,7 @@ int src1;
 int src2;
 {
     int tmp_src2 = src2;
+    int saved_src2_to_ebp = 0;
 
     /* make src1 be EAX */
     if (dest != EAX) {
@@ -1183,14 +1184,17 @@ int src2;
     if (dest != EDX) {
 	x86_push_reg(s, EDX);
     }
-	
-    if (src1 != EAX) {
-	x86_movi(s, EAX, src1);
-    }
-    if (src2 == EDX) {
+
+    /* If src2 is in EAX or EDX, save it to EBP before those registers are modified */
+    if ((src2 == EAX && src1 != EAX) || src2 == EDX) {
 	tmp_src2 = EBP;
 	x86_push_reg(s, EBP);
 	x86_movi(s, EBP, src2);
+	saved_src2_to_ebp = 1;
+    }
+
+    if (src1 != EAX) {
+	x86_movi(s, EAX, src1);
     }
     if (sign) {
 	x86_rshai(s, EDX, EAX, 31);
@@ -1198,7 +1202,7 @@ int src2;
 	x86_seti(s, EDX, 0);
     }
     BYTE_OUT2(s, 0xf7, ModRM(0x3, sign ? 0x7 : 0x6, tmp_src2));
-    if (src2 == EDX) {
+    if (saved_src2_to_ebp) {
 	x86_pop_reg(s, EBP);
     }
     if (div && (dest != EAX)) {
@@ -1213,7 +1217,7 @@ int src2;
     if (dest != EAX) {
 	x86_pop_reg(s, EAX);
     }
-	
+
 }
 
 static int group1_eax_op[] = {
