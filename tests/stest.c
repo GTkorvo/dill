@@ -21,6 +21,10 @@
 #include <sys/mman.h>
 #include <pthread.h>
 #endif
+#ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
+#include <memoryapi.h>
+#endif
 
 #ifdef USE_MACOS_MAP_JIT
 #define WRITE_PROTECT(x)    pthread_jit_write_protect_np(x)
@@ -151,6 +155,15 @@ int main() {
 	    printf("out of memory\n");
 	    return 1;
 	}
+#ifdef USE_VIRTUAL_PROTECT
+	{
+	    DWORD dummy;
+	    if (!VirtualProtect(target, dill_code_size(s), PAGE_EXECUTE_READWRITE, &dummy)) {
+	        fprintf(stderr, "VirtualProtect failed\n");
+	        return 1;
+	    }
+	}
+#endif
 #endif
 	WRITE_PROTECT(0);
 	ip = (int (*)()) dill_clone_code(s, target, dill_code_size(s));

@@ -51,7 +51,9 @@ x86_64_rt_call_link(char* code, call_t* t)
 static void
 x86_64_flush(void* base, void* limit)
 {
-#if defined(HOST_X86_64)
+#if defined(USE_VIRTUAL_PROTECT)
+    FlushInstructionCache(GetCurrentProcess(), base, (char*)limit - (char*)base);
+#elif defined(HOST_X86_64)
     {
         volatile void* ptr = base;
 
@@ -83,7 +85,6 @@ x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)
     char* tmp = code;
     dill_lookup_xfer_addrs(t, &x86_64_xfer_recs[0]);
     x86_64_rt_call_link(code, t);
-    x86_64_flush(code, code + 1024);
 #ifdef USE_MACOS_MAP_JIT
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
@@ -105,8 +106,8 @@ x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)
     tmp = (void*)mmap(0, pkg->code_size, PROT_EXEC | PROT_READ | PROT_WRITE,
                       MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
     memcpy(tmp, code, pkg->code_size);
-#endif
-#ifdef USE_VIRTUAL_PROTECT
+    x86_64_flush(tmp, tmp + pkg->code_size);
+#elif defined(USE_VIRTUAL_PROTECT)
     {
         DWORD dummy;
         if (!VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy)) {
@@ -114,7 +115,10 @@ x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)
                     GetLastError(), (void*)tmp, pkg->code_size);
             return NULL;
         }
+        x86_64_flush(tmp, tmp + pkg->code_size);
     }
+#else
+    x86_64_flush(code, code + pkg->code_size);
 #endif
     return tmp + pkg->entry_offset;
 }

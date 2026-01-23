@@ -247,7 +247,7 @@ generate_prefix_code(dill_stream s, int force, int ar_size )
     for (i = 0; i < s->p->c_param_count; i++) {
 	if (args[i].is_register) {
 	    if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
-		x86_ploadi(s, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
+		x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
 	    } else {
 		if (smi->generate_SSE) {
 		    x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
@@ -457,11 +457,11 @@ x86_ploadi(dill_stream s, int type, int force_8087, int dest, int src, long offs
     switch(type){
     case DILL_C:
 	x86_lshi(s, dest, tmp_dest, 24);
-	x86_rshi(s, dest, dest, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case DILL_S:
 	x86_lshi(s, dest, tmp_dest, 16);
-	x86_rshi(s, dest, dest, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -538,11 +538,11 @@ x86_sse_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset
     switch(type){
     case DILL_C:
 	x86_lshi(s, dest, tmp_dest, 24);
-	x86_rshi(s, dest, dest, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case DILL_S:
 	x86_lshi(s, dest, tmp_dest, 16);
-	x86_rshi(s, dest, dest, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -628,11 +628,11 @@ x86_pload(dill_stream s, int type, int force_8087, int dest, int src1, int src2)
     switch(type){
     case DILL_C:
 	x86_lshi(s, dest, tmp_dest, 24);
-	x86_rshi(s, dest, dest, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case DILL_S:
 	x86_lshi(s, dest, tmp_dest, 16);
-	x86_rshi(s, dest, dest, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -1970,7 +1970,30 @@ x86_emit_save(dill_stream s)
 
     s->p->cur_ip = save_ip;
 }
-    
+
+#ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
+#include <memoryapi.h>
+#endif
+
+static void
+x86_flush(void *base, void *limit)
+{
+#ifdef USE_VIRTUAL_PROTECT
+    {
+        DWORD dummy;
+        size_t size = ((size_t)limit - (size_t)base);
+        if (!VirtualProtect(base, size, PAGE_EXECUTE_READWRITE, &dummy)) {
+            fprintf(stderr, "VirtualProtect failed with error %lu for address %p, size %zu\n",
+                    GetLastError(), base, size);
+        }
+    }
+#else
+    (void)base;
+    (void)limit;
+#endif
+}
+
 extern void
 x86_end(s)
 dill_stream s;
@@ -1980,6 +2003,7 @@ dill_stream s;
     x86_call_link(s);
     x86_data_link(s);
     x86_emit_save(s);
+    x86_flush(s->p->code_base, s->p->code_limit);
 }
 
 extern void
@@ -1988,8 +2012,7 @@ x86_package_end(dill_stream s)
     x86_proc_ret(s);
     x86_branch_link(s);
     x86_emit_save(s);
-    /* at this point, code segment is finalized */
-    
+    x86_flush(s->p->code_base, s->p->code_limit);
 }
 
 extern void *
@@ -2045,7 +2068,7 @@ x86_setf(dill_stream s, int type, int junk, int dest, double imm)
 
     if (smi->generate_SSE) {
 	if (type == DILL_F) {
-	    a.f = imm;
+	    a.f = (float)imm;
 	    x86_seti(s, EAX, a.i);
 	    BYTE_OUT4(s, 0x66, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
 	} else {
@@ -2105,8 +2128,7 @@ x86_reg_init(dill_stream s, x86_mach_info smi)
 #define bit_sse (1<<25)
 
 extern void*
-gen_x86_mach_info(s)
-dill_stream s;
+gen_x86_mach_info(dill_stream s)
 {
     static int host_supports_SSE = -1;
     x86_mach_info smi = malloc(sizeof(*smi));
@@ -2230,7 +2252,7 @@ x86_print_insn(dill_stream s, void *info_ptr, void *insn)
 #endif
 }
 
-extern void null_func(){}
+extern void null_func(void){}
 extern int
 x86_count_insn(dill_stream s, int start, int end)
 {

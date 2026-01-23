@@ -368,6 +368,7 @@ dill_create_stream()
     s = dill_cross_init(NATIVE_ARCH);
     s->p->native_mach_reset = s->p->mach_reset;
     s->p->native.code_base = s->p->code_base;
+    s->p->native.code_limit = s->p->code_limit;
     s->p->native.mach_info = s->p->mach_info;
     s->p->mach_reset = dill_virtual_init;
     init_code_block(s);
