@@ -247,7 +247,7 @@ generate_prefix_code(dill_stream s, int force, int ar_size )
     for (i = 0; i < s->p->c_param_count; i++) {
 	if (args[i].is_register) {
 	    if ((args[i].type != DILL_F) && (args[i].type != DILL_D)) {
-		x86_ploadi(s, DILL_I, 0, args[i].in_reg, EBP, args[i].offset);
+		x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
 	    } else {
 		if (smi->generate_SSE) {
 		    x86_ploadi(s, args[i].type, 0, args[i].in_reg, EBP, args[i].offset);
@@ -457,11 +457,11 @@ x86_ploadi(dill_stream s, int type, int force_8087, int dest, int src, long offs
     switch(type){
     case DILL_C:
 	x86_lshi(s, dest, tmp_dest, 24);
-	x86_rshi(s, dest, dest, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case DILL_S:
 	x86_lshi(s, dest, tmp_dest, 16);
-	x86_rshi(s, dest, dest, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -538,11 +538,11 @@ x86_sse_ploadi(dill_stream s, int type, int junk, int dest, int src, long offset
     switch(type){
     case DILL_C:
 	x86_lshi(s, dest, tmp_dest, 24);
-	x86_rshi(s, dest, dest, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case DILL_S:
 	x86_lshi(s, dest, tmp_dest, 16);
-	x86_rshi(s, dest, dest, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
@@ -628,11 +628,11 @@ x86_pload(dill_stream s, int type, int force_8087, int dest, int src1, int src2)
     switch(type){
     case DILL_C:
 	x86_lshi(s, dest, tmp_dest, 24);
-	x86_rshi(s, dest, dest, 24);
+	x86_rshai(s, dest, dest, 24);
 	break;
     case DILL_S:
 	x86_lshi(s, dest, tmp_dest, 16);
-	x86_rshi(s, dest, dest, 16);
+	x86_rshai(s, dest, dest, 16);
 	break;
     case DILL_UC: case DILL_US:
 	if (dest != tmp_dest)
