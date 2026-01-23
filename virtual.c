@@ -1243,7 +1243,7 @@ build_bbs(dill_stream c, void* vinsns, void* prefix_begin, void* code_end)
     bb->is_loop_start = 0;
     bb->is_loop_end = 0;
     if (prefix_begin < code_end) {
-        i = ((char*)prefix_begin - (char*)insns) / sizeof(virtual_insn);
+        i = (int)(((char*)prefix_begin - (char*)insns) / sizeof(virtual_insn));
         bb->start = i;
         while ((insn = &insns[i++]) < (virtual_insn*)code_end) {
             build_bb_body(c, insn, (int)i, insns);
