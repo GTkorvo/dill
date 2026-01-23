@@ -989,13 +989,25 @@ arm64_pload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 void
 arm64_pbsloadi(dill_stream s, int type, int junk, int dest, int src, IMM_TYPE offset)
 {
-    /* TODO: Implement byte-swap load */
+    /* Load the value first */
+    arm64_ploadi(s, type, junk, dest, src, offset);
+
+    /* Byte swap (no-op for single-byte types) */
+    if (type != DILL_C && type != DILL_UC) {
+	arm64_bswap(s, type, 0, dest, dest);
+    }
 }
 
 void
 arm64_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 {
-    /* TODO: Implement byte-swap load */
+    /* Load the value first */
+    arm64_pload(s, type, junk, dest, src1, src2);
+
+    /* Byte swap (no-op for single-byte types) */
+    if (type != DILL_C && type != DILL_UC) {
+	arm64_bswap(s, type, 0, dest, dest);
+    }
 }
 
 void
