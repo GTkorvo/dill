@@ -2045,7 +2045,7 @@ x86_setf(dill_stream s, int type, int junk, int dest, double imm)
 
     if (smi->generate_SSE) {
 	if (type == DILL_F) {
-	    a.f = imm;
+	    a.f = (float)imm;
 	    x86_seti(s, EAX, a.i);
 	    BYTE_OUT4(s, 0x66, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
 	} else {

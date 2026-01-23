@@ -1231,7 +1231,7 @@ build_bbs(dill_stream c, void* vinsns, void* prefix_begin, void* code_end)
 
     vmi->bbcount = 0;
     vmi->bblist = malloc(sizeof(struct basic_block));
-    size_t i = 0;
+    int i = 0;
     bb = vmi->bblist;
     bb->start = 0;
     bb->label = -1;
