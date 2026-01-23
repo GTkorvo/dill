@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
 
-# CI cache bust: 2026-01-23
 # The directory label is used for CDash to treat DILL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS DILL)
 

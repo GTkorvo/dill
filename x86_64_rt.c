@@ -48,11 +48,12 @@ x86_64_rt_call_link(char* code, call_t* t)
     }
 }
 
-#if !defined(USE_VIRTUAL_PROTECT)
 static void
 x86_64_flush(void* base, void* limit)
 {
-#if defined(HOST_X86_64)
+#if defined(USE_VIRTUAL_PROTECT)
+    FlushInstructionCache(GetCurrentProcess(), base, (char*)limit - (char*)base);
+#elif defined(HOST_X86_64)
     {
         volatile void* ptr = base;
 
@@ -77,7 +78,6 @@ x86_64_flush(void* base, void* limit)
     }
 #endif
 }
-#endif
 
 extern char*
 x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)
@@ -115,7 +115,7 @@ x86_64_package_stitch(char* code, call_t* t, dill_pkg pkg)
                     GetLastError(), (void*)tmp, pkg->code_size);
             return NULL;
         }
-        FlushInstructionCache(GetCurrentProcess(), tmp, pkg->code_size);
+        x86_64_flush(tmp, tmp + pkg->code_size);
     }
 #else
     x86_64_flush(code, code + pkg->code_size);
