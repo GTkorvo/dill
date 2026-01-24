@@ -23,13 +23,18 @@ typedef SSIZE_T ssize_t;
 #include <stdlib.h>
 #ifdef USE_MMAP_CODE_SEG
 #include <sys/mman.h>
+#ifndef MAP_JIT
+#define MAP_JIT 0
+#endif
 #endif
 #ifdef USE_MACOS_MAP_JIT
-#include <sys/mman.h>
 #include <pthread.h>
 #if defined(HOST_ARM8) || defined(HOST_ARM64)
 #include <libkern/OSCacheControl.h>
 #endif
+#define JIT_PROTECT(enable) pthread_jit_write_protect_np(enable)
+#else
+#define JIT_PROTECT(enable) ((void)0)
 #endif
 #include "dill_internal.h"
 
@@ -104,9 +109,7 @@ free_emulator_handler_bits(dill_exec_handle handle);
 static void
 reset_context(dill_stream s)
 {
-#ifdef USE_MACOS_MAP_JIT
-    pthread_jit_write_protect_np(0);  /* enable write for code buffer reuse */
-#endif
+    JIT_PROTECT(0);  /* enable write for code buffer reuse */
     s->p->mach_reset(s);
     s->p->cur_ip = s->p->code_base;
     dill_register_init(s);
@@ -520,15 +523,13 @@ dill_finalize(dill_stream s)
     handle->fp = (void (*)())s->p->fp;
     handle->ref_count = 1;
     handle->size = 0;
-#ifdef USE_MACOS_MAP_JIT
-    pthread_jit_write_protect_np(1);  /* enable execute */
+    JIT_PROTECT(1);  /* enable execute */
 #if defined(HOST_ARM8) || defined(HOST_ARM64)
     /* Check for NULL - virtual mode already flushed in its inner dill_finalize */
     if (s->p->code_base != NULL) {
         sys_icache_invalidate(s->p->code_base,
             (size_t)((char*)s->p->cur_ip - (char*)s->p->code_base));
     }
-#endif
 #endif
     return handle;
 }
@@ -547,12 +548,10 @@ dill_get_handle(dill_stream s)
                END_OF_CODE_BUFFER;
         s->p->code_base = NULL;
     }
-#ifdef USE_MACOS_MAP_JIT
-    pthread_jit_write_protect_np(1);  /* enable execute */
+    JIT_PROTECT(1);  /* enable execute */
 #if defined(HOST_ARM8) || defined(HOST_ARM64)
     sys_icache_invalidate(native_base,
         (size_t)((char*)s->p->cur_ip - (char*)native_base));
-#endif
 #endif
     handle->fp = (void (*)())s->p->fp;
     handle->ref_count = 1;
@@ -576,7 +575,7 @@ dill_free_handle(dill_exec_handle handle)
         return;
     if (handle->size != 0) {
         if (handle->code_base) {
-#if defined(USE_MACOS_MAP_JIT) || defined(USE_MMAP_CODE_SEG)
+#ifdef USE_MMAP_CODE_SEG
             if (munmap(handle->code_base, handle->size) == -1)
                 perror("unmap 1");
 #else
@@ -906,17 +905,7 @@ void
 init_code_block(dill_stream s)
 {
     static unsigned long size = INIT_CODE_SIZE;
-#ifdef USE_MACOS_MAP_JIT
-#ifndef MAP_ANONYMOUS
-#define MAP_ANONYMOUS MAP_ANON
-#endif
-    pthread_jit_write_protect_np(0);  /* enable write */
-    s->p->code_base = (void*)mmap(0, size,
-                                  PROT_READ | PROT_WRITE | PROT_EXEC,
-                                  MAP_ANONYMOUS | MAP_PRIVATE | MAP_JIT, -1, 0);
-    if (s->p->code_base == MAP_FAILED)
-        perror("mmap MAP_JIT");
-#elif defined(USE_MMAP_CODE_SEG)
+#ifdef USE_MMAP_CODE_SEG
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
@@ -926,10 +915,11 @@ init_code_block(dill_stream s)
     }
     if (ps > size)
         size = ps;
-    s->p->code_base = (void*)mmap(0, 4096 /*INIT_CODE_SIZE*/,
-                                  PROT_EXEC | PROT_READ | PROT_WRITE,
-                                  MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-    if (s->p->code_base == (void*)-1)
+    JIT_PROTECT(0);  /* enable write */
+    s->p->code_base = (void*)mmap(0, size,
+                                  PROT_READ | PROT_WRITE | PROT_EXEC,
+                                  MAP_ANONYMOUS | MAP_PRIVATE | MAP_JIT, -1, 0);
+    if (s->p->code_base == MAP_FAILED)
         perror("mmap");
 #else
     s->p->code_base = (void*)malloc(size);
@@ -940,7 +930,7 @@ init_code_block(dill_stream s)
 static void
 free_code_blocks(dill_stream s)
 {
-#if defined(USE_MACOS_MAP_JIT) || defined(USE_MMAP_CODE_SEG)
+#ifdef USE_MMAP_CODE_SEG
     if (s->p->code_base) {
         int size =
             (long)s->p->code_limit - (long)s->p->code_base + END_OF_CODE_BUFFER;
@@ -985,30 +975,19 @@ extend_dill_stream(dill_stream s)
         printf("extend_dill_stream: old_base=%p, cur_ip_offset=%d, fp_offset=%d, old_size=%d, new_size=%d\n",
                s->p->code_base, cur_ip, fp_offset, size, new_size);
     }
-#ifdef USE_MACOS_MAP_JIT
+#ifdef USE_MMAP_CODE_SEG
     {
         void* old = s->p->code_base;
-        pthread_jit_write_protect_np(0);  /* enable write */
-        void* new_mem = mmap(0, new_size, PROT_READ | PROT_WRITE | PROT_EXEC,
-                         MAP_ANONYMOUS | MAP_PRIVATE | MAP_JIT, -1, 0);
+        void* new_mem;
+        JIT_PROTECT(0);  /* enable write */
+        new_mem = mmap(0, new_size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                       MAP_ANONYMOUS | MAP_PRIVATE | MAP_JIT, -1, 0);
         if (new_mem == MAP_FAILED)
-            perror("mmap MAP_JIT extend");
+            perror("mmap extend");
         memcpy(new_mem, old, size);
         s->p->code_base = new_mem;
         if (munmap(old, size) == -1)
-            perror("munmap exp");
-    }
-#elif defined(USE_MMAP_CODE_SEG)
-    {
-        void* old = s->p->code_base;
-        void* new = mmap(0, new_size, PROT_EXEC | PROT_READ | PROT_WRITE,
-                         MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-        if (new == (void*)-1)
-            perror("mmap1");
-        memcpy(new, old, size);
-        s->p->code_base = new;
-        if (munmap(old, size) == -1)
-            perror("munmap exp");
+            perror("munmap extend");
     }
 #else
     s->p->code_base = realloc(s->p->code_base, new_size);
