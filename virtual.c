@@ -4618,6 +4618,12 @@ dill_free_exec_context(dill_exec_ctx ec)
 }
 
 extern void
+dill_free(void *ptr)
+{
+    free(ptr);
+}
+
+extern void
 dill_assoc_client_data(dill_exec_ctx ec, int key, IMM_TYPE value)
 {
     int i = 0;
