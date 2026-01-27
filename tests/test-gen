@@ -816,6 +816,7 @@ print<<EOF;
 	dill_reg	rd$t;
 	dill_exec_handle h;
 
+	d$t = 0;
 	if (verbose) printf(" - $insn\\n");
 	s2ul = (UIMM_TYPE)&d$t - $offset;
 
