@@ -85,6 +85,8 @@ dill_package_stitch(char* pkg, dill_extern_entry* extra_externs)
 {
     dill_exec_handle handle = malloc(sizeof(*handle));
     char* code;
+    memset(handle, 0, sizeof(*handle));
+    handle->ref_count = 1;
     call_t t;
     unpack_package(pkg, &t, &code);
     if (extra_externs) {
