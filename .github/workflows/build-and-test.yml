@@ -48,6 +48,72 @@ jobs:
     - name: Test
       run: ctest --test-dir build --output-on-failure
 
+  # AddressSanitizer build to detect memory errors (buffer overflow, use-after-free, etc.)
+  asan:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      ASAN_FLAGS: "-fsanitize=address -fno-omit-frame-pointer"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build
+
+    - name: Configure with ASan
+      run: |
+        cmake -G Ninja -S . -B build \
+          -DCMAKE_C_FLAGS="${ASAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${ASAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${ASAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${ASAN_FLAGS}" \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+
+    - name: Build
+      run: ninja -C build
+
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
+  # UndefinedBehaviorSanitizer build to detect undefined behavior
+  ubsan:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+      UBSAN_FLAGS: "-fsanitize=undefined -fno-omit-frame-pointer"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm cmake ninja-build
+
+    - name: Configure with UBSan
+      run: |
+        cmake -G Ninja -S . -B build \
+          -DCMAKE_C_FLAGS="${UBSAN_FLAGS}" \
+          -DCMAKE_CXX_FLAGS="${UBSAN_FLAGS}" \
+          -DCMAKE_EXE_LINKER_FLAGS="${UBSAN_FLAGS}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="${UBSAN_FLAGS}" \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_TESTING=ON
+
+    - name: Build
+      run: ninja -C build
+
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
   linux:
     # The jobs should run pretty quick; anything over 30m essentially means
     # someting is stuck somewhere
