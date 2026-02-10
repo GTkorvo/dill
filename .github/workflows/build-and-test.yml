@@ -26,7 +26,7 @@ jobs:
       MSAN_FLAGS: "-fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install dependencies
       run: |
@@ -60,7 +60,7 @@ jobs:
       ASAN_FLAGS: "-fsanitize=address -fno-omit-frame-pointer"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install dependencies
       run: |
@@ -94,7 +94,7 @@ jobs:
       UBSAN_FLAGS: "-fsanitize=undefined -fno-omit-frame-pointer"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install dependencies
       run: |
@@ -144,14 +144,14 @@ jobs:
           container: ubuntu:22.04
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
     - name: Setup
       run: source/scripts/ci/setup/linux.sh
     - name: Cache CMake build
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: build
         key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.buildtype }}-${{ hashFiles('source/CMakeLists.txt', 'source/**/*.cmake') }}
@@ -201,7 +201,7 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
@@ -212,7 +212,7 @@ jobs:
       if: ${{ runner.os == 'macOS' }}
       run: source/scripts/ci/setup/macos.sh
     - name: Cache CMake build
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: build
         key: ${{ matrix.jobname }}-${{ matrix.buildtype }}-${{ hashFiles('source/CMakeLists.txt', 'source/**/*.cmake') }}
