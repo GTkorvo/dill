@@ -476,11 +476,14 @@ test_diamond(void)
  * Pre-assigned callee-saved registers (pointers, index) must
  * survive the call. Verifies values are correct after each call.
  *
+ * Uses int/DILL_I for the call and accumulator (not long) because
+ * C 'long' is 32-bit on Windows but DILL_L is 64-bit.
+ *
  * Computes: sum += scale_val(A[i]) for i in [0, N)
  * where scale_val(x) returns x * 2.
  */
-static long
-scale_val(long x)
+static int
+scale_val(int x)
 {
     return x * 2;
 }
@@ -490,64 +493,64 @@ test_loop_with_call(void)
 {
     dill_stream s = dill_create_stream();
     dill_exec_handle handle;
-    long (*func)(long*, long);
+    int (*func)(int*, int);
     dill_reg pA, limit, off, sum, tmp, ret;
     int L_top, L_end;
     int i, failure = 0;
     const int N = 16;
-    long A[16];
+    int A[16];
 
     for (i = 0; i < N; i++)
-        A[i] = (long)(i + 1);
+        A[i] = i + 1;
 
-    dill_start_proc(s, "loop_call", DILL_L, "%p%l");
+    dill_start_proc(s, "loop_call", DILL_I, "%p%i");
     pA = dill_vparam(s, 0);
     limit = dill_vparam(s, 1);
 
     off = dill_getreg(s, DILL_L);
-    sum = dill_getreg(s, DILL_L);
-    tmp = dill_getreg(s, DILL_L);
+    sum = dill_getreg(s, DILL_I);
+    tmp = dill_getreg(s, DILL_I);
 
     L_top = dill_alloc_label(s, "loop_top");
     L_end = dill_alloc_label(s, "loop_end");
 
-    dill_mulli(s, limit, limit, (IMM_TYPE)8);
+    dill_mulli(s, limit, limit, (IMM_TYPE)4);
     dill_setl(s, off, (IMM_TYPE)0);
-    dill_setl(s, sum, (IMM_TYPE)0);
+    dill_seti(s, sum, 0);
 
     dill_mark_label(s, L_top);
     dill_bgel(s, off, limit, L_end);
 
     /* tmp = A[off] */
-    dill_ldl(s, tmp, pA, off);
+    dill_ldi(s, tmp, pA, off);
 
     /* call scale_val(tmp) */
     dill_push_init(s);
-    dill_push_argl(s, tmp);
-    ret = dill_calll(s, (void*)scale_val, "scale_val");
+    dill_push_argi(s, tmp);
+    ret = dill_calli(s, (void*)scale_val, "scale_val");
 
     /* sum += return value */
-    dill_addl(s, sum, sum, ret);
+    dill_addi(s, sum, sum, ret);
 
-    dill_addli(s, off, off, (IMM_TYPE)8);
+    dill_addli(s, off, off, (IMM_TYPE)4);
     dill_jv(s, L_top);
     dill_mark_label(s, L_end);
 
-    dill_retl(s, sum);
+    dill_reti(s, sum);
 
     handle = dill_finalize(s);
-    func = (long (*)(long*, long))dill_get_fp(handle);
+    func = (int (*)(int*, int))dill_get_fp(handle);
 
     if (verbose)
         dill_dump(s);
 
     {
-        long result = (*func)(A, (long)N);
+        int result = (*func)(A, N);
         /* sum = 2 * sum(1..16) = 2 * 136 = 272 */
-        long expected = 272;
+        int expected = 272;
         if (result != expected) {
             if (verbose)
-                printf("  loop_call: result = %ld, expected %ld\n", result,
+                printf("  loop_call: result = %d, expected %d\n", result,
                        expected);
             failure = 1;
         }
