@@ -1754,6 +1754,7 @@ dill_dump(dill_stream s)
         int insn_count = 0;
         if ((s->j != s->p->virtual.mach_jump) && (s->p->fp != NULL))
             base = s->p->fp;
+        JIT_PROTECT(0);  /* enable read access for code dump */
         for (p = base; (char*)p < s->p->cur_ip;) {
             int i;
             struct branch_table* t = &s->p->branch_table;
@@ -1773,6 +1774,7 @@ dill_dump(dill_stream s)
             p = (char*)p + l;
             insn_count++;
         }
+        JIT_PROTECT(1);  /* restore execute-only */
         printf("\nDumped %d instructions\n\n", insn_count);
     }
 }
