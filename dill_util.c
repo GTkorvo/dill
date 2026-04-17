@@ -528,8 +528,12 @@ dill_finalize(dill_stream s)
 #if defined(HOST_ARM8) || defined(HOST_ARM64)
     /* Check for NULL - virtual mode already flushed in its inner dill_finalize */
     if (s->p->code_base != NULL) {
+#if defined(__APPLE__)
         sys_icache_invalidate(s->p->code_base,
             (size_t)((char*)s->p->cur_ip - (char*)s->p->code_base));
+#else
+        __clear_cache(s->p->code_base, (char*)s->p->cur_ip);
+#endif
     }
 #endif
     return handle;
@@ -551,8 +555,12 @@ dill_get_handle(dill_stream s)
     }
     JIT_PROTECT(1);  /* enable execute */
 #if defined(HOST_ARM8) || defined(HOST_ARM64)
+#if defined(__APPLE__)
     sys_icache_invalidate(native_base,
         (size_t)((char*)s->p->cur_ip - (char*)native_base));
+#else
+    __clear_cache(native_base, (char*)s->p->cur_ip);
+#endif
 #endif
     handle->fp = (void (*)())s->p->fp;
     handle->ref_count = 1;

@@ -505,7 +505,11 @@ arm64_proc_start(dill_stream s, char *subr_name, int arg_count,
 	    } else {
 		args[i].is_register = 0;
 		args[i].offset = cur_arg_offset;
-		cur_arg_offset += 4;  /* 32-bit float takes 4 bytes on stack */
+#ifdef __APPLE__
+		cur_arg_offset += 4;
+#else
+		cur_arg_offset += 8;  /* AAPCS64: 8-byte stack slots */
+#endif
 	    }
 	    break;
 	case DILL_D:
@@ -538,7 +542,11 @@ arm64_proc_start(dill_stream s, char *subr_name, int arg_count,
 	    } else {
 		args[i].is_register = 0;
 		args[i].offset = cur_arg_offset;
-		cur_arg_offset += 4;  /* 32-bit int takes 4 bytes on stack */
+#ifdef __APPLE__
+		cur_arg_offset += 4;
+#else
+		cur_arg_offset += 8;  /* AAPCS64: 8-byte stack slots */
+#endif
 	    }
 	    break;
 	default:
@@ -1183,6 +1191,26 @@ arm64_mov(dill_stream s, int type, int junk, int dest, int src)
     case DILL_D:
 	/* FMOV Dd, Dn = 0x1E604000 | (Dn << 5) | Dd */
 	insn = 0x1E604000 | (src << 5) | dest;
+	INSN_OUT(s, insn);
+	break;
+    case DILL_C:
+	/* SXTB Wd, Wn = 0x13001C00 */
+	insn = 0x13001C00 | (src << 5) | dest;
+	INSN_OUT(s, insn);
+	break;
+    case DILL_UC:
+	/* UXTB Wd, Wn = 0x53001C00 */
+	insn = 0x53001C00 | (src << 5) | dest;
+	INSN_OUT(s, insn);
+	break;
+    case DILL_S:
+	/* SXTH Wd, Wn = 0x13003C00 */
+	insn = 0x13003C00 | (src << 5) | dest;
+	INSN_OUT(s, insn);
+	break;
+    case DILL_US:
+	/* UXTH Wd, Wn = 0x53003C00 */
+	insn = 0x53003C00 | (src << 5) | dest;
 	INSN_OUT(s, insn);
 	break;
     default:
@@ -2388,17 +2416,7 @@ static void internal_push(dill_stream s, int type, int immediate, void *value_pt
             arg.is_register = 0;
         } else
 #endif
-        /* For variadic anonymous args on non-Apple, float/double go in integer registers */
-        if (is_variadic_anon) {
-            if (ami->next_core_register <= _x7) {
-                arg.is_register = 1;
-                arg.in_reg = ami->next_core_register;
-                arg.out_reg = ami->next_core_register;
-                ami->next_core_register++;
-            } else {
-                arg.is_register = 0;
-            }
-        } else if (ami->next_float_register <= _v7) {
+        if (ami->next_float_register <= _v7) {
             arg.is_register = 1;
             arg.in_reg = ami->next_float_register;
             arg.out_reg = ami->next_float_register;
@@ -2422,11 +2440,15 @@ static void internal_push(dill_stream s, int type, int immediate, void *value_pt
     switch (type) {
     case DILL_C: case DILL_UC: case DILL_S: case DILL_US:
     case DILL_I: case DILL_U: case DILL_F:
-        slot_size = 4;  /* 32-bit types use 4-byte slots */
+#ifdef __APPLE__
+        slot_size = 4;
+#else
+        slot_size = 8;  /* AAPCS64: 8-byte stack slots */
+#endif
         break;
     case DILL_L: case DILL_UL: case DILL_P: case DILL_D:
     default:
-        slot_size = 8;  /* 64-bit types use 8-byte slots */
+        slot_size = 8;
         break;
     }
 
@@ -2467,7 +2489,7 @@ static void internal_push(dill_stream s, int type, int immediate, void *value_pt
                 } else
 #endif
                 {
-                    /* 32-bit integer immediate - store as 32-bit */
+#ifdef __APPLE__
                     /* STUR Wn, [sp, #offset] = 0xB8000000 */
                     if (stack_offset >= 0 && stack_offset < 256) {
                         unsigned int insn = 0xB8000000 | ((stack_offset & 0x1FF) << 12) |
@@ -2476,9 +2498,21 @@ static void internal_push(dill_stream s, int type, int immediate, void *value_pt
                     } else {
                         arm64_set64(s, _x17, stack_offset);
                         INSN_OUT(s, 0x8B110000 | (_sp << 5) | _x17 | (_x17 << 16));
-                        /* STR Wn, [x17] = 0xB9000000 */
                         INSN_OUT(s, 0xB9000000 | (_x17 << 5) | _x16);
                     }
+#else
+                    /* AAPCS64: store as 64-bit into 8-byte slot */
+                    /* STUR Xn, [sp, #offset] = 0xF8000000 */
+                    if (stack_offset >= 0 && stack_offset < 256) {
+                        unsigned int insn = 0xF8000000 | ((stack_offset & 0x1FF) << 12) |
+                                           (_sp << 5) | _x16;
+                        INSN_OUT(s, insn);
+                    } else {
+                        arm64_set64(s, _x17, stack_offset);
+                        INSN_OUT(s, 0x8B110000 | (_sp << 5) | _x17 | (_x17 << 16));
+                        INSN_OUT(s, 0xF9000000 | (_x17 << 5) | _x16);
+                    }
+#endif
                 }
                 break;
             case DILL_L:
@@ -2536,7 +2570,7 @@ static void internal_push(dill_stream s, int type, int immediate, void *value_pt
                 } else
 #endif
                 {
-                    /* 32-bit integer register - store as 32-bit */
+#ifdef __APPLE__
                     /* STUR Wn, [sp, #offset] = 0xB8000000 */
                     if (stack_offset >= 0 && stack_offset < 256) {
                         unsigned int insn = 0xB8000000 | ((stack_offset & 0x1FF) << 12) |
@@ -2547,6 +2581,18 @@ static void internal_push(dill_stream s, int type, int immediate, void *value_pt
                         INSN_OUT(s, 0x8B110000 | (_sp << 5) | _x17 | (_x17 << 16));
                         INSN_OUT(s, 0xB9000000 | (_x17 << 5) | reg);
                     }
+#else
+                    /* AAPCS64: store as 64-bit into 8-byte slot */
+                    if (stack_offset >= 0 && stack_offset < 256) {
+                        unsigned int insn = 0xF8000000 | ((stack_offset & 0x1FF) << 12) |
+                                           (_sp << 5) | reg;
+                        INSN_OUT(s, insn);
+                    } else {
+                        arm64_set64(s, _x17, stack_offset);
+                        INSN_OUT(s, 0x8B110000 | (_sp << 5) | _x17 | (_x17 << 16));
+                        INSN_OUT(s, 0xF9000000 | (_x17 << 5) | reg);
+                    }
+#endif
                 }
                 break;
             case DILL_L:
@@ -2601,13 +2647,14 @@ static void internal_push(dill_stream s, int type, int immediate, void *value_pt
                 break;
             case DILL_F:
             case DILL_D:
+#ifdef __APPLE__
                 if (is_variadic_anon) {
-                    /* Variadic anonymous float/double: load into FP temp, then FMOV to integer reg */
-                    /* Float is promoted to double in variadic calls */
                     arm64_setf(s, DILL_D, 0, _v16, *(double*)value_ptr);
-                    /* FMOV Xd, Dn = 0x9E660000 | (Rn << 5) | Rd */
+                    /* FMOV Xd, Dn = 0x9E660000 */
                     INSN_OUT(s, 0x9E660000 | (_v16 << 5) | target_reg);
-                } else {
+                } else
+#endif
+                {
                     arm64_setf(s, arg.type, 0, target_reg, *(double*)value_ptr);
                 }
                 break;
@@ -2626,22 +2673,25 @@ static void internal_push(dill_stream s, int type, int immediate, void *value_pt
                 }
                 break;
             case DILL_F:
+#ifdef __APPLE__
                 if (is_variadic_anon) {
-                    /* Variadic anonymous float: convert to double, then FMOV to integer reg */
-                    /* FCVT Dd, Sn = 0x1E22C000 | (Rn << 5) | Rd */
+                    /* FCVT Dd, Sn then FMOV Xd, Dn */
                     INSN_OUT(s, 0x1E22C000 | (src_reg << 5) | _v16);
-                    /* FMOV Xd, Dn = 0x9E660000 | (Rn << 5) | Rd */
                     INSN_OUT(s, 0x9E660000 | (_v16 << 5) | target_reg);
-                } else if (src_reg != target_reg) {
+                } else
+#endif
+                if (src_reg != target_reg) {
                     arm64_mov(s, DILL_F, 0, target_reg, src_reg);
                 }
                 break;
             case DILL_D:
+#ifdef __APPLE__
                 if (is_variadic_anon) {
-                    /* Variadic anonymous double: FMOV to integer reg */
-                    /* FMOV Xd, Dn = 0x9E660000 | (Rn << 5) | Rd */
+                    /* FMOV Xd, Dn */
                     INSN_OUT(s, 0x9E660000 | (src_reg << 5) | target_reg);
-                } else if (src_reg != target_reg) {
+                } else
+#endif
+                if (src_reg != target_reg) {
                     arm64_mov(s, DILL_D, 0, target_reg, src_reg);
                 }
                 break;
