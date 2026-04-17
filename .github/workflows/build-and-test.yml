@@ -166,6 +166,34 @@ jobs:
     - name: Test
       run: source/scripts/ci/gh-actions/run.sh test
 
+  linux-arm64:
+    if: github.event_name != 'schedule' || github.repository == 'GTkorvo/dill'
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        buildtype: [ release, debug ]
+        compiler: [ gcc, clang ]
+    env:
+      CC: ${{ matrix.compiler }}
+      CXX: ${{ matrix.compiler == 'gcc' && 'g++' || 'clang++' }}
+    steps:
+    - uses: actions/checkout@v6
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build ${{ matrix.compiler }} ${{ matrix.compiler == 'gcc' && 'g++' || 'clang' }}
+    - name: Configure
+      run: |
+        cmake -G Ninja -S . -B build \
+          -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }} \
+          -DBUILD_TESTING=ON
+    - name: Build
+      run: ninja -C build
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
   mac_and_windows:
     if: github.event_name != 'schedule' || github.repository == 'GTkorvo/dill'
     # The jobs should run pretty quick; anything over 30m essentially means
