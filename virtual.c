@@ -1612,7 +1612,8 @@ do_global_assign(dill_stream c, virtual_mach_info vmi)
     candidates = malloc(sizeof(global_assign_candidate) * c->p->vreg_count);
     for (i = 0; i < c->p->vreg_count; i++) {
         int is_cross_block = 0;
-        if (c->p->vregs[i].typ == DILL_B || c->p->vregs[i].typ == DILL_V)
+        if (c->p->vregs[i].typ == DILL_B || c->p->vregs[i].typ == DILL_V ||
+            c->p->vregs[i].typ == DILL_Q)
             continue;
         if (c->p->vregs[i].use_info.use_count == 0 &&
             c->p->vregs[i].use_info.def_count == 0)
@@ -1730,6 +1731,11 @@ static int
 tmp_for_vreg(dill_stream c, int tmp_num, int vreg)
 {
     int typ = dill_type_of(c, vreg);
+    if (typ >= DILL_B) {
+        fprintf(stderr,
+                "dill: type %d unsupported by DILL_OLD_REGS allocator\n", typ);
+        abort();
+    }
     return c->p->v_tmps[typ][tmp_num];
 }
 
@@ -2780,7 +2786,7 @@ reset_reg_state(reg_state* state)
             int preg = c->p->vregs[i].preg;
             int typ = c->p->vregs[i].typ;
             ensure_preg_capacity(state, preg);
-            if (typ == DILL_F || typ == DILL_D) {
+            if (typ == DILL_F || typ == DILL_D || typ == DILL_Q) {
                 state->fpregs[preg].holds = i + 100;
             } else {
                 state->ipregs[preg].holds = i + 100;
@@ -3003,6 +3009,7 @@ select_reg(reg_state* state, int vreg, int loc, int src)
     switch (dill_type_of(c, vreg)) {
     case DILL_F:
     case DILL_D:
+    case DILL_Q:
         pregs = state->fpregs;
         break;
     default:
@@ -3054,6 +3061,7 @@ select_reg(reg_state* state, int vreg, int loc, int src)
                 switch (dill_type_of(c, vreg)) {
                 case DILL_F:
                 case DILL_D:
+                case DILL_Q:
                     pregs = state->fpregs;
                     break;
                 default:

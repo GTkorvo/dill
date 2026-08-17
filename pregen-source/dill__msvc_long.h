@@ -209,6 +209,8 @@ extern void dill_mark_label(dill_stream s, int label);
 extern int dill_is_label_mark(dill_stream s);
 extern int dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int reg_class);
 extern int dill_getreg(dill_stream s, int typ);
+/*! query whether the (eventual native) target implements the DILL_Q vector ops */
+extern int dill_has_vector_ops(dill_stream s);
 extern void dill_raw_putreg(dill_stream s, dill_reg reg_p, int type);
 extern void dill_raw_unavailreg(dill_stream s, int type, dill_reg reg);
 extern void dill_raw_availreg(dill_stream s, int type, dill_reg reg);
@@ -298,6 +300,7 @@ enum {
     DILL_V,    /* void */
     DILL_B,    /* block structure */
     DILL_EC,   /* execution context */
+    DILL_Q,    /* 128-bit vector; lane use (4xF/2xD) set by the operation */
     DILL_ERR   /* no type */
 };
 
@@ -467,6 +470,32 @@ enum {DILL_VAR, DILL_TEMP};
 #define dill_divd(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_divd](s, s->j->a3_data[dill_jmp_divd].data1, s->j->a3_data[dill_jmp_divd].data2, dest, src1, src2)
 #define dill_divdi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_divd](s, s->j->a3f_data[dill_jmp_divd].data1, s->j->a3f_data[dill_jmp_divd].data2, dest, src1, imm)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+#define dill_jmp_vaddf 50
+#define dill_jmp_vaddd 51
+#define dill_jmp_vsubf 52
+#define dill_jmp_vsubd 53
+#define dill_jmp_vmulf 54
+#define dill_jmp_vmuld 55
+#define dill_jmp_vdivf 56
+#define dill_jmp_vdivd 57
+#endif
+#define dill_vaddf(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vaddf](s, s->j->a3_data[dill_jmp_vaddf].data1, s->j->a3_data[dill_jmp_vaddf].data2, dest, src1, src2)
+#define dill_vaddfi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vaddf](s, s->j->a3f_data[dill_jmp_vaddf].data1, s->j->a3f_data[dill_jmp_vaddf].data2, dest, src1, imm)
+#define dill_vaddd(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vaddd](s, s->j->a3_data[dill_jmp_vaddd].data1, s->j->a3_data[dill_jmp_vaddd].data2, dest, src1, src2)
+#define dill_vadddi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vaddd](s, s->j->a3f_data[dill_jmp_vaddd].data1, s->j->a3f_data[dill_jmp_vaddd].data2, dest, src1, imm)
+#define dill_vsubf(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vsubf](s, s->j->a3_data[dill_jmp_vsubf].data1, s->j->a3_data[dill_jmp_vsubf].data2, dest, src1, src2)
+#define dill_vsubfi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vsubf](s, s->j->a3f_data[dill_jmp_vsubf].data1, s->j->a3f_data[dill_jmp_vsubf].data2, dest, src1, imm)
+#define dill_vsubd(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vsubd](s, s->j->a3_data[dill_jmp_vsubd].data1, s->j->a3_data[dill_jmp_vsubd].data2, dest, src1, src2)
+#define dill_vsubdi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vsubd](s, s->j->a3f_data[dill_jmp_vsubd].data1, s->j->a3f_data[dill_jmp_vsubd].data2, dest, src1, imm)
+#define dill_vmulf(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vmulf](s, s->j->a3_data[dill_jmp_vmulf].data1, s->j->a3_data[dill_jmp_vmulf].data2, dest, src1, src2)
+#define dill_vmulfi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vmulf](s, s->j->a3f_data[dill_jmp_vmulf].data1, s->j->a3f_data[dill_jmp_vmulf].data2, dest, src1, imm)
+#define dill_vmuld(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vmuld](s, s->j->a3_data[dill_jmp_vmuld].data1, s->j->a3_data[dill_jmp_vmuld].data2, dest, src1, src2)
+#define dill_vmuldi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vmuld](s, s->j->a3f_data[dill_jmp_vmuld].data1, s->j->a3f_data[dill_jmp_vmuld].data2, dest, src1, imm)
+#define dill_vdivf(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vdivf](s, s->j->a3_data[dill_jmp_vdivf].data1, s->j->a3_data[dill_jmp_vdivf].data2, dest, src1, src2)
+#define dill_vdivfi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vdivf](s, s->j->a3f_data[dill_jmp_vdivf].data1, s->j->a3f_data[dill_jmp_vdivf].data2, dest, src1, imm)
+#define dill_vdivd(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vdivd](s, s->j->a3_data[dill_jmp_vdivd].data1, s->j->a3_data[dill_jmp_vdivd].data2, dest, src1, src2)
+#define dill_vdivdi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vdivd](s, s->j->a3f_data[dill_jmp_vdivd].data1, s->j->a3f_data[dill_jmp_vdivd].data2, dest, src1, imm)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #define dill_jmp_noti 0
 #define dill_jmp_notu 1
 #define dill_jmp_notul 2
@@ -582,6 +611,48 @@ enum {DILL_VAR, DILL_TEMP};
 #define dill_negd(s, dest, src) (s->j->jmp_a2)[dill_jmp_negd](s, s->j->a2_data[dill_jmp_negd].data1, s->j->a2_data[dill_jmp_negd].data2, dest, src)
 /*! DILL neg d immediate operator */
 #define dill_negdi(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_negd](s, s->j->a2f_data[dill_jmp_negd].data1, s->j->a2f_data[dill_jmp_negd].data2, dest, imm)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#define dill_jmp_sqrtf 22
+#define dill_jmp_sqrtd 23
+#define dill_jmp_vnegf 24
+#define dill_jmp_vnegd 25
+#define dill_jmp_vsqrtf 26
+#define dill_jmp_vsqrtd 27
+#define dill_jmp_vsplatf 28
+#define dill_jmp_vsplatd 29
+#endif
+/*! DILL sqrt f operator */
+#define dill_sqrtf(s, dest, src) (s->j->jmp_a2)[dill_jmp_sqrtf](s, s->j->a2_data[dill_jmp_sqrtf].data1, s->j->a2_data[dill_jmp_sqrtf].data2, dest, src)
+/*! DILL sqrt f immediate operator */
+#define dill_sqrtfi(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_sqrtf](s, s->j->a2f_data[dill_jmp_sqrtf].data1, s->j->a2f_data[dill_jmp_sqrtf].data2, dest, imm)
+/*! DILL sqrt d operator */
+#define dill_sqrtd(s, dest, src) (s->j->jmp_a2)[dill_jmp_sqrtd](s, s->j->a2_data[dill_jmp_sqrtd].data1, s->j->a2_data[dill_jmp_sqrtd].data2, dest, src)
+/*! DILL sqrt d immediate operator */
+#define dill_sqrtdi(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_sqrtd](s, s->j->a2f_data[dill_jmp_sqrtd].data1, s->j->a2f_data[dill_jmp_sqrtd].data2, dest, imm)
+/*! DILL vneg f operator */
+#define dill_vnegf(s, dest, src) (s->j->jmp_a2)[dill_jmp_vnegf](s, s->j->a2_data[dill_jmp_vnegf].data1, s->j->a2_data[dill_jmp_vnegf].data2, dest, src)
+/*! DILL vneg f immediate operator */
+#define dill_vnegfi(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_vnegf](s, s->j->a2f_data[dill_jmp_vnegf].data1, s->j->a2f_data[dill_jmp_vnegf].data2, dest, imm)
+/*! DILL vneg d operator */
+#define dill_vnegd(s, dest, src) (s->j->jmp_a2)[dill_jmp_vnegd](s, s->j->a2_data[dill_jmp_vnegd].data1, s->j->a2_data[dill_jmp_vnegd].data2, dest, src)
+/*! DILL vneg d immediate operator */
+#define dill_vnegdi(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_vnegd](s, s->j->a2f_data[dill_jmp_vnegd].data1, s->j->a2f_data[dill_jmp_vnegd].data2, dest, imm)
+/*! DILL vsqrt f operator */
+#define dill_vsqrtf(s, dest, src) (s->j->jmp_a2)[dill_jmp_vsqrtf](s, s->j->a2_data[dill_jmp_vsqrtf].data1, s->j->a2_data[dill_jmp_vsqrtf].data2, dest, src)
+/*! DILL vsqrt f immediate operator */
+#define dill_vsqrtfi(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_vsqrtf](s, s->j->a2f_data[dill_jmp_vsqrtf].data1, s->j->a2f_data[dill_jmp_vsqrtf].data2, dest, imm)
+/*! DILL vsqrt d operator */
+#define dill_vsqrtd(s, dest, src) (s->j->jmp_a2)[dill_jmp_vsqrtd](s, s->j->a2_data[dill_jmp_vsqrtd].data1, s->j->a2_data[dill_jmp_vsqrtd].data2, dest, src)
+/*! DILL vsqrt d immediate operator */
+#define dill_vsqrtdi(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_vsqrtd](s, s->j->a2f_data[dill_jmp_vsqrtd].data1, s->j->a2f_data[dill_jmp_vsqrtd].data2, dest, imm)
+/*! DILL vsplat f operator */
+#define dill_vsplatf(s, dest, src) (s->j->jmp_a2)[dill_jmp_vsplatf](s, s->j->a2_data[dill_jmp_vsplatf].data1, s->j->a2_data[dill_jmp_vsplatf].data2, dest, src)
+/*! DILL vsplat f immediate operator */
+#define dill_vsplatfi(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_vsplatf](s, s->j->a2f_data[dill_jmp_vsplatf].data1, s->j->a2f_data[dill_jmp_vsplatf].data2, dest, imm)
+/*! DILL vsplat d operator */
+#define dill_vsplatd(s, dest, src) (s->j->jmp_a2)[dill_jmp_vsplatd](s, s->j->a2_data[dill_jmp_vsplatd].data1, s->j->a2_data[dill_jmp_vsplatd].data2, dest, src)
+/*! DILL vsplat d immediate operator */
+#define dill_vsplatdi(s, dest, imm) (s->j->jmp_f2i)[dill_jmp_vsplatd](s, s->j->a2f_data[dill_jmp_vsplatd].data1, s->j->a2f_data[dill_jmp_vsplatd].data2, dest, imm)
 #define dill_eq_code 0
 #define dill_ge_code 1
 #define dill_gt_code 2
@@ -1162,6 +1233,14 @@ enum {DILL_VAR, DILL_TEMP};
 #define dill_ldbsus(s, dest, src1, src2) (s->j->bsload)(s, DILL_US, 0, dest, src1, src2)
 #define dill_ldbsusi(s, dest, src, imm) (s->j->bsloadi)(s, DILL_US, 0, dest, src, imm)
 #define dill_lea(s, dest, src, imm) (s->j->lea)(s, 0, 0, dest, src, imm)
+#define dill_ldq(s, dest, src1, src2) (s->j->load)(s, DILL_Q, 0, dest, src1, src2)
+#define dill_ldqi(s, dest, src, imm) (s->j->loadi)(s, DILL_Q, 0, dest, src, imm)
+#define dill_stq(s, dest, src1, src2) (s->j->store)(s, DILL_Q, 0, dest, src1, src2)
+#define dill_stqi(s, dest, src, imm) (s->j->storei)(s, DILL_Q, 0, dest, src, imm)
+#define dill_has_ldbs(s) (s->j->bsload != 0)
+#define dill_ldbsq(s, dest, src1, src2) (s->j->bsload)(s, DILL_Q, 0, dest, src1, src2)
+#define dill_ldbsqi(s, dest, src, imm) (s->j->bsloadi)(s, DILL_Q, 0, dest, src, imm)
+#define dill_lea(s, dest, src, imm) (s->j->lea)(s, 0, 0, dest, src, imm)
 #define dill_retc(s, src) (s->j->ret)(s, DILL_I, 0, src)
 #define dill_retci(s, imm) (s->j->reti)(s, DILL_C, 0, imm)
 #define dill_retuc(s, src) (s->j->ret)(s, DILL_I, 0, src)
@@ -1196,6 +1275,7 @@ enum {DILL_VAR, DILL_TEMP};
 #define dill_movp(s, dest, src) (s->j->mov)(s, DILL_P, 0, dest, src)
 #define dill_movd(s, dest, src) (s->j->mov)(s, DILL_D, 0, dest, src)
 #define dill_movf(s, dest, src) (s->j->mov)(s, DILL_F, 0, dest, src)
+#define dill_movq(s, dest, src) (s->j->mov)(s, DILL_Q, 0, dest, src)
 #define dill_pmov(s, type, dest, src) (s->j->mov)(s, type, 0, dest, src)
 #define dill_setc(s, dest, imm) (s->j->set)(s, DILL_C, 0, dest, imm)
 #define dill_setuc(s, dest, imm) (s->j->set)(s, DILL_UC, 0, dest, imm)
@@ -1266,9 +1346,11 @@ extern void dill_scallv(dill_stream s, void *ptr, const char *name, const char *
 #define dill_restored(s, reg) s->j->save_restore(s, 1, DILL_D, reg)
 #define dill_savef(s, reg) s->j->save_restore(s, 0, DILL_F, reg)
 #define dill_restoref(s, reg) s->j->save_restore(s, 1, DILL_F, reg)
+#define dill_saveq(s, reg) s->j->save_restore(s, 0, DILL_Q, reg)
+#define dill_restoreq(s, reg) s->j->save_restore(s, 1, DILL_Q, reg)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-#define dill_jmp_a3_size 50
-#define dill_jmp_a2_size 22
+#define dill_jmp_a3_size 58
+#define dill_jmp_a2_size 30
 #define dill_jmp_branch_size 66
 #define dill_jmp_compare_size 66
 #define dill_jmp_convert_size 0
@@ -1301,6 +1383,14 @@ extern DILL_DECLSPEC int dill_rsh_poly_map[];
 #define dill_Prsh(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_rsh_poly_map[typ]](s, s->j->a3_data[dill_rsh_poly_map[typ]].data1, s->j->a3_data[dill_rsh_poly_map[typ]].data2, dest, src1, src2)
 extern DILL_DECLSPEC int dill_sub_poly_map[];
 #define dill_Psub(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_sub_poly_map[typ]](s, s->j->a3_data[dill_sub_poly_map[typ]].data1, s->j->a3_data[dill_sub_poly_map[typ]].data2, dest, src1, src2)
+extern DILL_DECLSPEC int dill_vadd_poly_map[];
+#define dill_Pvadd(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_vadd_poly_map[typ]](s, s->j->a3_data[dill_vadd_poly_map[typ]].data1, s->j->a3_data[dill_vadd_poly_map[typ]].data2, dest, src1, src2)
+extern DILL_DECLSPEC int dill_vdiv_poly_map[];
+#define dill_Pvdiv(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_vdiv_poly_map[typ]](s, s->j->a3_data[dill_vdiv_poly_map[typ]].data1, s->j->a3_data[dill_vdiv_poly_map[typ]].data2, dest, src1, src2)
+extern DILL_DECLSPEC int dill_vmul_poly_map[];
+#define dill_Pvmul(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_vmul_poly_map[typ]](s, s->j->a3_data[dill_vmul_poly_map[typ]].data1, s->j->a3_data[dill_vmul_poly_map[typ]].data2, dest, src1, src2)
+extern DILL_DECLSPEC int dill_vsub_poly_map[];
+#define dill_Pvsub(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_vsub_poly_map[typ]](s, s->j->a3_data[dill_vsub_poly_map[typ]].data1, s->j->a3_data[dill_vsub_poly_map[typ]].data2, dest, src1, src2)
 extern DILL_DECLSPEC int dill_xor_poly_map[];
 #define dill_Pxor(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_xor_poly_map[typ]](s, s->j->a3_data[dill_xor_poly_map[typ]].data1, s->j->a3_data[dill_xor_poly_map[typ]].data2, dest, src1, src2)
 

@@ -83,6 +83,7 @@ int x86_64_type_align[] = {
     4,                 /* V */
     4,                 /* B */
     sizeof(char*),     /* EC */
+    16, /* DILL_Q */
 };
 
 int x86_64_type_size[] = {
@@ -100,6 +101,7 @@ int x86_64_type_size[] = {
     4,                 /* V */
     0,                 /* B */
     sizeof(char*),     /* EC */
+    16, /* DILL_Q */
 };
 
 static void

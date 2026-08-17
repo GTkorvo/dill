@@ -1,5 +1,5 @@
 
-set(TESTS basic_call general t1 opt branch prefix_test mixed_params loop_reg local_block)
+set(TESTS basic_call general t1 opt branch prefix_test mixed_params loop_reg local_block vec)
 
 if(NATIVE_CG)
   list(APPEND TESTS pkg_test multi_test)
