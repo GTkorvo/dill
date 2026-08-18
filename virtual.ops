@@ -17,6 +17,7 @@ sub upperc {
 &arith2_insn("neg", "i u ul l f d", "dill_varith2");
 &arith2_insn("bswap", "s us i u ul l f d", "dill_varith2");
 &vec_arith_insn("vadd vsub vmul vdiv", "f d", "dill_varith3");
+&vec_arith_insn("vfma", "f d", "dill_varith3");
 &vec_arith2_insn("sqrt vneg vsqrt vsplat", "f d", "dill_varith2");
 
 &arithi_insn("add sub", "i u ul l p", "dill_varith3i");

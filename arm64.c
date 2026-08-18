@@ -3264,6 +3264,9 @@ void arm64_vfarith(dill_stream s, int data1, int data2, int dest, int src1, int 
     case 3: /* FDIV Vd.4S = 0x6E20FC00, Vd.2D = 0x6E60FC00 */
 	insn = (is_double ? 0x6E60FC00 : 0x6E20FC00);
 	break;
+    case 4: /* FMLA (accumulating: Vd += Vn*Vm) Vd.4S = 0x4E20CC00, Vd.2D = 0x4E60CC00 */
+	insn = (is_double ? 0x4E60CC00 : 0x4E20CC00);
+	break;
     default:
 	return;
     }

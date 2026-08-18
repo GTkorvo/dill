@@ -46,6 +46,8 @@ sub upperc {
 &arith_insn("vmul", "d", "arm64_vfarith", "2", "1");
 &arith_insn("vdiv", "f", "arm64_vfarith", "3", "0");
 &arith_insn("vdiv", "d", "arm64_vfarith", "3", "1");
+&arith_insn("vfma", "f", "arm64_vfarith", "4", "0");
+&arith_insn("vfma", "d", "arm64_vfarith", "4", "1");
 &arith2_insn("vneg", "f", "(arith_op2)arm64_vfarith2", "0", "0");
 &arith2_insn("vneg", "d", "(arith_op2)arm64_vfarith2", "0", "1");
 &arith2_insn("vsqrt", "f", "(arith_op2)arm64_vfarith2", "1", "0");

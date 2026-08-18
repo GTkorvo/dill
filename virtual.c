@@ -264,6 +264,14 @@ virtual_print_insn(dill_stream c, void* info_ptr, void* i)
     return sizeof(*insn);
 }
 
+/* Accumulating arith3 ops (currently vfma: dest += src1*src2) read their
+ * dest operand, so liveness and the optimizers must treat dest as a use. */
+static int
+is_accum_insn(int insn_code)
+{
+    return (insn_code == dill_jmp_vfmaf) || (insn_code == dill_jmp_vfmad);
+}
+
 static int
 insn_same_except_dest(virtual_insn* i, virtual_insn* j)
 {
@@ -275,6 +283,8 @@ insn_same_except_dest(virtual_insn* i, virtual_insn* j)
     switch (i->class_code) {
     case iclass_arith3:
     case iclass_compare:
+        if ((i->class_code == iclass_arith3) && is_accum_insn(icode))
+            return 0; /* dest is an input: never equivalent-except-dest */
         return ((icode == jcode) && (i->opnds.a3.src1 == j->opnds.a3.src1) &&
                 (i->opnds.a3.src2 == j->opnds.a3.src2));
     case iclass_arith3i:
@@ -759,6 +769,8 @@ insn_uses(virtual_insn* insn, int* used)
     case iclass_compare:
         used[0] = insn->opnds.a3.src1;
         used[1] = insn->opnds.a3.src2;
+        if ((insn->class_code == iclass_arith3) && is_accum_insn(insn->insn_code))
+            used[2] = insn->opnds.a3.dest;
         break;
     case iclass_arith3i:
         used[0] = insn->opnds.a3i.src;
@@ -1109,6 +1121,8 @@ build_bb_body(dill_stream c, virtual_insn* insn, int i, virtual_insn* insns)
     case iclass_compare:
         bb_uses(c, bb, insn->opnds.a3.src1);
         bb_uses(c, bb, insn->opnds.a3.src2);
+        if ((insn->class_code == iclass_arith3) && is_accum_insn(insn->insn_code))
+            bb_uses(c, bb, insn->opnds.a3.dest);
         bb_defines(c, bb, insn->opnds.a3.dest);
         break;
     case iclass_arith3i:
@@ -3607,6 +3621,8 @@ const_prop_ip(dill_stream c,
         int src1_vreg = ip->opnds.a3.src1;
         int src2_vreg = ip->opnds.a3.src2;
         int insn_code = ip->insn_code;
+        if (is_accum_insn(insn_code))
+            break; /* no immediate form; dest is an input */
         if ((src1_vreg == set_vreg) && is_commutative(insn_code)) {
             src2_vreg = ip->opnds.a3.src1;
             src1_vreg = ip->opnds.a3.src2;
@@ -4115,6 +4131,8 @@ do_const_prop(dill_stream c, basic_block bb, virtual_insn* insns, int loc)
             case iclass_arith3: {
                 /* arith 3 operand integer insns */
                 int dest_vreg = ip->opnds.a3.dest;
+                if (is_accum_insn(ip->insn_code))
+                    break; /* dest is an input; renaming it changes the accumulator */
                 if (dest_vreg == mov_src) {
                     if (c->dill_debug) {
                         printf("   Replacing  ");

@@ -181,6 +181,12 @@ static void gen_arm64_jump_table()
 	  arm64_jump_table->jmp_a3[dill_jmp_vdivd] = arm64_vfarith;
 	  arm64_jump_table->a3_data[dill_jmp_vdivd].data1 = 3;
 	  arm64_jump_table->a3_data[dill_jmp_vdivd].data2 = 1;
+	  arm64_jump_table->jmp_a3[dill_jmp_vfmaf] = arm64_vfarith;
+	  arm64_jump_table->a3_data[dill_jmp_vfmaf].data1 = 4;
+	  arm64_jump_table->a3_data[dill_jmp_vfmaf].data2 = 0;
+	  arm64_jump_table->jmp_a3[dill_jmp_vfmad] = arm64_vfarith;
+	  arm64_jump_table->a3_data[dill_jmp_vfmad].data1 = 4;
+	  arm64_jump_table->a3_data[dill_jmp_vfmad].data2 = 1;
 	  arm64_jump_table->jmp_a3i[dill_jmp_addi] = arm64_arith3i;
 	  arm64_jump_table->a3i_data[dill_jmp_addi].data1 = 0;
 	  arm64_jump_table->a3i_data[dill_jmp_addi].data2 = DILL_I;

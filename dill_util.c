@@ -1176,7 +1176,7 @@ dill_has_vector_ops(dill_stream s)
     if (getenv("DILL_DO_EMULATION"))
         return 0; /* emulation forced; the emulator has no vector support */
     return (j->jmp_a3[dill_jmp_vaddf] != 0) && (j->jmp_a3[dill_jmp_vaddd] != 0) &&
-           (j->jmp_a2[dill_jmp_vsplatf] != 0);
+           (j->jmp_a3[dill_jmp_vfmaf] != 0) && (j->jmp_a2[dill_jmp_vsplatf] != 0);
 #endif
 }
 

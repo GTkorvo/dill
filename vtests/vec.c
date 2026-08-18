@@ -376,6 +376,139 @@ test_mag_loop(void)
     dill_free_stream(s);
 }
 
+/* vfma: dest += src1*src2 (dill's one read-modify-write op).  Straight-line
+ * check against C fma semantics (FMLA is fused: single rounding). */
+static void
+test_fma(void)
+{
+    float fa[4] = {1.5f, -2.0f, 3.25f, 0.5f};
+    float fb[4] = {2.0f, 4.0f, -1.0f, 8.0f};
+    float facc[4] = {10.0f, 20.0f, 30.0f, 40.0f};
+    float fo[4], fw[4];
+    double da[2] = {1.5, -2.75};
+    double db[2] = {4.0, 0.5};
+    double dacc[2] = {100.0, -100.0};
+    double dout[2], dw[2];
+    int i;
+    {
+        dill_stream s = dill_create_stream();
+        dill_exec_handle h;
+        dill_reg pa, pb, pc, po, va, vb, vacc;
+        void (*f)(void *, void *, void *, void *);
+        dill_start_proc(s, "vfma", DILL_V, "%p%p%p%p");
+        pa = dill_vparam(s, 0);
+        pb = dill_vparam(s, 1);
+        pc = dill_vparam(s, 2);
+        po = dill_vparam(s, 3);
+        va = dill_getreg(s, DILL_Q);
+        vb = dill_getreg(s, DILL_Q);
+        vacc = dill_getreg(s, DILL_Q);
+        dill_ldqi(s, va, pa, 0);
+        dill_ldqi(s, vb, pb, 0);
+        dill_ldqi(s, vacc, pc, 0);
+        dill_vfmaf(s, vacc, va, vb);
+        dill_stqi(s, vacc, po, 0);
+        dill_retii(s, 0);
+        h = dill_finalize(s);
+        f = (void (*)(void *, void *, void *, void *))dill_get_fp(h);
+        f(fa, fb, facc, fo);
+        for (i = 0; i < 4; i++)
+            fw[i] = fmaf(fa[i], fb[i], facc[i]);
+        check_f("vfmaf", fo, fw, 4);
+        dill_free_handle(h);
+        dill_free_stream(s);
+    }
+    {
+        dill_stream s = dill_create_stream();
+        dill_exec_handle h;
+        dill_reg pa, pb, pc, po, va, vb, vacc;
+        void (*f)(void *, void *, void *, void *);
+        dill_start_proc(s, "vfmad", DILL_V, "%p%p%p%p");
+        pa = dill_vparam(s, 0);
+        pb = dill_vparam(s, 1);
+        pc = dill_vparam(s, 2);
+        po = dill_vparam(s, 3);
+        va = dill_getreg(s, DILL_Q);
+        vb = dill_getreg(s, DILL_Q);
+        vacc = dill_getreg(s, DILL_Q);
+        dill_ldqi(s, va, pa, 0);
+        dill_ldqi(s, vb, pb, 0);
+        dill_ldqi(s, vacc, pc, 0);
+        dill_vfmad(s, vacc, va, vb);
+        dill_stqi(s, vacc, po, 0);
+        dill_retii(s, 0);
+        h = dill_finalize(s);
+        f = (void (*)(void *, void *, void *, void *))dill_get_fp(h);
+        f(da, db, dacc, dout);
+        for (i = 0; i < 2; i++)
+            dw[i] = fma(da[i], db[i], dacc[i]);
+        check_d("vfmad", dout, dw, 2);
+        dill_free_handle(h);
+        dill_free_stream(s);
+    }
+}
+
+/* Loop-carried vector accumulator (dot-product shape): the accumulator
+ * crosses the backedge, so it spills/reloads per block and each vfma's dest
+ * is an upward-exposed use.  N multiple of 4 to keep it simple. */
+static void
+test_fma_loop(void)
+{
+    enum { N = 512 };
+    static float a[N], b[N];
+    float out[4], want[4] = {0, 0, 0, 0};
+    dill_stream s = dill_create_stream();
+    dill_exec_handle h;
+    dill_reg pa, pb, po, n, i, off, vacc, va, vb;
+    void (*f)(void *, void *, void *, size_t);
+    int loop_top, loop_end;
+    int k;
+
+    for (k = 0; k < N; k++) {
+        a[k] = (float)(k % 23) * 0.5f;
+        b[k] = (float)(k % 9) - 4.0f;
+    }
+    for (k = 0; k < N; k++)
+        want[k % 4] = fmaf(a[k], b[k], want[k % 4]);
+
+    dill_start_proc(s, "dot", DILL_V, "%p%p%p%ul");
+    pa = dill_vparam(s, 0);
+    pb = dill_vparam(s, 1);
+    po = dill_vparam(s, 2);
+    n = dill_vparam(s, 3);
+    i = dill_getreg(s, DILL_UL);
+    off = dill_getreg(s, DILL_UL);
+    vacc = dill_getreg(s, DILL_Q);
+    va = dill_getreg(s, DILL_Q);
+    vb = dill_getreg(s, DILL_Q);
+
+    /* zero the accumulator: acc = x - x for any loaded x */
+    dill_ldqi(s, va, pa, 0);
+    dill_vsubf(s, vacc, va, va);
+    dill_setul(s, i, 0);
+
+    loop_top = dill_alloc_label(s, "fl_top");
+    loop_end = dill_alloc_label(s, "fl_end");
+    dill_mark_label(s, loop_top);
+    dill_bgeul(s, i, n, loop_end);
+    dill_mululi(s, off, i, sizeof(float));
+    dill_ldq(s, va, pa, off);
+    dill_ldq(s, vb, pb, off);
+    dill_vfmaf(s, vacc, va, vb);
+    dill_adduli(s, i, i, 4);
+    dill_jv(s, loop_top);
+    dill_mark_label(s, loop_end);
+    dill_stqi(s, vacc, po, 0);
+    dill_retii(s, 0);
+
+    h = dill_finalize(s);
+    f = (void (*)(void *, void *, void *, size_t))dill_get_fp(h);
+    f(a, b, out, (size_t)N);
+    check_f("fma_loop", out, want, 4);
+    dill_free_handle(h);
+    dill_free_stream(s);
+}
+
 /* Enough simultaneously-live vectors to force 16-byte spills, plus a call in
  * the middle so live vectors cross a basic-block/call boundary. */
 static double
@@ -456,6 +589,8 @@ main(int argc, char **argv)
     test_splat();
     test_scalar_sqrt();
     test_mag_loop();
+    test_fma();
+    test_fma_loop();
     test_spill_and_call();
 
     if (!failed)

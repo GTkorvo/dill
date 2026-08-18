@@ -496,6 +496,14 @@ enum {DILL_VAR, DILL_TEMP};
 #define dill_vdivd(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vdivd](s, s->j->a3_data[dill_jmp_vdivd].data1, s->j->a3_data[dill_jmp_vdivd].data2, dest, src1, src2)
 #define dill_vdivdi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vdivd](s, s->j->a3f_data[dill_jmp_vdivd].data1, s->j->a3f_data[dill_jmp_vdivd].data2, dest, src1, imm)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+#define dill_jmp_vfmaf 58
+#define dill_jmp_vfmad 59
+#endif
+#define dill_vfmaf(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vfmaf](s, s->j->a3_data[dill_jmp_vfmaf].data1, s->j->a3_data[dill_jmp_vfmaf].data2, dest, src1, src2)
+#define dill_vfmafi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vfmaf](s, s->j->a3f_data[dill_jmp_vfmaf].data1, s->j->a3f_data[dill_jmp_vfmaf].data2, dest, src1, imm)
+#define dill_vfmad(s, dest, src1, src2) (s->j->jmp_a3)[dill_jmp_vfmad](s, s->j->a3_data[dill_jmp_vfmad].data1, s->j->a3_data[dill_jmp_vfmad].data2, dest, src1, src2)
+#define dill_vfmadi(s, dest, src1, imm) (s->j->jmp_f3i)[dill_jmp_vfmad](s, s->j->a3f_data[dill_jmp_vfmad].data1, s->j->a3f_data[dill_jmp_vfmad].data2, dest, src1, imm)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #define dill_jmp_noti 0
 #define dill_jmp_notu 1
 #define dill_jmp_notul 2
@@ -1349,7 +1357,7 @@ extern void dill_scallv(dill_stream s, void *ptr, const char *name, const char *
 #define dill_saveq(s, reg) s->j->save_restore(s, 0, DILL_Q, reg)
 #define dill_restoreq(s, reg) s->j->save_restore(s, 1, DILL_Q, reg)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-#define dill_jmp_a3_size 58
+#define dill_jmp_a3_size 60
 #define dill_jmp_a2_size 30
 #define dill_jmp_branch_size 66
 #define dill_jmp_compare_size 66
@@ -1387,6 +1395,8 @@ extern DILL_DECLSPEC int dill_vadd_poly_map[];
 #define dill_Pvadd(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_vadd_poly_map[typ]](s, s->j->a3_data[dill_vadd_poly_map[typ]].data1, s->j->a3_data[dill_vadd_poly_map[typ]].data2, dest, src1, src2)
 extern DILL_DECLSPEC int dill_vdiv_poly_map[];
 #define dill_Pvdiv(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_vdiv_poly_map[typ]](s, s->j->a3_data[dill_vdiv_poly_map[typ]].data1, s->j->a3_data[dill_vdiv_poly_map[typ]].data2, dest, src1, src2)
+extern DILL_DECLSPEC int dill_vfma_poly_map[];
+#define dill_Pvfma(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_vfma_poly_map[typ]](s, s->j->a3_data[dill_vfma_poly_map[typ]].data1, s->j->a3_data[dill_vfma_poly_map[typ]].data2, dest, src1, src2)
 extern DILL_DECLSPEC int dill_vmul_poly_map[];
 #define dill_Pvmul(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_vmul_poly_map[typ]](s, s->j->a3_data[dill_vmul_poly_map[typ]].data1, s->j->a3_data[dill_vmul_poly_map[typ]].data2, dest, src1, src2)
 extern DILL_DECLSPEC int dill_vsub_poly_map[];

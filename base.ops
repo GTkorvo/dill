@@ -32,6 +32,7 @@ EOF
 &arith3( "add sub", "p");
 &arith3( "add sub mul div", "f d");
 &arith3( "vadd vsub vmul vdiv", "f d");
+&arith3( "vfma", "f d");
     $arith2 = 0;
 &arith2( "not com neg", "i u ul l");
 &arith2( "bswap", "s us i u ul l f d");
