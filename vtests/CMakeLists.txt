@@ -31,6 +31,12 @@ foreach(TEST ${TESTS})
   add_test(NAME vtest_${TEST} COMMAND v${TEST})
 endforeach()
 
+# vec.c checks against libm (sqrtf/fmaf); on Linux those live outside libc.
+find_library(VTEST_MATH_LIBRARY m)
+if(VTEST_MATH_LIBRARY)
+  target_link_libraries(vvec ${VTEST_MATH_LIBRARY})
+endif()
+
 # ARM64 backend has a bug with small return types (char, short) that
 # only manifests with optimization enabled. Keep -O0 for now.
 if(NOT (CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
