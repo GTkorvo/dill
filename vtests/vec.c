@@ -185,6 +185,7 @@ test_unops(void)
         dill_retii(s, 0);
         h = dill_finalize(s);
         f = (void (*)(void*, void*))dill_get_fp(h);
+        memset(fo, 0, sizeof(fo));
         f(fa, fo);
         for (i = 0; i < nlf; i++)
             fw[i] = -sqrtf(fa[i]);
@@ -209,6 +210,7 @@ test_unops(void)
         dill_retii(s, 0);
         h = dill_finalize(s);
         f = (void (*)(void*, void*))dill_get_fp(h);
+        memset(dout, 0, sizeof(dout));
         f(da, dout);
         for (i = 0; i < nld; i++)
             dw[i] = -sqrt(da[i]);
@@ -238,6 +240,7 @@ test_unops(void)
         f = (void (*)(void*, void*))dill_get_fp(h);
         for (i = 0; i < nlf; i++)
             zin[i] = (i & 1) ? -0.0f : 0.0f;
+        memset(zout, 0, sizeof(zout));
         f(zin, zout);
         for (i = 0; i < nlf; i++) {
             float want = -zin[i];
@@ -283,6 +286,7 @@ test_splat(void)
         dill_retii(s, 0);
         h = dill_finalize(s);
         f = (void (*)(void*, void*, float))dill_get_fp(h);
+        memset(fo, 0, sizeof(fo));
         f(fa, fo, 2.5f);
         for (i = 0; i < nlf; i++)
             fw[i] = fa[i] * 2.5f;
@@ -308,6 +312,7 @@ test_splat(void)
         dill_retii(s, 0);
         h = dill_finalize(s);
         f = (void (*)(void*, void*, double))dill_get_fp(h);
+        memset(dout, 0, sizeof(dout));
         f(da, dout, 3.0);
         for (i = 0; i < nld; i++)
             dw[i] = da[i] * 3.0;
@@ -435,6 +440,7 @@ test_mag_loop(void)
 
     h = dill_finalize(s);
     f = (void (*)(void*, void*, void*, void*, size_t))dill_get_fp(h);
+    memset(out, 0, sizeof(float) * N);
     f(a, b, c, out, (size_t)N);
     check_f("mag_loop", out, want, N);
     dill_free_handle(h);
@@ -490,6 +496,7 @@ test_fma(void)
         dill_retii(s, 0);
         h = dill_finalize(s);
         f = (void (*)(void*, void*, void*, void*))dill_get_fp(h);
+        memset(fo, 0, sizeof(fo));
         f(fa, fb, facc, fo);
         for (i = 0; i < nlf; i++)
             fw[i] = fmaf(fa[i], fb[i], facc[i]);
@@ -518,6 +525,7 @@ test_fma(void)
         dill_retii(s, 0);
         h = dill_finalize(s);
         f = (void (*)(void*, void*, void*, void*))dill_get_fp(h);
+        memset(dout, 0, sizeof(dout));
         f(da, db, dacc, dout);
         for (i = 0; i < nld; i++)
             dw[i] = fma(da[i], db[i], dacc[i]);
@@ -589,6 +597,7 @@ test_fma_loop(void)
 
     h = dill_finalize(s);
     f = (void (*)(void*, void*, void*, size_t))dill_get_fp(h);
+    memset(out, 0, sizeof(out));
     f(a, b, out, (size_t)N);
     check_f("fma_loop", out, want, nlf);
     dill_free_handle(h);
@@ -651,6 +660,7 @@ test_spill_and_call(void)
 
     h = dill_finalize(s);
     f = (void (*)(void*, void*))dill_get_fp(h);
+    memset(out, 0, sizeof(out));
     f(in, out);
     check_f("spill_and_call", out, want, nlf);
     dill_free_handle(h);

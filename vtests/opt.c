@@ -4,6 +4,7 @@
 #include "malloc.h"
 #endif
 #include <stdlib.h>
+#include <stdint.h>
 #ifdef HAVE_UNISTD_H
 #include "unistd.h"
 #endif
@@ -93,8 +94,13 @@ mulshift()
         {2, -3, -6, -6},
         {8, 7, 56, 56},
         {4096, -5, -20480, -20480},
-        {6, 7, 42, 42},                    /* non-power: real mul */
-        {((intptr_t)1) << 33, 3, ((intptr_t)3) << 33, 0}, /* > int width */
+        {6, 7, 42, 42}, /* non-power: real mul */
+#if INTPTR_MAX > INT32_MAX
+        /* shift count above the 32-bit type's width: reduced for l, left as
+         * a (truncating) mul for i.  64-bit targets only -- the constant
+         * itself does not exist on a 32-bit intptr_t. */
+        {((intptr_t)1) << 33, 3, ((intptr_t)3) << 33, 0},
+#endif
     };
     size_t i;
     for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
@@ -114,8 +120,8 @@ mulshift()
         lp = (intptr_t(*)(intptr_t))dill_get_fp(h);
         lres = lp(cases[i].in);
         if (lres != cases[i].want_l) {
-            printf("mulshift L case %zd: got %zd, expected %zd\n", i,
-                   (ssize_t)lres, (ssize_t)cases[i].want_l);
+            printf("mulshift L case %d: got %lld, expected %lld\n", (int)i,
+                   (long long)lres, (long long)cases[i].want_l);
         }
         dill_free_handle(h);
         dill_free_stream(s);
@@ -129,7 +135,7 @@ mulshift()
         iap = (int (*)(int))dill_get_fp(h);
         ires = iap((int)cases[i].in);
         if (ires != cases[i].want_i) {
-            printf("mulshift I case %zd: got %d, expected %d\n", i, ires,
+            printf("mulshift I case %d: got %d, expected %d\n", (int)i, ires,
                    cases[i].want_i);
         }
         dill_free_handle(h);
