@@ -1166,18 +1166,50 @@ dill_raw_availreg(dill_stream s, int type, dill_reg reg)
     }
 }
 
-extern int
-dill_has_vector_ops(dill_stream s)
+/* The jump table that will actually emit DILL_Q code, or NULL if this stream
+ * has no vector support.  In virtual mode s->j is the always-filled virtual
+ * table, so the vector queries have to look through to the emit-time table. */
+static jmp_table
+vector_jump_table(dill_stream s)
 {
 #ifdef EMULATION_ONLY
-    return 0; /* the emulator has no vector support */
+    return NULL; /* the emulator has no vector support */
 #else
     jmp_table j = s->p->native.mach_jump ? s->p->native.mach_jump : s->j;
     if (getenv("DILL_DO_EMULATION"))
-        return 0; /* emulation forced; the emulator has no vector support */
-    return (j->jmp_a3[dill_jmp_vaddf] != 0) && (j->jmp_a3[dill_jmp_vaddd] != 0) &&
-           (j->jmp_a3[dill_jmp_vfmaf] != 0) && (j->jmp_a2[dill_jmp_vsplatf] != 0);
+        return NULL; /* emulation forced; the emulator has no vector support */
+    if (j == NULL)
+        return NULL;
+    if ((j->jmp_a3[dill_jmp_vaddf] == 0) || (j->jmp_a3[dill_jmp_vaddd] == 0) ||
+        (j->jmp_a3[dill_jmp_vfmaf] == 0) || (j->jmp_a2[dill_jmp_vsplatf] == 0))
+        return NULL;
+    return j;
 #endif
+}
+
+extern int
+dill_has_vector_ops(dill_stream s)
+{
+    return vector_jump_table(s) != NULL;
+}
+
+extern int
+dill_vector_bytes(dill_stream s)
+{
+    jmp_table j = vector_jump_table(s);
+    /* The vector width is not a constant of the DILL_Q design; it is whatever
+     * the target's type_size table says, so a backend can widen (AVX, SVE)
+     * without any change here or in client loop structure. */
+    return (j != NULL) ? j->type_size[DILL_Q] : 0;
+}
+
+extern int
+dill_vector_lanes(dill_stream s, int element_type)
+{
+    jmp_table j = vector_jump_table(s);
+    if ((j == NULL) || ((element_type != DILL_F) && (element_type != DILL_D)))
+        return 0;
+    return j->type_size[DILL_Q] / j->type_size[element_type];
 }
 
 extern int

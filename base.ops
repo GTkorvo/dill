@@ -626,6 +626,12 @@ struct jmp_table_s {
     lea_op lea;
     int target_byte_order;
     int target_float_format;
+    /* Set by a backend that can hold a DILL_Q in a globally-assigned register
+     * across basic blocks AND calls without losing lanes.  That needs the
+     * backend's call path to save/restore the FULL vector width, not just 64
+     * bits.  Left 0 (the safe default) means DILL_Q vregs are never given a
+     * cross-block register and so spill at every block boundary. */
+    int vector_global_regs;
 };
 
 typedef struct { 
@@ -679,6 +685,14 @@ extern int dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int reg_cla
 extern int dill_getreg(dill_stream s, int typ);
 /*! query whether the (eventual native) target implements the DILL_Q vector ops */
 extern int dill_has_vector_ops(dill_stream s);
+/*! bytes in a DILL_Q vector on the (eventual native) target, or 0 if it has no
+ *  vector ops.  NOT a constant of the API: a backend may use 128, 256 or 512
+ *  bits, so clients must structure vector loops around this rather than
+ *  assuming a width. */
+extern int dill_vector_bytes(dill_stream s);
+/*! lanes of element_type (DILL_F or DILL_D) in one DILL_Q vector, or 0 if the
+ *  target has no vector ops.  This is the vector loop's stride. */
+extern int dill_vector_lanes(dill_stream s, int element_type);
 extern void dill_raw_putreg(dill_stream s, dill_reg reg_p, int type);
 extern void dill_raw_unavailreg(dill_stream s, int type, dill_reg reg);
 extern void dill_raw_availreg(dill_stream s, int type, dill_reg reg);
