@@ -1626,8 +1626,13 @@ do_global_assign(dill_stream c, virtual_mach_info vmi)
     candidates = malloc(sizeof(global_assign_candidate) * c->p->vreg_count);
     for (i = 0; i < c->p->vreg_count; i++) {
         int is_cross_block = 0;
-        if (c->p->vregs[i].typ == DILL_B || c->p->vregs[i].typ == DILL_V ||
-            c->p->vregs[i].typ == DILL_Q)
+        if (c->p->vregs[i].typ == DILL_B || c->p->vregs[i].typ == DILL_V)
+            continue;
+        /* A DILL_Q only gets a cross-block register if the backend can keep
+         * one intact across a call (see jmp_table.vector_global_regs).  With
+         * it off, vectors spill at every block boundary -- correct, but it
+         * costs a reload per iteration for any loop-carried accumulator. */
+        if ((c->p->vregs[i].typ == DILL_Q) && !c->j->vector_global_regs)
             continue;
         if (c->p->vregs[i].use_info.use_count == 0 &&
             c->p->vregs[i].use_info.def_count == 0)
@@ -1664,8 +1669,13 @@ do_global_assign(dill_stream c, virtual_mach_info vmi)
         int probe[MIN_ONDEMAND_RESERVE];
         int got, k;
 
+        /* Exhaustion is per register CLASS: integer candidates draw from a
+         * different pool than float/vector ones.  So a candidate that cannot
+         * be satisfied must not abort the whole loop -- skip it and keep
+         * going, or a starved integer pool (easily caused by a few pointer
+         * parameters) silently denies every vector accumulator a register. */
         if (dill_raw_getreg(c, &preg, candidates[i].typ, DILL_VAR) == 0)
-            break; /* no more registers available */
+            continue; /* no registers left in THIS class */
 
         /* Verify enough registers remain for on-demand allocation */
         got = 0;
@@ -1680,9 +1690,11 @@ do_global_assign(dill_stream c, virtual_mach_info vmi)
             dill_raw_putreg(c, probe[k], candidates[i].typ);
 
         if (got < MIN_ONDEMAND_RESERVE) {
-            /* Pool is too depleted — return this register and stop */
+            /* This class is too depleted to keep the on-demand allocator fed;
+             * give the register back and try the next candidate, which may be
+             * in a class that still has room. */
             dill_raw_putreg(c, preg, candidates[i].typ);
-            break;
+            continue;
         }
 
         c->p->vregs[idx].preg = preg;
