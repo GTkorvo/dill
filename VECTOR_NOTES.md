@@ -458,9 +458,12 @@ commit.
    magnitude kernel, which is otherwise optimal. This is a dill register-model
    problem, not a vector one, and none of the obvious fixes are safe — see the
    appendix below before touching it. arm64 does not have this problem.
-2. Client-side: `dill_mululi` expands to a 64-bit `MUL` bracketed by
-   `push rax`/`push rdx`/`pop` — 8 instructions to multiply by 4. Use
-   `dill_lshuli`.
+2. DONE (2026-08-24): integer multiply by a power-of-two immediate is now
+   strength-reduced to a shift (x1 to a mov) at emit time in
+   `new_emit_insns`, so `dill_mululi(off, i, 4)` costs one `lsl`/`shl` on
+   every backend instead of x86_64's 8-instruction `MUL` sequence.  Guarded
+   by operand-type width; non-powers and the `DILL_OLD_REGS` legacy path
+   keep the real multiply.  Clients need no change.
 3. arm64 has not been given `vector_global_regs`, so it still spills
    loop-carried vectors every iteration. Needs the AAPCS64 v8-v15 low-64-bits
    problem worked through first (allocate DILL_Q from the tmp pool only, and

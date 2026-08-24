@@ -3391,13 +3391,41 @@ new_emit_insns(dill_stream c,
                                           c->j->a2_data[insn_code].data2, pdest,
                                           pused[0]);
                 break;
-            case iclass_arith3i:
+            case iclass_arith3i: {
                 /* arith 3 immediate operand integer insns */
-                (c->j->jmp_a3i)[insn_code](c, c->j->a3i_data[insn_code].data1,
-                                           c->j->a3i_data[insn_code].data2,
-                                           pdest, pused[0],
-                                           ip->opnds.a3i.u.imm);
+                int code = insn_code;
+                IMM_TYPE imm = ip->opnds.a3i.u.imm;
+                /* Strength-reduce integer multiply by a power of two into a
+                 * left shift (exact in two's complement, signed or unsigned;
+                 * x1 becomes a mov).  mul is the one a3i op backends may
+                 * expand into long sequences (x86_64_muli is 8 insns), and
+                 * loop bodies multiply an index by an element size
+                 * constantly.  The shift count must fit the operand type:
+                 * mul by 2^k for k >= the type's width truncates to zero,
+                 * but hardware masks shift counts, so leave those as mul. */
+                if ((code >= dill_jmp_muli) && (code <= dill_jmp_mull) &&
+                    (imm > 0) && ((imm & (imm - 1)) == 0)) {
+                    static const int mul_op_type[4] = {DILL_I, DILL_U, DILL_UL,
+                                                       DILL_L};
+                    int typ = mul_op_type[code - dill_jmp_muli];
+                    int max_shift = c->j->type_size[typ] * 8 - 1;
+                    int k = 0;
+                    while ((((IMM_TYPE)1) << k) < imm)
+                        k++;
+                    if (k == 0) {
+                        c->j->mov(c, typ, 0, pdest, pused[0]);
+                        break;
+                    }
+                    if (k <= max_shift) {
+                        code = dill_jmp_lshi + (code - dill_jmp_muli);
+                        imm = k;
+                    }
+                }
+                (c->j->jmp_a3i)[code](c, c->j->a3i_data[code].data1,
+                                      c->j->a3i_data[code].data2, pdest,
+                                      pused[0], imm);
                 break;
+            }
             case iclass_ret:
                 (c->j->ret)(c, ip->insn_code, 0, pused[0]);
                 break;
