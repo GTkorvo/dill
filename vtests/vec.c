@@ -129,6 +129,7 @@ test_binops(void)
         dill_exec_handle h;
         binop_func f = gen_binop(s, &h, cases[c].emit);
         if (cases[c].dbl) {
+            memset(dout, 0, sizeof(dout));
             f(da, db, dout);
             for (i = 0; i < nld; i++) {
                 switch (cases[c].op) {
@@ -140,6 +141,7 @@ test_binops(void)
             }
             check_d(cases[c].name, dout, dw, nld);
         } else {
+            memset(fo, 0, sizeof(fo));
             f(fa, fb, fo);
             for (i = 0; i < nlf; i++) {
                 switch (cases[c].op) {
