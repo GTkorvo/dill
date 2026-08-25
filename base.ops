@@ -673,6 +673,11 @@ extern dill_stream dill_create_stream(void);
 extern dill_stream dill_dup_stream(dill_stream s);
 
 extern dill_exec_ctx dill_get_exec_context(dill_stream x);
+/*! Free the stream AND every code buffer it owns.  Generated code obtained
+ *  via dill_finalize() DIES HERE: its handle does not own the code (see
+ *  dill_finalize).  Only code detached with dill_get_handle() survives the
+ *  stream.  Do not free a stream while a dill_finalize()-produced function
+ *  pointer is still callable. */
 extern void dill_free_stream(dill_stream s);
 extern void dill_free_exec_context(dill_exec_ctx c);
 extern void dill_assoc_client_data(dill_exec_ctx ec, int key, IMM_TYPE value);
@@ -707,8 +712,21 @@ extern dill_reg dill_param_reg(dill_stream s, int argno);
 extern dill_reg dill_vparam(dill_stream s, int argno);
 extern void dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str);
 extern void dill_dump(dill_stream s);
+/*! Finish code generation and return a handle to the generated function.
+ *  LIFETIME: the handle does NOT own the code.  The code lives in the
+ *  stream's buffers, so the function pointer from dill_get_fp() is valid
+ *  only until dill_free_stream() -- or until the stream is reused by a
+ *  later dill_start_proc(), which overwrites the buffer.  To keep code
+ *  beyond the stream, call dill_get_handle() after dill_finalize() and
+ *  free the finalize handle; the get_handle handle owns the code and
+ *  frees it in dill_free_handle(). */
 extern dill_exec_handle dill_finalize(dill_stream s);
 extern void dill_begin_prefix_code(dill_stream s);
+/*! Detach the most recently generated code from the stream and return an
+ *  OWNING handle: the code survives dill_free_stream() and is released by
+ *  dill_free_handle().  Call after dill_finalize() (which does the actual
+ *  emission; its non-owning handle should then be freed).  After this the
+ *  stream no longer references the code. */
 extern dill_exec_handle dill_get_handle(dill_stream s);
 extern char *dill_finalize_package(dill_stream s, int *pkg_len);
 typedef struct _dill_extern_entry {
@@ -720,6 +738,9 @@ typedef struct _dill_extern_entry {
 
 extern dill_exec_handle dill_package_stitch(char *package, dill_extern_entry* externs);
 extern void *dill_package_entry(char* package);
+/*! Release a handle.  For dill_get_handle() handles this frees the
+ *  generated code; for dill_finalize() handles it frees only the handle
+ *  struct (the code belongs to the stream). */
 extern void dill_free_handle(dill_exec_handle h);
 extern void dill_ref_handle(dill_exec_handle h);
 extern void *dill_get_fp(dill_exec_handle h);
