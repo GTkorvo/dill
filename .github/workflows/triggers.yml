@@ -8,6 +8,8 @@ on:
 jobs:
   all_triggers:
     runs-on: ubuntu-latest
+    permissions:
+      statuses: write
 
     steps:
     - uses: actions/checkout@v7
